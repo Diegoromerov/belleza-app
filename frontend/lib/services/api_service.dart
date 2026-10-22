@@ -368,6 +368,36 @@ class ApiService {
     });
   }
 
+  /// PATCH con reintentos (actualización parcial idempotente).
+  static Future<dynamic> patch(String path, Map<String, dynamic> body) {
+    return runWithRetry(() async {
+      await ensureBaseUrl();
+      final headers = await _getAuthHeaders();
+      final uri = Uri.parse('$_baseUrl$path');
+      final response = await http
+          .patch(uri, headers: headers, body: jsonEncode(body))
+          .timeout(requestTimeout);
+      return _decodeResponse(response);
+    });
+  }
+
+  /// DELETE con reintentos (petición idempotente).
+  static Future<dynamic> delete(String path) {
+    return runWithRetry(() async {
+      await ensureBaseUrl();
+      final headers = await _getAuthHeaders();
+      final uri = Uri.parse('$_baseUrl$path');
+      if (kDebugMode) {
+        print('🌐 ApiService.delete: Requesting URI: $uri');
+      }
+      final response = await http
+          .delete(uri, headers: headers)
+          .timeout(requestTimeout);
+      return _decodeResponse(response);
+    });
+  }
+
+
   // ─────────────────────────────────────────────────────────────
   // PROVEEDORES (Públicos - sin token requerido)
   // ─────────────────────────────────────────────────────────────

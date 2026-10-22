@@ -31,7 +31,7 @@ router.get('/', async (req, res) => {
     const periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
 
     const { rows: metrics } = await pool.query(`
-      SELECT feature, count, limit, period_start, period_end
+      SELECT feature, count, "limit", period_start, period_end
       FROM usage_metrics
       WHERE tenant_id = $1 AND period_start = $2
       ORDER BY feature;
@@ -101,7 +101,7 @@ router.get('/history', async (req, res) => {
     const months = Math.min(parseInt(req.query.months) || 6, 12);
 
     const { rows } = await pool.query(`
-      SELECT feature, period_start, period_end, count, limit
+      SELECT feature, period_start, period_end, count, "limit"
       FROM usage_metrics
       WHERE tenant_id = $1
         AND period_start >= (date_trunc('month', CURRENT_DATE) - interval '${months} months')
@@ -113,7 +113,7 @@ router.get('/history', async (req, res) => {
     rows.forEach(row => {
       const key = row.period_start;
       if (!byMonth[key]) byMonth[key] = { periodStart: key, periodEnd: row.period_end, features: {} };
-      byMonth[key].features[row.feature] = { count: row.count, limit: row.limit };
+      byMonth[key].features[row.feature] = { count: row.count, limit: row["limit"] };
     });
 
     res.json({

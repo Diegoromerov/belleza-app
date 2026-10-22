@@ -25,9 +25,9 @@ router.get('/', async (req, res) => {
 
     const { rows } = await pool.query(`
       SELECT m.id, m.user_id, m.role, m.status, m.invited_at, m.accepted_at,
-             u.email, u.full_name, u.avatar_url
+             u.email, u.nombre AS full_name, u.foto_url AS avatar_url
       FROM memberships m
-      JOIN users u ON u.id = m.user_id
+      JOIN usuarios u ON u.id = m.user_id
       WHERE m.business_profile_id = $1
       ORDER BY 
         CASE m.role 
@@ -108,7 +108,7 @@ router.post('/invite', requireRole('ADMIN'), async (req, res) => {
 
     // Buscar usuario por email
     const { rows: users } = await pool.query(
-      `SELECT id, email, full_name FROM users WHERE email = $1`,
+      `SELECT id, email, nombre AS full_name FROM usuarios WHERE email = $1`,
       [email.toLowerCase()]
     );
 

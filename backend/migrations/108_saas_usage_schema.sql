@@ -18,12 +18,14 @@ CREATE TABLE IF NOT EXISTS usage_metrics (
       'TEAM_SEATS',
       'API_CALLS',
       'ADVANCED_ANALYTICS',
-      'CUSTOM_BRANDING'
+      'CUSTOM_BRANDING',
+      'WHATSAPP_INTEGRATION',
+      'POS_INTEGRATION'
     )),
   period_start    DATE NOT NULL,
   period_end      DATE NOT NULL,
   count           INTEGER DEFAULT 0,
-  limit           INTEGER, -- NULL = ilimitado
+  "limit"         INTEGER, -- NULL = ilimitado (nombre reservado: requiere comillas)
   created_at      TIMESTAMPTZ DEFAULT NOW(),
   updated_at      TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE (tenant_id, feature, period_start)

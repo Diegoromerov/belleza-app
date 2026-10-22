@@ -456,27 +456,79 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
           ],
         ),
         actions: [
-          IconButton(
-            icon: GlowIcon.resolve(
-              'refresh',
-              size: GlowIconSize.sm,
-              color: t.textSecondary,
-              semanticLabel: 'Actualizar datos',
-            ),
-            onPressed: _fetchSalonData,
-            tooltip: 'Actualizar datos',
-          ),
-          IconButton(
-            icon: GlowIcon.resolve(
-              'logout',
-              size: GlowIconSize.sm,
-              color: t.textSecondary,
-              semanticLabel: 'Cerrar sesión',
-            ),
-            onPressed: _handleLogout,
-            tooltip: 'Cerrar sesión',
-          ),
-        ],
+                          PopupMenuButton<String>(
+                            icon: GlowIcon.resolve(
+                              'more_vert',
+                              size: GlowIconSize.sm,
+                              color: t.brandPrimary,
+                              semanticLabel: 'Opciones SaaS',
+                            ),
+                            onSelected: (value) {
+                              switch (value) {
+                                case 'billing':
+                                  Navigator.pushNamed(context, '/saas/billing');
+                                  break;
+                                case 'usage':
+                                  Navigator.pushNamed(context, '/saas/usage');
+                                  break;
+                                case 'api_keys':
+                                  Navigator.pushNamed(context, '/saas/api-keys');
+                                  break;
+                                case 'team':
+                                  Navigator.pushNamed(context, '/saas/team');
+                                  break;
+                              }
+                            },
+                            itemBuilder: (ctx) => [
+                              const PopupMenuItem(
+                                value: 'team',
+                                child: Row(children: [Icon(Icons.people_rounded, size: 18), SizedBox(width: 8), Text('Mi Equipo')]),
+                              ),
+                              const PopupMenuItem(
+                                value: 'billing',
+                                child: Row(children: [Icon(Icons.receipt_long_rounded, size: 18), SizedBox(width: 8), Text('Facturación')]),
+                              ),
+                              const PopupMenuItem(
+                                value: 'usage',
+                                child: Row(children: [Icon(Icons.analytics_rounded, size: 18), SizedBox(width: 8), Text('Uso y Métricas')]),
+                              ),
+                              const PopupMenuItem(
+                                value: 'api_keys',
+                                child: Row(children: [Icon(Icons.vpn_key_rounded, size: 18), SizedBox(width: 8), Text('API Keys')]),
+                              ),
+                            ],
+                          ),
+                          IconButton(
+                            icon: GlowIcon.resolve(
+                              'settings',
+                              size: GlowIconSize.sm,
+                              color: t.brandPrimary,
+                              semanticLabel: 'Gestionar mi negocio',
+                            ),
+                            onPressed: () => Navigator.pushNamed(context, '/saas/team'),
+                            tooltip: 'Gestionar mi negocio',
+                          ),
+                  IconButton(
+                    icon: GlowIcon.resolve(
+                      'refresh',
+                      size: GlowIconSize.sm,
+                      color: t.textSecondary,
+                      semanticLabel: 'Actualizar datos',
+                    ),
+                    onPressed: _fetchSalonData,
+                    tooltip: 'Actualizar datos',
+                  ),
+                  IconButton(
+                    icon: GlowIcon.resolve(
+                      'logout',
+                      size: GlowIconSize.sm,
+                      color: t.textSecondary,
+                      semanticLabel: 'Cerrar sesión',
+                    ),
+                    onPressed: _handleLogout,
+                    tooltip: 'Cerrar sesión',
+                  ),
+                ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(kToolbarHeight),
           child: Container(

@@ -143,14 +143,14 @@ async function incrementUsage(tenantId, feature, delta = 1) {
   const limit = getLimit(plan, feature);
 
   const query = `
-    INSERT INTO usage_metrics (tenant_id, feature, period_start, period_end, count, limit)
+    INSERT INTO usage_metrics (tenant_id, feature, period_start, period_end, count, "limit")
     VALUES ($1, $2, $3, $4, $5, $6)
     ON CONFLICT (tenant_id, feature, period_start)
     DO UPDATE SET
       count = usage_metrics.count + EXCLUDED.count,
-      limit = EXCLUDED.limit,
+      "limit" = EXCLUDED."limit",
       updated_at = NOW()
-    RETURNING count, limit;
+    RETURNING count, "limit";
   `;
 
   const { rows } = await pool.query(query, [
@@ -204,12 +204,12 @@ async function resetMonthlyCounters() {
 
   // Ejemplo: detectar tenants que excedieron límites el mes pasado
   const { rows: exceeded } = await pool.query(`
-    SELECT um.tenant_id, um.feature, um.count, um.limit, bp.saas_plan, bp.name
+    SELECT um.tenant_id, um.feature, um.count, um."limit", bp.saas_plan, bp.name
     FROM usage_metrics um
     JOIN business_profiles bp ON bp.id = um.tenant_id
     WHERE um.period_start = $1
-      AND um.limit IS NOT NULL
-      AND um.count > um.limit
+      AND um."limit" IS NOT NULL
+      AND um.count > um."limit"
   `, [prevMonthStart.toISOString().split('T')[0]]);
 
   return { period: prevMonthStart.toISOString().split('T')[0], exceeded };
@@ -242,9 +242,9 @@ async function checkUsageAlerts() {
 
     for (const alert of configuredAlerts) {
       const metric = metrics.find(m => m.feature === alert.feature);
-      if (!metric || !metric.limit) continue;
+      if (!metric || !metric["limit"]) continue;
 
-      const percentage = (metric.count / metric.limit) * 100;
+      const percentage = (metric.count / metric["limit"]) * 100;
       if (percentage >= alert.thresholdPercent) {
         alerts.push({
           tenantId: tenant.id,
@@ -254,7 +254,7 @@ async function checkUsageAlerts() {
           threshold: alert.thresholdPercent,
           currentPercent: Math.round(percentage),
           count: metric.count,
-          limit: metric.limit,
+          limit: metric["limit"],
           channel: alert.channel,
           webhookUrl: alert.webhookUrl
         });

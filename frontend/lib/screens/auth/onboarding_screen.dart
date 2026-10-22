@@ -1,7 +1,10 @@
 // frontend/lib/screens/auth/onboarding_screen.dart
+import 'package:beauty_app/models/saas/saas_models.dart';
+import 'package:beauty_app/services/saas_api_service.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
@@ -50,6 +53,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final _generatorNumCtrl = TextEditingController();
   final _plateNumCtrl = TextEditingController();
   final _complementCtrl = TextEditingController();
+
+  // ═══════════════════════════════════════════════════════════════
+  // SAAS ONBOARDING STATE
+  // ═══════════════════════════════════════════════════════════════
+  SaasPlanTier _selectedPlan = SaasPlanTier.freeTrial;
+  final List<InviteMemberRequest> _teamInvites = [];
+  bool _isCreatingSaasProfile = false;
+  String? _saasError;
 
   static const List<String> _viaTypes = [
     'Calle',
@@ -191,10 +202,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
     setState(() {
       _isLoading = true;
+      _isCreatingSaasProfile = true;
       _error = null;
+      _saasError = null;
     });
 
     try {
+      // Paso 1: Crear salón en Business Engine (existente)
       final res = await AuthService.createSalon(
         nombreSalon: _salonNameCtrl.text.trim(),
         nit: _salonNitCtrl.text.trim(),
@@ -205,13 +219,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         longitude: _salonLocationConfirmed ? _salonLocation.longitude : null,
         locationPublic: _salonLocationPublic,
       );
-      if (res != null && res['success'] == true) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('userRole', 'salon');
-        if (mounted) {
-          Navigator.pushReplacementNamed(context, '/salon-hub');
-        }
-      } else {
+
+      if (res == null || res['success'] != true) {
+        // Fallback: completar onboarding sin SaaS
         await AuthService.completeOnboarding(
           role: 'SALON',
           aceptarHabeasData: _habeasDataAccepted,
@@ -222,12 +232,243 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         if (mounted) {
           Navigator.pushReplacementNamed(context, '/salon-hub');
         }
+        return;
+      }
+
+      // Paso 2: provisionar el tenant SaaS desde el salón recién creado.
+      // Crea business_profile + membership OWNER (idempotente). Sin esto,
+      // /api/saas/* responde 401 "Contexto SaaS requerido".
+      try {
+        final profile = await SaasApiService.provisionTenant(plan: _selectedPlan.code);
+
+        // Paso 3: enviar invitaciones de equipo con el id real del tenant
+        // (antes se pasaba el slug, que no identifica al tenant).
+        var inviteFailures = 0;
+        for (final invite in _teamInvites) {
+          try {
+            await SaasApiService.inviteMember(profile.id, invite);
+          } catch (_) {
+            inviteFailures++;
+          }
+        }
+        if (inviteFailures > 0 && mounted) {
+          setState(() {
+            _saasError = 'El salón quedó creado, pero $inviteFailures invitación(es) '
+                'no se enviaron. Puedes reenviarlas desde Mi Equipo.';
+          });
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _saasError = 'El salón quedó creado, pero el perfil SaaS no se pudo '
+                'provisionar. Podrás completarlo desde Facturación.';
+          });
+        }
+        if (kDebugMode) debugPrint('Onboarding: provisionamiento SaaS falló: $e');
+      }
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('userRole', 'salon');
+      if (mounted) {
+        final warning = _saasError;
+        if (warning != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(warning), duration: const Duration(seconds: 6)),
+          );
+        }
+        Navigator.pushReplacementNamed(context, '/salon-hub');
       }
     } catch (e) {
       setState(() => _error = 'Error de conexión: $e');
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) setState(() {
+        _isLoading = false;
+        _isCreatingSaasProfile = false;
+      });
     }
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // SAAS HELPER METHODS (class level)
+  // ═══════════════════════════════════════════════════════════════
+
+  String _planDescription(SaasPlanTier plan) {
+      switch (plan) {
+        case SaasPlanTier.freeTrial:
+          return '14 días gratis · 3 asientos · 1.000 API/mes';
+        case SaasPlanTier.freemium:
+          return 'Gratis permanente · 1 asiento · 500 API/mes';
+        case SaasPlanTier.basic:
+          return '5 asientos · 200 reservas/mes · 10.000 API/mes';
+        case SaasPlanTier.pro:
+          return '20 asientos · reservas ilimitadas · Analítica avanzada · API Keys';
+        case SaasPlanTier.enterprise:
+          return 'Asientos y API ilimitados · WhatsApp · POS · Soporte prioritario';
+      }
+    }
+
+  Widget _buildPlanSelector() {
+    return Column(
+      children: SaasPlanTier.values.map((plan) {
+        final isSelected = _selectedPlan == plan;
+        return GestureDetector(
+          onTap: () => setState(() => _selectedPlan = plan),
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: isSelected ? plan.color.withValues(alpha: 0.1) : Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isSelected ? plan.color : const Color(0xFFEFE8DE),
+                width: isSelected ? 2 : 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 22,
+                  height: 22,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isSelected ? plan.color : const Color(0xFFC5A052),
+                      width: 2,
+                    ),
+                    color: isSelected ? plan.color : Colors.transparent,
+                  ),
+                  child: isSelected
+                      ? const Icon(Icons.check, size: 14, color: Colors.white)
+                      : null,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        plan.label,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: isSelected ? plan.color : const Color(0xFF1F1A15),
+                        ),
+                      ),
+                      Text(
+                        plan.formattedPrice,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isSelected ? plan.color : const Color(0xFF8C7E74),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Text(
+                  _planDescription(plan),
+                  style: const TextStyle(fontSize: 11, color: Color(0xFF8C7E74)),
+                ),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildInviteChip(InviteMemberRequest invite) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: invite.role.color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: invite.role.color.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.person_rounded, size: 14, color: invite.role.color),
+          const SizedBox(width: 6),
+          Text(
+            invite.email,
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: invite.role.color),
+          ),
+          const SizedBox(width: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: invite.role.color,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              invite.role.label,
+              style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white),
+            ),
+          ),
+          const SizedBox(width: 6),
+          GestureDetector(
+            onTap: () => setState(() => _teamInvites.remove(invite)),
+            child: Icon(Icons.close_rounded, size: 14, color: invite.role.color),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showInviteMemberDialog() async {
+    final emailCtrl = TextEditingController();
+    MembershipRole selectedRole = MembershipRole.staff;
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Invitar miembro al equipo'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: emailCtrl,
+              keyboardType: TextInputType.emailAddress,
+              decoration: const InputDecoration(
+                labelText: 'Email del miembro',
+                hintText: 'ejemplo@email.com',
+                prefixIcon: Icon(Icons.email_outlined),
+              ),
+            ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<MembershipRole>(
+              initialValue: selectedRole,
+              decoration: const InputDecoration(
+                labelText: 'Rol',
+                prefixIcon: Icon(Icons.badge_outlined),
+              ),
+              items: [MembershipRole.admin, MembershipRole.manager, MembershipRole.staff]
+                  .map((r) => DropdownMenuItem(value: r, child: Text(r.label)))
+                  .toList(),
+              onChanged: (v) => selectedRole = v ?? MembershipRole.staff,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () {
+              final email = emailCtrl.text.trim();
+              if (email.isNotEmpty && email.contains('@')) {
+                setState(() {
+                  _teamInvites.add(InviteMemberRequest(email: email, role: selectedRole));
+                });
+                Navigator.pop(ctx);
+              }
+            },
+            child: const Text('Invitar'),
+          ),
+        ],
+      ),
+    );
   }
 
   // URLs de documentos subidos
@@ -777,6 +1018,134 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
               );
             },
+          ),
+          const SizedBox(height: 14),
+
+          // ═══════════════════════════════════════════════════════════════
+          // SAAS: SELECCIÓN DE PLAN
+          // ═══════════════════════════════════════════════════════════════
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFEFE8DE)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.workspace_premium_rounded, color: Color(0xFFC5A052), size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      'Plan SaaS para tu Salón',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1F1A15),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Elige el plan que mejor se adapte a tu negocio. Podrás cambiarlo después.',
+                  style: TextStyle(fontSize: 12, color: Color(0xFF8C7E74)),
+                ),
+                const SizedBox(height: 12),
+                _buildPlanSelector(),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // ═══════════════════════════════════════════════════════════════
+          // SAAS: INVITAR EQUIPO (OPCIONAL)
+          // ═══════════════════════════════════════════════════════════════
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFEFE8DE)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(Icons.group_add_rounded, color: Color(0xFFC5A052), size: 20),
+                        SizedBox(width: 8),
+                        Text(
+                          'Invitar a mi Equipo (Opcional)',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1F1A15),
+                          ),
+                        ),
+                      ],
+                    ),
+                    TextButton.icon(
+                      onPressed: _showInviteMemberDialog,
+                      icon: const Icon(Icons.person_add_rounded, size: 16, color: Color(0xFFC5A052)),
+                      label: const Text('Agregar', style: TextStyle(fontSize: 12, color: Color(0xFFC5A052), fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Envía invitaciones a tu equipo. Recibirán un email para unirse a tu salón.',
+                  style: TextStyle(fontSize: 11, color: Color(0xFF8C7E74)),
+                ),
+                const SizedBox(height: 12),
+                if (_teamInvites.isEmpty)
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFAF6EE),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFEFE8DE).withValues(alpha: 0.5)),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.info_outline, size: 16, color: Color(0xFFC5A052)),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Sin invitaciones pendientes. Agrega miembros de tu equipo si lo deseas.',
+                            style: TextStyle(fontSize: 12, color: Color(0xFF8C7E74)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: _teamInvites.map((invite) => _buildInviteChip(invite)).toList(),
+                  ),
+              ],
+            ),
           ),
           const SizedBox(height: 14),
 
@@ -1337,10 +1706,26 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 elevation: 0,
               ),
               child: _isLoading
-                  ? const SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(color: Color(0xFF1F1A15), strokeWidth: 2.5),
+                  ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(color: Color(0xFF1F1A15), strokeWidth: 2.5),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          _isCreatingSaasProfile ? 'PROVISIONANDO CUENTA…' : 'CREANDO SALÓN…',
+                          style: const TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF1F1A15),
+                          ),
+                        ),
+                      ],
                     )
                   : const Text(
                       'CREAR MI SALÓN DE BELLEZA (SaaS)',

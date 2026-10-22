@@ -40,6 +40,10 @@ import 'screens/provider_detail_screen.dart';
 import 'screens/provider_dashboard_screen.dart';
 import 'screens/salon_dashboard_screen.dart';
 import 'screens/salon/salon_hub_screen.dart';
+import 'screens/saas/team_management_screen.dart';
+import 'screens/saas/billing_screen.dart';
+import 'screens/saas/usage_screen.dart';
+import 'screens/saas/api_keys_screen.dart';
 import 'screens/client_bookings_screen.dart';
 import 'screens/provider_services_screen.dart';
 import 'screens/provider_portfolio_screen.dart';
@@ -320,6 +324,12 @@ class BeautyApp extends StatelessWidget {
                   final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
                   return ProviderRouteScreen(booking: args);
                 },
+
+                // SaaS: equipo, facturación, uso y API keys
+                '/saas/team': (_) => const TeamManagementScreen(),
+                '/saas/billing': (_) => const BillingScreen(),
+                '/saas/usage': (_) => const UsageScreen(),
+                '/saas/api-keys': (_) => const ApiKeysScreen(),
 
                 // 4. Citas, Chat & Perfil
                 '/client-bookings': (_) => const ClientBookingsScreen(),

@@ -319,3 +319,17 @@ La fila `107_saas_billing_schema.sql` de `schema_migrations` se deja como regist
 histórico de lo que realmente se ejecutó; no se borra.
 **Lección para la próxima:** el número se elige mirando el directorio **y las ramas en
 vuelo en el remoto**, no solo el worktree. Dos ramas del mismo día se pisan igual.
+
+## 112_memberships_invite_columns.sql (pendiente de aplicar)
+
+**Motivo:** `saasTeamRoutes.js` escribe `invite_token`, `invited_by` y `status='PENDING'`,
+pero 082 no creó esas columnas y su CHECK solo admitía `INVITED/ACTIVE/SUSPENDED/REVOKED`.
+Invitaciones y aceptaciones fallaban en tiempo de ejecución.
+
+**Además:** `business_verticals` estaba vacía en producción (0 filas) y
+`business_profiles.vertical_id` es NOT NULL con FK, así que provisionar un tenant
+era imposible. La migración siembra la vertical `BELLEZA` si la tabla está vacía.
+
+**Validado:** ejecutada dentro de una transacción contra la BD de producción y
+revertida con ROLLBACK; también aplicada dos veces seguidas para confirmar
+idempotencia. No se ha aplicado de forma persistente.
