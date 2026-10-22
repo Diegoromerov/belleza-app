@@ -4975,6 +4975,522 @@
         "x-glowapp-documented": false
       }
     },
+    "/api/saas/api-keys": {
+      "get": {
+        "operationId": "getapi_saas_api_keys",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "GET /api/saas/api-keys (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "saas"
+        ],
+        "x-glowapp-documented": false
+      },
+      "post": {
+        "operationId": "postapi_saas_api_keys",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "POST /api/saas/api-keys (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "saas"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/saas/api-keys/verify": {
+      "post": {
+        "operationId": "postapi_saas_api_keys_verify",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "POST /api/saas/api-keys/verify (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "saas"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/saas/api-keys/{keyId}": {
+      "delete": {
+        "operationId": "deleteapi_saas_api_keys_keyId",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "keyId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "DELETE /api/saas/api-keys/{keyId} (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "saas"
+        ],
+        "x-glowapp-documented": false
+      },
+      "patch": {
+        "operationId": "patchapi_saas_api_keys_keyId",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "keyId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "PATCH /api/saas/api-keys/{keyId} (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "saas"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/saas/api-keys/{keyId}/revoke": {
+      "post": {
+        "operationId": "postapi_saas_api_keys_keyId_revoke",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "keyId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "POST /api/saas/api-keys/{keyId}/revoke (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "saas"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/saas/billing": {
+      "get": {
+        "operationId": "getapi_saas_billing",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "GET /api/saas/billing (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "saas"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/saas/billing/cancel": {
+      "post": {
+        "operationId": "postapi_saas_billing_cancel",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "POST /api/saas/billing/cancel (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "saas"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/saas/billing/change-plan": {
+      "post": {
+        "operationId": "postapi_saas_billing_change_plan",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "POST /api/saas/billing/change-plan (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "saas"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/saas/billing/checkout": {
+      "post": {
+        "operationId": "postapi_saas_billing_checkout",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "POST /api/saas/billing/checkout (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "saas"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/saas/billing/invoices": {
+      "get": {
+        "operationId": "getapi_saas_billing_invoices",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "GET /api/saas/billing/invoices (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "saas"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/saas/billing/invoices/{invoiceId}": {
+      "get": {
+        "operationId": "getapi_saas_billing_invoices_invoiceId",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "invoiceId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "GET /api/saas/billing/invoices/{invoiceId} (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "saas"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/saas/billing/invoices/{invoiceId}/pdf": {
+      "get": {
+        "operationId": "getapi_saas_billing_invoices_invoiceId_pdf",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "invoiceId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "GET /api/saas/billing/invoices/{invoiceId}/pdf (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "saas"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/saas/billing/payment-methods": {
+      "get": {
+        "operationId": "getapi_saas_billing_payment_methods",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "GET /api/saas/billing/payment-methods (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "saas"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/saas/billing/portal": {
+      "post": {
+        "operationId": "postapi_saas_billing_portal",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "POST /api/saas/billing/portal (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "saas"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/saas/team": {
+      "get": {
+        "operationId": "getapi_saas_team",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "GET /api/saas/team (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "saas"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/saas/team/accept/{token}": {
+      "post": {
+        "operationId": "postapi_saas_team_accept_token",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "POST /api/saas/team/accept/{token} (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "saas"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/saas/team/invite": {
+      "post": {
+        "operationId": "postapi_saas_team_invite",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "POST /api/saas/team/invite (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "saas"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/saas/team/{memberId}": {
+      "delete": {
+        "operationId": "deleteapi_saas_team_memberId",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "memberId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "DELETE /api/saas/team/{memberId} (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "saas"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/saas/team/{memberId}/resend-invite": {
+      "post": {
+        "operationId": "postapi_saas_team_memberId_resend_invite",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "memberId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "POST /api/saas/team/{memberId}/resend-invite (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "saas"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/saas/team/{memberId}/role": {
+      "patch": {
+        "operationId": "patchapi_saas_team_memberId_role",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "memberId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "PATCH /api/saas/team/{memberId}/role (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "saas"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/saas/usage": {
+      "get": {
+        "operationId": "getapi_saas_usage",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "GET /api/saas/usage (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "saas"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/saas/usage/alerts": {
+      "get": {
+        "operationId": "getapi_saas_usage_alerts",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "GET /api/saas/usage/alerts (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "saas"
+        ],
+        "x-glowapp-documented": false
+      },
+      "post": {
+        "operationId": "postapi_saas_usage_alerts",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "POST /api/saas/usage/alerts (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "saas"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/saas/usage/alerts/{index}": {
+      "delete": {
+        "operationId": "deleteapi_saas_usage_alerts_index",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "index",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "DELETE /api/saas/usage/alerts/{index} (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "saas"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/saas/usage/history": {
+      "get": {
+        "operationId": "getapi_saas_usage_history",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "GET /api/saas/usage/history (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "saas"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/saas/usage/limits": {
+      "get": {
+        "operationId": "getapi_saas_usage_limits",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "GET /api/saas/usage/limits (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "saas"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
     "/api/salon/accept-invitation": {
       "post": {
         "operationId": "postapi_salon_accept_invitation",
@@ -5368,6 +5884,193 @@
         "summary": "GET /api/store/shipping/quote (autodescubierto, sin contrato declarado)",
         "tags": [
           "store"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/superadmin/audit-logs": {
+      "get": {
+        "operationId": "getapi_superadmin_audit_logs",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "GET /api/superadmin/audit-logs (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "superadmin"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/superadmin/dashboard": {
+      "get": {
+        "operationId": "getapi_superadmin_dashboard",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "GET /api/superadmin/dashboard (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "superadmin"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/superadmin/health": {
+      "get": {
+        "operationId": "getapi_superadmin_health",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "GET /api/superadmin/health (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "superadmin"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/superadmin/revenue": {
+      "get": {
+        "operationId": "getapi_superadmin_revenue",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "GET /api/superadmin/revenue (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "superadmin"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/superadmin/tenants": {
+      "get": {
+        "operationId": "getapi_superadmin_tenants",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "GET /api/superadmin/tenants (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "superadmin"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/superadmin/tenants/{tenantId}": {
+      "get": {
+        "operationId": "getapi_superadmin_tenants_tenantId",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "GET /api/superadmin/tenants/{tenantId} (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "superadmin"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/superadmin/tenants/{tenantId}/plan": {
+      "patch": {
+        "operationId": "patchapi_superadmin_tenants_tenantId_plan",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "PATCH /api/superadmin/tenants/{tenantId}/plan (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "superadmin"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/superadmin/tenants/{tenantId}/suspend": {
+      "post": {
+        "operationId": "postapi_superadmin_tenants_tenantId_suspend",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tenantId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "POST /api/superadmin/tenants/{tenantId}/suspend (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "superadmin"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/superadmin/usage": {
+      "get": {
+        "operationId": "getapi_superadmin_usage",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "GET /api/superadmin/usage (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "superadmin"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/superadmin/webhooks": {
+      "get": {
+        "operationId": "getapi_superadmin_webhooks",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "GET /api/superadmin/webhooks (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "superadmin"
         ],
         "x-glowapp-documented": false
       }
@@ -6521,8 +7224,8 @@
   ],
   "x-glowapp-contract": {
     "generator": "backend/src/openapi/buildOpenApi.js",
-    "operationsDiscovered": 294,
+    "operationsDiscovered": 331,
     "operationsDocumented": 16,
-    "routesMounted": 310
+    "routesMounted": 347
   }
 }
