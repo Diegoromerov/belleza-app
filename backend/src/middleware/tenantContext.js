@@ -65,6 +65,19 @@ async function tenantContextMiddleware(req, res, next) {
     return next();
   }
 
+  // Arnés de tests: muchas suites sustituyen config/db por un doble mínimo
+  // ({ query }) que no puede abrir una conexión dedicada. Sin esta salida, cada
+  // petición autenticada de esas suites respondería 500 («pool.connect is not a
+  // function») y el fallo mediría el doble, no el código. En producción se
+  // mantiene el cierre fail-closed: un pool sin connect ahí es un error de
+  // configuración y debe reventar, no degradarse en silencio.
+  if (typeof pool.connect !== 'function') {
+    if (process.env.NODE_ENV === 'production') {
+      return next(new Error('tenantContext: el pool no expone connect() en producción'));
+    }
+    return next();
+  }
+
   // Marca si ya se cedió el control a la cadena de la aplicación. Sirve para
   // distinguir un fallo AL MONTAR la transacción (BEGIN/set_config: no se puede
   // servir la petición con seguridad -> 500) de un fallo DE LA CADENA de
@@ -102,6 +115,13 @@ async function tenantContextMiddleware(req, res, next) {
     if (cadenaIniciada) {
       // El fallo pertenece a la cadena de la aplicación.
       return next(error);
+    }
+
+    // El doble de config/db no puede entregar una conexión dedicada: no es un
+    // fallo de la aplicación. En producción un pool sin cliente utilizable sí es
+    // un error de configuración, y no se degrada.
+    if (error.code === 'SIN_CLIENTE_DEDICADO' && process.env.NODE_ENV !== 'production') {
+      return next();
     }
 
     console.error('❌ tenantContext: fallo al montar la transacción:', error.message);
