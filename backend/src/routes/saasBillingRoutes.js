@@ -238,7 +238,7 @@ router.post('/checkout', requireOwner, async (req, res) => {
     }
 
     const tenant = await pool.query(
-      `SELECT bp.*, u.email FROM business_profiles bp LEFT JOIN users u ON u.id = bp.owner_id WHERE bp.id = $1`,
+      `SELECT bp.*, u.email FROM business_profiles bp LEFT JOIN usuarios u ON u.id = bp.provider_id WHERE bp.id = $1`,
       [req.saas.tenantId]
     );
 

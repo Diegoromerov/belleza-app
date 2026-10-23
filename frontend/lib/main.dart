@@ -42,6 +42,7 @@ import 'screens/salon_dashboard_screen.dart';
 import 'screens/salon/salon_hub_screen.dart';
 import 'screens/saas/team_management_screen.dart';
 import 'screens/saas/billing_screen.dart';
+import 'screens/superadmin/superadmin_screen.dart';
 import 'screens/saas/usage_screen.dart';
 import 'screens/saas/api_keys_screen.dart';
 import 'screens/client_bookings_screen.dart';
@@ -301,6 +302,8 @@ class BeautyApp extends StatelessWidget {
                   final token = args is String ? args : (args is Map ? (args['token']?.toString()) : null);
                   return AcceptInvitationScreen(token: token);
                 },
+                '/superadmin': (_) => const SuperAdminScreen(),
+
                 '/onboarding': (_) => const OnboardingScreen(),
                 '/verification-pending': (_) => const VerificationPendingScreen(),
                 '/context-selection': (context) {

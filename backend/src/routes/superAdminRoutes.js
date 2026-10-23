@@ -158,13 +158,13 @@ router.get('/tenants', async (req, res) => {
     // Query principal con subqueries para métricas
     const query = `
       SELECT 
-        bp.id, bp.name, bp.saas_plan, bp.owner_id, bp.created_at, bp.updated_at,
+        bp.id, bp.name, bp.saas_plan, bp.provider_id AS owner_id, bp.created_at, bp.updated_at,
         u.email as owner_email,
         s.status as sub_status, s.plan as sub_plan, s.current_period_end,
         (SELECT COUNT(*) FROM memberships m WHERE m.business_profile_id = bp.id AND m.status = 'ACTIVE') as team_size,
         (SELECT COUNT(*) FROM usage_metrics um WHERE um.tenant_id = bp.id AND um.feature = 'API_CALLS' AND um.period_start = date_trunc('month', CURRENT_DATE)::date) as api_calls_this_month
       FROM business_profiles bp
-      LEFT JOIN users u ON u.id = bp.owner_id
+      LEFT JOIN usuarios u ON u.id = bp.provider_id
       LEFT JOIN subscriptions s ON s.tenant_id = bp.id AND s.status IN ('active', 'trialing', 'past_due')
       ${whereClause}
       ORDER BY bp.${sortColumn} ${sortDir}
@@ -221,13 +221,13 @@ router.get('/tenants/:tenantId', async (req, res) => {
       pool.query(`
         SELECT bp.*, u.email as owner_email, u.full_name as owner_name
         FROM business_profiles bp
-        LEFT JOIN users u ON u.id = bp.owner_id
+        LEFT JOIN usuarios u ON u.id = bp.provider_id
         WHERE bp.id = $1
       `, [tenantId]),
       pool.query(`
         SELECT m.*, u.email, u.full_name
         FROM memberships m
-        JOIN users u ON u.id = m.user_id
+        JOIN usuarios u ON u.id = m.user_id
         WHERE m.business_profile_id = $1
         ORDER BY 
           CASE m.role WHEN 'OWNER' THEN 1 WHEN 'ADMIN' THEN 2 WHEN 'MANAGER' THEN 3 ELSE 4 END,
@@ -635,7 +635,7 @@ router.get('/audit-logs', async (req, res) => {
     const { rows } = await pool.query(`
       SELECT al.*, u.email as actor_email
       FROM audit_logs al
-      LEFT JOIN users u ON u.id = al.actor_id
+      LEFT JOIN usuarios u ON u.id = al.actor_id
       ${where}
       ORDER BY al.created_at DESC
       LIMIT $${paramIdx++} OFFSET $${paramIdx};

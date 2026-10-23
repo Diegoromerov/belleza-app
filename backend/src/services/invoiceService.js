@@ -48,7 +48,7 @@ async function getTenantInvoiceData(client, tenantId) {
   const query = `
     SELECT bp.*, u.email as owner_email
     FROM business_profiles bp
-    LEFT JOIN users u ON u.id = bp.owner_id
+    LEFT JOIN usuarios u ON u.id = bp.provider_id
     WHERE bp.id = $1;
   `;
   const { rows } = await client.query(query, [tenantId]);
