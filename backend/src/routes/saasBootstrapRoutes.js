@@ -179,4 +179,93 @@ router.post('/', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/saas/bootstrap:
+ *   get:
+ *     summary: Tenant SaaS activo del usuario autenticado
+ *     description: |
+ *       Devuelve el business_profile y el rol del usuario dentro del tenant.
+ *       Responde 404 con `provisioned: false` cuando el usuario todavía no tiene
+ *       membership activa (caso típico: salón creado sin perfil SaaS).
+ *     operationId: get_api_saas_bootstrap
+ *     tags: [saas]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Tenant provisionado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 provisioned: { type: boolean, example: true }
+ *                 profile:
+ *                   $ref: '#/components/schemas/SaasBootstrapProfile'
+ *       401:
+ *         description: Token ausente o inválido
+ *       404:
+ *         description: Usuario sin tenant provisionado
+ *       500:
+ *         description: Error resolviendo el perfil
+ *   post:
+ *     summary: Provisiona el tenant SaaS desde el salón del usuario
+ *     description: |
+ *       Idempotente. Si el usuario ya tiene membership activa devuelve 200 con
+ *       `created: false`. En caso contrario crea el `business_profile` a partir de
+ *       su salón y una membership `OWNER`, y devuelve 201 con `created: true`.
+ *       Requiere que el usuario tenga un salón registrado y que exista al menos
+ *       una vertical de negocio.
+ *     operationId: post_api_saas_bootstrap
+ *     tags: [saas]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               plan:
+ *                 type: string
+ *                 enum: [FREE_TRIAL, FREEMIUM, BASIC, PRO, ENTERPRISE]
+ *                 default: FREE_TRIAL
+ *               name:
+ *                 type: string
+ *                 maxLength: 150
+ *     responses:
+ *       201:
+ *         description: Tenant creado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 provisioned: { type: boolean, example: true }
+ *                 created: { type: boolean, example: true }
+ *                 profile:
+ *                   $ref: '#/components/schemas/SaasBootstrapProfile'
+ *       200:
+ *         description: Tenant ya existente (no se creó nada)
+ *       400:
+ *         description: Plan o nombre inválido
+ *       409:
+ *         description: Sin salón registrado o sin verticales configurados
+ *       500:
+ *         description: Error provisionando el tenant
+ *
+ * components:
+ *   schemas:
+ *     SaasBootstrapProfile:
+ *       type: object
+ *       properties:
+ *         id: { type: string, example: salon-42 }
+ *         name: { type: string, example: Salón Glow }
+ *         plan: { type: string, example: FREE_TRIAL }
+ *         role: { type: string, example: OWNER }
+ *         membershipId: { type: string, format: uuid }
+ *         tenantId: { type: string, example: tenant-42 }
+ */
 module.exports = router;

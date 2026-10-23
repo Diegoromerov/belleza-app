@@ -226,6 +226,35 @@
           }
         },
         "type": "object"
+      },
+      "SaasBootstrapProfile": {
+        "properties": {
+          "id": {
+            "example": "salon-42",
+            "type": "string"
+          },
+          "membershipId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "example": "Salón Glow",
+            "type": "string"
+          },
+          "plan": {
+            "example": "FREE_TRIAL",
+            "type": "string"
+          },
+          "role": {
+            "example": "OWNER",
+            "type": "string"
+          },
+          "tenantId": {
+            "example": "tenant-42",
+            "type": "string"
+          }
+        },
+        "type": "object"
       }
     },
     "securitySchemes": {
@@ -5256,6 +5285,132 @@
         "x-glowapp-documented": false
       }
     },
+    "/api/saas/bootstrap": {
+      "get": {
+        "description": "Devuelve el business_profile y el rol del usuario dentro del tenant.\nResponde 404 con `provisioned: false` cuando el usuario todavía no tiene\nmembership activa (caso típico: salón creado sin perfil SaaS).\n",
+        "operationId": "get_api_saas_bootstrap",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "profile": {
+                      "$ref": "#/components/schemas/SaasBootstrapProfile"
+                    },
+                    "provisioned": {
+                      "example": true,
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Tenant provisionado"
+          },
+          "401": {
+            "description": "Token ausente o inválido"
+          },
+          "404": {
+            "description": "Usuario sin tenant provisionado"
+          },
+          "500": {
+            "description": "Error resolviendo el perfil"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Tenant SaaS activo del usuario autenticado",
+        "tags": [
+          "saas"
+        ],
+        "x-glowapp-critical": false,
+        "x-glowapp-documented": true
+      },
+      "post": {
+        "description": "Idempotente. Si el usuario ya tiene membership activa devuelve 200 con\n`created: false`. En caso contrario crea el `business_profile` a partir de\nsu salón y una membership `OWNER`, y devuelve 201 con `created: true`.\nRequiere que el usuario tenga un salón registrado y que exista al menos\nuna vertical de negocio.\n",
+        "operationId": "post_api_saas_bootstrap",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "name": {
+                    "maxLength": 150,
+                    "type": "string"
+                  },
+                  "plan": {
+                    "default": "FREE_TRIAL",
+                    "enum": [
+                      "FREE_TRIAL",
+                      "FREEMIUM",
+                      "BASIC",
+                      "PRO",
+                      "ENTERPRISE"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": false
+        },
+        "responses": {
+          "200": {
+            "description": "Tenant ya existente (no se creó nada)"
+          },
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "created": {
+                      "example": true,
+                      "type": "boolean"
+                    },
+                    "profile": {
+                      "$ref": "#/components/schemas/SaasBootstrapProfile"
+                    },
+                    "provisioned": {
+                      "example": true,
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Tenant creado"
+          },
+          "400": {
+            "description": "Plan o nombre inválido"
+          },
+          "409": {
+            "description": "Sin salón registrado o sin verticales configurados"
+          },
+          "500": {
+            "description": "Error provisionando el tenant"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Provisiona el tenant SaaS desde el salón del usuario",
+        "tags": [
+          "saas"
+        ],
+        "x-glowapp-critical": false,
+        "x-glowapp-documented": true
+      }
+    },
     "/api/saas/team": {
       "get": {
         "operationId": "getapi_saas_team",
@@ -7225,7 +7380,7 @@
   "x-glowapp-contract": {
     "generator": "backend/src/openapi/buildOpenApi.js",
     "operationsDiscovered": 331,
-    "operationsDocumented": 16,
-    "routesMounted": 347
+    "operationsDocumented": 18,
+    "routesMounted": 349
   }
 }
