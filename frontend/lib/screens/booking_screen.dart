@@ -1741,8 +1741,7 @@ class _BookingScreenState extends State<BookingScreen> {
               ),
             ),
             Text(
-              NumberFormat.currency(locale: 'es_CO', symbol: '\$', decimalDigits: 0)
-                  .format(total),
+              NumberFormat(r'$#,##0', 'es_CO').format(total),
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
