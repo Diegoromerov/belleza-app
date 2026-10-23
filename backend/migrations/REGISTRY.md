@@ -352,3 +352,15 @@ código: `could not access file "$libdir/vector"`, `column "metadata" does not e
 **Pendiente conocido:** `076_rag_embedding_dimension_2048.sql` no es aplicable tal como
 está: pide `vector(2048)` con índice **ivfflat** y pgvector limita ivfflat a 2000
 dimensiones. Requiere decidir `halfvec(2048)` o índice `hnsw` antes de tocarla.
+
+## 076 pasa a `halfvec(2048)` (no `vector(2048)`)
+
+La versión previa pedía `vector(2048)` + índice HNSW. Es imposible: pgvector limita
+HNSW e IVFFlat a 2000 dimensiones para el tipo `vector`, así que la migración fallaba
+con `column cannot have more than 2000 dimensions for ivfflat index` y nunca se aplicó.
+Producción tiene pgvector 0.8.6, que soporta `halfvec` hasta 4000 dims con HNSW.
+
+- Columna: `halfvec(2048)`; índice `hnsw (embedding halfvec_cosine_ops)`.
+- Código: los 113 casts `::vector` de las consultas a `beauty_knowledge_embeddings`
+  pasan a `::halfvec` (42 archivos). `aura_knowledge_chunks` sigue en `vector(1024)`.
+- Test de regresión acepta `halfvec` y `vector` en el DDL.

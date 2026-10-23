@@ -102,9 +102,9 @@ async function main() {
     const vecStr = '[' + emb.join(',') + ']';
     const res = await ragPool.query(
       `SELECT chunk_id, title, content, category, metadata,
-              1 - (embedding <=> $1::vector) AS similarity
+              1 - (embedding <=> $1::halfvec) AS similarity
        FROM beauty_knowledge_embeddings
-       ORDER BY embedding <=> $1::vector
+       ORDER BY embedding <=> $1::halfvec
        LIMIT $2`,
       [vecStr, k]
     );

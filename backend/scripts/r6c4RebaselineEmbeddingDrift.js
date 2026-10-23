@@ -90,9 +90,9 @@ async function main() {
     
     // Retrieve top 100
     const top100Res = await ragPool.query(
-      `SELECT chunk_id, 1 - (embedding <=> $1::vector) AS similarity
+      `SELECT chunk_id, 1 - (embedding <=> $1::halfvec) AS similarity
        FROM beauty_knowledge_embeddings
-       ORDER BY embedding <=> $1::vector
+       ORDER BY embedding <=> $1::halfvec
        LIMIT 100`,
       [vecStr]
     );

@@ -42,7 +42,7 @@ async function upsertChunk(chunk) {
   const sql = `
     INSERT INTO beauty_knowledge_embeddings
     (title, category, content, metadata, embedding, document_id, document_version, chunk_id, content_hash, fuente, seccion, updated_at)
-    VALUES ($1, $2, $3, $4, $5::vector, $6, $7, $8, $9, $10, $11, NOW())
+    VALUES ($1, $2, $3, $4, $5::halfvec, $6, $7, $8, $9, $10, $11, NOW())
     ON CONFLICT (document_id, chunk_id) DO UPDATE SET
       title = EXCLUDED.title,
       category = EXCLUDED.category,

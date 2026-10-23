@@ -148,7 +148,7 @@ async function main() {
     const vecStr = '[' + emb.join(',') + ']';
     let queryStr = `
       SELECT chunk_id, title, content, category, metadata,
-             1 - (embedding <=> $1::vector) AS similarity
+             1 - (embedding <=> $1::halfvec) AS similarity
       FROM beauty_knowledge_embeddings
     `;
     const params = [vecStr];
@@ -156,7 +156,7 @@ async function main() {
       queryStr += ' WHERE chunk_id = ANY($2::text[])';
       params.push(pool);
     }
-    queryStr += ' ORDER BY embedding <=> $1::vector LIMIT $' + (params.length + 1);
+    queryStr += ' ORDER BY embedding <=> $1::halfvec LIMIT $' + (params.length + 1);
     params.push(k);
     const res = await ragPool.query(queryStr, params);
     return res.rows.map((r, i) => ({

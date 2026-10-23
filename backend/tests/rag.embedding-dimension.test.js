@@ -54,11 +54,13 @@ const applicableMigrations = () => {
 
 /**
  * Dimensión EFECTIVA de `beauty_knowledge_embeddings.embedding`: la última declaración
- * `embedding vector(N)` / `ALTER COLUMN embedding TYPE vector(N)` en orden de ejecución
+ * `embedding vector(N)` / `embedding halfvec(N)` / `ALTER COLUMN embedding TYPE ...` en
+ * orden de ejecución (pgvector limita HNSW/IVFFlat a 2000 dims con `vector`, por eso
+ * el corpus usa `halfvec(2048)`).
  * (nombres de archivo ordenados alfabéticamente, como los aplica migrationRunner).
  */
 const effectiveColumnDimension = () => {
-  const re = /embedding\s+(?:TYPE\s+)?vector\((\d+)\)/g;
+  const re = /embedding\s+(?:TYPE\s+)?(?:halfvec|vector)\((\d+)\)/g;
   let last = null;
   let lastFile = null;
   for (const { file, sql } of applicableMigrations()) {
@@ -124,14 +126,15 @@ describe('RAG · dimensión de embeddings vs modelo vivo', () => {
   test('existe una migración que reconstruye la columna a 2048 y recrea el índice HNSW', () => {
     const migrations = applicableMigrations();
     const target = migrations.filter(({ sql }) =>
-      /vector\(2048\)/.test(sql) && /USING\s+hnsw\s*\(\s*embedding\s+vector_cosine_ops\s*\)/i.test(sql)
+      /(?:halfvec|vector)\(2048\)/.test(sql) &&
+      /USING\s+hnsw\s*\(\s*embedding\s+(?:halfvec|vector)_cosine_ops\s*\)/i.test(sql)
     );
     expect(target.length).toBeGreaterThan(0);
   });
 
   test('la migración de dimensión documenta la re-ingesta obligatoria del corpus', () => {
     const migrations = applicableMigrations();
-    const target = migrations.find(({ sql }) => /vector\(2048\)/.test(sql));
+    const target = migrations.find(({ sql }) => /(?:halfvec|vector)\(2048\)/.test(sql));
     expect(target).toBeTruthy();
     expect(target.sql.toLowerCase()).toMatch(/re-?ingesta|re-?ingest/);
   });

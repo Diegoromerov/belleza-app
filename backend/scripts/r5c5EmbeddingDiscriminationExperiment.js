@@ -125,8 +125,8 @@ function computeMetrics(rankedIds, expected) {
 
 async function runQuery(q, queryText, qv, expected, topK) {
   const res = await ragPool.query(
-    `SELECT id, chunk_id, document_id, title, content, 1-(embedding <=> $1::vector) AS sim
-     FROM beauty_knowledge_embeddings ORDER BY embedding <=> $1::vector LIMIT ${topK}`, [qv]);
+    `SELECT id, chunk_id, document_id, title, content, 1-(embedding <=> $1::halfvec) AS sim
+     FROM beauty_knowledge_embeddings ORDER BY embedding <=> $1::halfvec LIMIT ${topK}`, [qv]);
   const rows = res.rows;
   const ranked = rows.map(r => r.chunk_id);
   const metrics = computeMetrics(ranked, expected);
@@ -134,7 +134,7 @@ async function runQuery(q, queryText, qv, expected, topK) {
   const expSims = [];
   for (const expId of expected) {
     const er = await ragPool.query(
-      `SELECT 1-(embedding <=> $1::vector) AS sim FROM beauty_knowledge_embeddings WHERE chunk_id = $2`, [qv, expId]);
+      `SELECT 1-(embedding <=> $1::halfvec) AS sim FROM beauty_knowledge_embeddings WHERE chunk_id = $2`, [qv, expId]);
     if (er.rows.length) expSims.push({ chunk_id: expId, sim: parseFloat(er.rows[0].sim.toFixed(4)) });
   }
   const top1 = rows[0];

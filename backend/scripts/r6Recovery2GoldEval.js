@@ -45,7 +45,7 @@ async function main() {
     const emb = await generateEmbedding(q.query);
     const vecStr = '[' + emb.join(',') + ']';
     const res = await ragPool.query(
-      `SELECT chunk_id FROM beauty_knowledge_embeddings ORDER BY embedding <=> $1::vector LIMIT 100`,
+      `SELECT chunk_id FROM beauty_knowledge_embeddings ORDER BY embedding <=> $1::halfvec LIMIT 100`,
       [vecStr]
     );
     const top100 = res.rows.map(r => r.chunk_id);

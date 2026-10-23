@@ -64,8 +64,8 @@ async function main() {
     // Retrieval con el MISMO motor (una sola ejecución → retrieved IDs idénticos para V2/V3)
     const qEmb = await generateEmbedding(q.query, 'query');
     const res = await ragPool.query(
-      `SELECT id, chunk_id, document_id, content_hash, 1-(embedding <=> $1::vector) AS sim
-       FROM beauty_knowledge_embeddings ORDER BY embedding <=> $1::vector LIMIT ${TOPK}`, ['[' + qEmb.join(',') + ']']);
+      `SELECT id, chunk_id, document_id, content_hash, 1-(embedding <=> $1::halfvec) AS sim
+       FROM beauty_knowledge_embeddings ORDER BY embedding <=> $1::halfvec LIMIT ${TOPK}`, ['[' + qEmb.join(',') + ']']);
     const rankedIds = res.rows.map(r => r.chunk_id);
 
     // Verificación física de expected V3

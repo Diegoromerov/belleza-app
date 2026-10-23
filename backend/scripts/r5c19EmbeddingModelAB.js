@@ -62,8 +62,8 @@ async function main() {
     const goldAll = [...q.expected_chunks.core, ...q.expected_chunks.supporting];
     const qEmb = await generateEmbedding(q.query, 'query'); // ARM A query embedding (NVIDIA)
     const res = await ragPool.query(
-      `SELECT chunk_id, 1-(embedding <=> $1::vector) AS sim
-       FROM beauty_knowledge_embeddings ORDER BY embedding <=> $1::vector LIMIT ${POOL_K}`, ['[' + qEmb.join(',') + ']']);
+      `SELECT chunk_id, 1-(embedding <=> $1::halfvec) AS sim
+       FROM beauty_knowledge_embeddings ORDER BY embedding <=> $1::halfvec LIMIT ${POOL_K}`, ['[' + qEmb.join(',') + ']']);
     const poolIds = res.rows.map(r => r.chunk_id);
     for (const g of goldAll) if (!poolIds.includes(g)) poolIds.push(g);
     poolPerQuery[q.query_id] = poolIds;
@@ -115,7 +115,7 @@ async function main() {
     // ARM A: query NVIDIA + embeddings BD
     const qEmbA = await generateEmbedding(q.query, 'query');
     const aRes = await ragPool.query(
-      `SELECT chunk_id, 1-(embedding <=> $1::vector) AS sim
+      `SELECT chunk_id, 1-(embedding <=> $1::halfvec) AS sim
        FROM beauty_knowledge_embeddings WHERE chunk_id = ANY($2::text[])`, ['[' + qEmbA.join(',') + ']', poolIdsQ]);
     const aScores = new Map(aRes.rows.map(r => [r.chunk_id, +r.sim.toFixed(4)]));
 

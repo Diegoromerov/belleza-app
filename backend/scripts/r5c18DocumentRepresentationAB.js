@@ -55,8 +55,8 @@ async function main() {
     const goldAll = [...q.expected_chunks.core, ...q.expected_chunks.supporting];
     const qEmb = await generateEmbedding(q.query, 'query');
     const res = await ragPool.query(
-      `SELECT chunk_id, 1-(embedding <=> $1::vector) AS sim
-       FROM beauty_knowledge_embeddings ORDER BY embedding <=> $1::vector LIMIT ${POOL_K}`, ['[' + qEmb.join(',') + ']']);
+      `SELECT chunk_id, 1-(embedding <=> $1::halfvec) AS sim
+       FROM beauty_knowledge_embeddings ORDER BY embedding <=> $1::halfvec LIMIT ${POOL_K}`, ['[' + qEmb.join(',') + ']']);
     const poolIds = res.rows.map(r => r.chunk_id);
     // Añadir golds que no estén en top-50 (para medir su rank en B)
     for (const g of goldAll) if (!poolIds.includes(g)) poolIds.push(g);
@@ -110,7 +110,7 @@ async function main() {
 
     // ARM A: similitud con embeddings EXISTENTES en BD (pipeline actual)
     const aRes = await ragPool.query(
-      `SELECT chunk_id, 1-(embedding <=> $1::vector) AS sim
+      `SELECT chunk_id, 1-(embedding <=> $1::halfvec) AS sim
        FROM beauty_knowledge_embeddings WHERE chunk_id = ANY($2::text[])`, ['[' + qEmb.join(',') + ']', poolIdsQ]);
     const aScores = new Map(aRes.rows.map(r => [r.chunk_id, +r.sim.toFixed(4)]));
 

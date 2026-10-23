@@ -178,8 +178,8 @@ async function main() {
     const expCore = new Set(q.expected_chunks.core);
     const qEmb = await generateEmbedding(q.query, 'query');
     const res = await ragPool.query(
-      `SELECT id, chunk_id, document_id, content_hash, 1-(embedding <=> $1::vector) AS sim
-       FROM beauty_knowledge_embeddings ORDER BY embedding <=> $1::vector LIMIT ${TOPK}`, ['[' + qEmb.join(',') + ']']);
+      `SELECT id, chunk_id, document_id, content_hash, 1-(embedding <=> $1::halfvec) AS sim
+       FROM beauty_knowledge_embeddings ORDER BY embedding <=> $1::halfvec LIMIT ${TOPK}`, ['[' + qEmb.join(',') + ']']);
     const ranked = res.rows.map(r => ({ chunk_id: r.chunk_id, sim: +r.sim.toFixed(4) }));
     const rankedIds = ranked.map(r => r.chunk_id);
 

@@ -234,11 +234,11 @@ async function runVectorSearch({ queryEmbedding, filters, tenantId, threshold, t
 
   const sql = `
       SELECT${SELECTED_COLUMNS},
-        1 - (embedding <=> $1::vector) AS similarity
+        1 - (embedding <=> $1::halfvec) AS similarity
       FROM beauty_knowledge_embeddings
       ${finalWhere}
-      ${finalWhere ? 'AND' : 'WHERE'} 1 - (embedding <=> $1::vector) >= $${thresholdIndex}
-      ORDER BY embedding <=> $1::vector
+      ${finalWhere ? 'AND' : 'WHERE'} 1 - (embedding <=> $1::halfvec) >= $${thresholdIndex}
+      ORDER BY embedding <=> $1::halfvec
       LIMIT $${limitIndex};
     `;
 

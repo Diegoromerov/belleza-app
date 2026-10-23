@@ -70,14 +70,14 @@ async function main() {
     const qEmb = await generateEmbedding(g.query, 'query');
     const vecQ = '[' + qEmb.join(',') + ']';
     const res = await ragPool.query(
-      `SELECT id, chunk_id, document_id, title, content, 1-(embedding <=> $1::vector) AS sim
-       FROM beauty_knowledge_embeddings ORDER BY embedding <=> $1::vector LIMIT ${TOPK}`, [vecQ]);
+      `SELECT id, chunk_id, document_id, title, content, 1-(embedding <=> $1::halfvec) AS sim
+       FROM beauty_knowledge_embeddings ORDER BY embedding <=> $1::halfvec LIMIT ${TOPK}`, [vecQ]);
     const top10 = res.rows.map(r => ({ chunk_id: r.chunk_id, document_id: r.document_id, title: r.title, sim: +r.sim.toFixed(4) }));
 
     // ── EXP A: matriz query↔documento ──
     // sim(query, gold) directo
     const goldSims = await ragPool.query(
-      'SELECT chunk_id, 1-(embedding <=> $1::vector) AS sim FROM beauty_knowledge_embeddings WHERE chunk_id = ANY($2::text[])', [vecQ, goldAll]);
+      'SELECT chunk_id, 1-(embedding <=> $1::halfvec) AS sim FROM beauty_knowledge_embeddings WHERE chunk_id = ANY($2::text[])', [vecQ, goldAll]);
     const goldSimMap = new Map(goldSims.rows.map(r => [r.chunk_id, +r.sim.toFixed(4)]));
 
     // competidores: top-5 no-gold del retrieval
@@ -133,7 +133,7 @@ async function main() {
       const fullText = `${DOC_PREFIX[qid] || ''}${c.title}. ${c.content}`;
       const dEmb = await generateEmbedding(fullText, 'passage');
       const dRes = await ragPool.query(
-        'SELECT chunk_id, 1-(embedding <=> $1::vector) AS sim FROM beauty_knowledge_embeddings WHERE chunk_id = ANY($2::text[])',
+        'SELECT chunk_id, 1-(embedding <=> $1::halfvec) AS sim FROM beauty_knowledge_embeddings WHERE chunk_id = ANY($2::text[])',
         ['[' + dEmb.join(',') + ']', goldIds]);
       const dMap = new Map(dRes.rows.map(r => [r.chunk_id, +r.sim.toFixed(4)]));
       docReps[cid] = { text_prefix: DOC_PREFIX[qid] || '', sim_query_to_docrep: dMap.get(cid) ?? null, sim_gold_vs_competitors: {} };

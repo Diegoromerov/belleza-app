@@ -7,7 +7,7 @@
 
 El corpus se indexó con `nvidia/nv-embedqa-e5-v5` (**1024 dimensiones**, retirado — EOL 2026-08-25,
 HTTP 410 Gone). La migración `073_rag_embedding_dimension_2048.sql` reconstruye la columna
-`beauty_knowledge_embeddings.embedding` como `vector(2048)` para el modelo vivo
+`beauty_knowledge_embeddings.embedding` como `halfvec(2048)` para el modelo vivo
 `nvidia/nemotron-3-embed-1b` (2048 dimensiones).
 
 Un embedding **no es un dato neutral**: cada modelo define su propio *espacio vectorial*. Los
@@ -19,7 +19,7 @@ semánticamente. Por eso es imposible "convertir" los vectores existentes: hay q
 ## Orden de despliegue (obligatorio)
 
 ```
-1. Migración   → 073_rag_embedding_dimension_2048.sql   (columna vector(2048) + HNSW coseno 2048d)
+1. Migración   → 076_rag_embedding_dimension_2048.sql   (columna halfvec(2048) + HNSW coseno 2048d)
 2. Re-ingesta  → node scripts/ingestBeautyKnowledge.js --source=corpus
 3. Umbral      → recalibrar (ver §"Umbral")
 4. Verificación→ traza debe declarar `hnsw` (ruta vectorial), no `fts`
@@ -71,3 +71,18 @@ node scripts/evaluateRag.js    # o el probe de retrieval disponible
 - Migración: `backend/migrations/073_rag_embedding_dimension_2048.sql` (+ rollback en `rollback/`).
 - Código: `embeddingService.js` (`expectedDimension: 2048`, modelo vivo), `ragService.js` (`EXPECTED_DIMS = 2048`).
 - Test de no-regresión: `backend/tests/rag.embedding-dimension.test.js` (comparación estática DDL ↔ código ↔ modelo).
+
+---
+
+## Nota de implementación (2026-10-23): `halfvec`, no `vector`
+
+`vector(2048)` con índice HNSW **no es posible**: pgvector limita HNSW e IVFFlat a 2000
+dimensiones para el tipo `vector`, y la migración fallaba con
+`column cannot have more than 2000 dimensions for ivfflat index` (la rama de fallback
+también fallaba). Por eso nunca se había aplicado y la búsqueda vectorial seguía en 1024d
+con un modelo retirado.
+
+La columna se reconstruye como **`halfvec(2048)`** e índice
+`USING hnsw (embedding halfvec_cosine_ops)`. Requiere pgvector ≥ 0.7 (producción: 0.8.6).
+Consecuencia en código: las consultas castean el parámetro a `::halfvec`; un `halfvec`
+no es comparable con un `vector` sin cast explícito.

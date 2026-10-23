@@ -134,8 +134,8 @@ async function main() {
     // ── Retrieval top-50 e5-v5 (pool natural, SIN insertar gold) ──
     const qEmb = await generateEmbedding(q.query, 'query');
     const res = await ragPool.query(
-      `SELECT chunk_id, title, content, 1-(embedding <=> $1::vector) AS sim
-       FROM beauty_knowledge_embeddings ORDER BY embedding <=> $1::vector LIMIT ${POOL_K}`, ['[' + qEmb.join(',') + ']']);
+      `SELECT chunk_id, title, content, 1-(embedding <=> $1::halfvec) AS sim
+       FROM beauty_knowledge_embeddings ORDER BY embedding <=> $1::halfvec LIMIT ${POOL_K}`, ['[' + qEmb.join(',') + ']']);
     const pool = res.rows.map(r => ({
       chunk_id: r.chunk_id, title: r.title || '', content: r.content || '',
       vector_score: +r.sim.toFixed(4),
