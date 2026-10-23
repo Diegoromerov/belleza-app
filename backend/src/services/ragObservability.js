@@ -8,6 +8,7 @@
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
+const { RAG_SIMILARITY_THRESHOLD } = require('../config/ragConfig');
 const { sanitizeForLog, hashIdForLog } = require('../utils/piiSanitizer');
 const { breakers } = require('./circuitBreakerService');
 
@@ -181,7 +182,7 @@ function emitRetrievalComplete(traceId, userId, query, retrievalResult) {
     latency_ms: retrievalResult.latency_ms,
     candidate_count: retrievalResult.candidate_count || null,
     top_k: retrievalResult.top_k || 5,
-    threshold: retrievalResult.threshold || 0.45,
+    threshold: retrievalResult.threshold || RAG_SIMILARITY_THRESHOLD,
     filters_applied: retrievalResult.filters_applied || {},
     scores,
     score_gap_1_2: top1 - top2,

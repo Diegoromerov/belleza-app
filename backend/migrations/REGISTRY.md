@@ -372,3 +372,15 @@ vestigial `beauty_knowledge_embeddings` (`embedding real[]`, 6 filas). El corpus
 (6.420 chunks) vive en la base RAG y solo `scripts/ingestCanonicalCorpus.js` usa
 `ragPool`. Flags: `--limit=N`, `--dry-run`. Su guard de seguridad permite
 `railway.internal`, por eso corre dentro del contenedor.
+
+## 113: columnas de alcance del RAG (`tenant_id`, `deleted_at`, `expires_at`)
+
+`ragService` arma el WHERE con esas tres columnas y el SELECT con dos de ellas, pero la
+base RAG nunca las recibió: su migración (`080_rag_rls_multi_tenant_hardening.sql`) ya no
+existe en el repo y se aplicó contra la base principal. Medido: **toda consulta fallaba**
+con `column "tenant_id" does not exist` en la ruta vectorial y en el fallback → el RAG
+devolvía `[]` siempre. No era el umbral: la búsqueda no llegaba a ejecutarse.
+
+113 las añade (`tenant_id INTEGER`, `deleted_at`/`expires_at` TIMESTAMPTZ) con las 5.619
+filas en `tenant_id NULL` = conocimiento global. Sin RLS: el aislamiento va en el WHERE
+(`appendTenantCondition`), y RLS necesitaría el GUC `app.tenant_id` que el pool del RAG no fija.

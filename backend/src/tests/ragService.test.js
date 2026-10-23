@@ -30,6 +30,7 @@ jest.mock('../services/embeddingService', () => ({
 const { ragPool } = require('../config/db');
 const { generateEmbedding } = require('../services/embeddingService');
 const { searchBeautyKnowledge, formatKnowledgeContext } = require('../services/ragService');
+const { RAG_SIMILARITY_THRESHOLD } = require('../config/ragConfig');
 
 describe('ragService retrieval', () => {
   beforeEach(() => {
@@ -90,7 +91,7 @@ describe('ragService retrieval', () => {
 
     // Y el tenant es un parámetro ligado, con el threshold/limit desplazados
     expect(params[1]).toBe(maliciousTenantId);
-    expect(params[2]).toBe(0.45);
+    expect(params[2]).toBe(RAG_SIMILARITY_THRESHOLD);
     expect(params[3]).toBe(5);
   });
 

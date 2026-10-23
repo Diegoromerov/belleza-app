@@ -22,6 +22,7 @@ function toGeminiSchema(schema, depth = 0) {
   if (out.items) out.items = toGeminiSchema(out.items, depth + 1);
   return out;
 }
+const { RAG_SIMILARITY_THRESHOLD } = require('../config/ragConfig');
 const { searchBeautyKnowledge, formatKnowledgeContext, generateEmbedding } = require('./ragService');
 const { breakers } = require('./circuitBreakerService');
 const { sanitizeForLog, hashIdForLog } = require('../utils/piiSanitizer');
@@ -377,7 +378,7 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
 
       // Una sola fuente para el umbral: el mismo valor que se usa en la búsqueda es el que
       // se registra en la traza (antes la traza decía 0.72 mientras la consulta usaba 0.45).
-      const ragRetrievalOptions = { topK: 5, threshold: 0.45 };
+      const ragRetrievalOptions = { topK: 5, threshold: RAG_SIMILARITY_THRESHOLD };
       retrievalTrace = {};
 
       const [servicesCtx, chunks] = await Promise.all([
@@ -731,7 +732,7 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
                       try {
                         console.log(`🔍 RAG Vectorial en fallback para: "${userMessageText.substring(0, 60)}..."`);
                         const fallbackRetrievalStart = Date.now();
-                        beautyChunksFallback = await searchBeautyKnowledge(userMessageText, { topK: 5, threshold: 0.45, trace: retrievalTrace });
+                        beautyChunksFallback = await searchBeautyKnowledge(userMessageText, { topK: 5, threshold: RAG_SIMILARITY_THRESHOLD, trace: retrievalTrace });
                         const fallbackRetrievalLatency = Date.now() - fallbackRetrievalStart;
                         console.log(`✅ RAG Fallback: ${beautyChunksFallback.length} chunks encontrados (latencia: ${fallbackRetrievalLatency}ms)`);
                         console.log(`📚 Chunks RAG fallback: ${beautyChunksFallback.map(c => c.title).join(' | ')}`);

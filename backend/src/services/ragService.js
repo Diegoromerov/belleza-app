@@ -33,6 +33,7 @@
 require('dotenv').config();
 const crypto = require('crypto');
 const { ragPool, pool } = require('../config/db');
+const { RAG_SIMILARITY_THRESHOLD } = require('../config/ragConfig');
 const { generateEmbedding: generateQueryEmbedding } = require('./embeddingService');
 const { resolveCategory } = require('../config/knowledgeCategories');
 
@@ -300,7 +301,7 @@ async function runFullTextSearch({ query, filters, tenantId, topK, useMetadataFi
  * @returns {Promise<Array>} chunks con similarity (null si vino del fallback full-text)
  */
 async function searchBeautyKnowledge(query, options = {}) {
-  const { topK = 5, threshold = 0.45, filters = {}, tenantId = null, trace = null } = options;
+  const { topK = 5, threshold = RAG_SIMILARITY_THRESHOLD, filters = {}, tenantId = null, trace = null } = options;
 
   if (trace) {
     trace.threshold_used = threshold;
