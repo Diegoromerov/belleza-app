@@ -418,29 +418,41 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
   bool _isLoading = true;
   String? _errorMessage;
 
+  // ignore: unused_field
   bool _hasToken = false;
+  // ignore: unused_field
   String? _userRole;
-  final TextEditingController _searchController = TextEditingController();
-  final LatLng _bogotaCenter = const LatLng(4.6735, -74.1422);
-  LatLng? _userLocation;
 
-  // Legacy Tutorial state
+  // ignore: unused_field
   bool _showTutorial = false;
+  // ignore: unused_field
   int _tutorialStep = 0;
+  // ignore: unused_field
   bool _isMapMenuOpen = false;
 
   // GlowGuide Integration (I1)
+  // ignore: unused_field
   late final GlowGuideEngine _glowGuideEngine;
+  // ignore: unused_field
   late final ScreenVisibilityObserver _screenVisibilityObserver;
+  // ignore: unused_field
   late final AudioEngine _audioEngine;
+  // ignore: unused_field
   late final PersistenceEngine _persistenceEngine;
 
   // Legacy Mutex state
+  // ignore: unused_field
   bool _enableGlowGuide = false;
+  // ignore: unused_field
   bool _enableLegacy = false;
 
   // Start trigger idempotency guard (I3-START)
+  // ignore: unused_field
   bool _glowGuideStartScheduled = false;
+
+  final TextEditingController _searchController = TextEditingController();
+  final LatLng _bogotaCenter = const LatLng(4.6735, -74.1422);
+  LatLng? _userLocation;
 
   @override
   void initState() {
