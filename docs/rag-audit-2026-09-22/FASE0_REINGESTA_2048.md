@@ -95,3 +95,63 @@ este último usa el `pool` de la base PRINCIPAL y escribe en su tabla vestigial
 `vector(1024)`) vive en la base RAG (`RAG_DATABASE_URL`) y `ingestCanonicalCorpus.js` es el
 único que usa `ragPool`. Flags: `--limit=N`, `--dry-run`. El guard de seguridad acepta
 `railway.internal`, así que se ejecuta dentro del contenedor.
+
+---
+
+# CIERRE DE FASE 0 (2026-10-23)
+
+## Lo que faltaba no era el umbral
+
+Al correr la evaluación de calibración apareció el bloqueo real: **toda consulta del RAG
+fallaba** con `column "tenant_id" does not exist` en la ruta vectorial **y** en el fallback
+full-text, devolviendo `[]` siempre. `ragService` filtra por `tenant_id`, `deleted_at` y
+`expires_at`, columnas que la base RAG nunca tuvo: su migración
+(`080_rag_rls_multi_tenant_hardening.sql`) se aplicó contra la base **principal** y ya no
+existe en el repo.
+
+Corregido con la migración **113** (`tenant_id INTEGER`, `deleted_at`/`expires_at`
+TIMESTAMPTZ + índices). Las 5.619 filas quedan con `tenant_id NULL` = conocimiento global.
+
+## Calibración del umbral (GOLD-V5 · 18 consultas · topK=5)
+
+| umbral | respondidas | vacías | recall@5 core | precision gold | MRR | media resultados |
+|---|---:|---:|---:|---:|---:|---:|
+| 0.45 | 13/18 | 5 | 0.250 | 0.156 | 0.250 | 2.94 |
+| 0.40 | 16/18 | 2 | 0.317 | 0.211 | 0.338 | 4.17 |
+| **0.30** | **18/18** | **0** | **0.350** | **0.222** | **0.349** | **5.00** |
+
+Bajar el umbral mejora **todas** las métricas a la vez: las consultas que se quedaban sin
+resultados no eran ruido, eran aciertos que el corte descartaba. Se adopta **0.30**, que es
+además lo que recomienda la decisión D3 del plan («piso de admisión bajo + el ranking decide»).
+
+El valor vive en `src/config/ragConfig.js` y es configurable con `RAG_SIMILARITY_THRESHOLD`.
+Estaba hardcodeado en **tres** puntos del camino real (`ragService` + dos en `geminiService`),
+así que un cambio en uno solo no habría tenido efecto en producción.
+
+Reproducible: `node scripts/evalThresholdGoldV5.js` → `src/data/eval/r7_threshold_calibration_goldv5.json`.
+
+## Verificación end-to-end (producción, commit 27ea5995)
+
+Consulta real «¿Qué activos sirven para manchas por melasma?»:
+
+```
+UMBRAL_EN_USO 0.3
+RESULTADOS 5 | mode hnsw | threshold_used 0.3 | fallback false
+TOP1 colorimetria-melasma-contraste-005 · 0.4423 · «Melasma y la trampa del subtono…»
+     fuente: International Journal of Dermatology
+CITA_COINCIDE true
+```
+
+Ese chunk (0.4423) era exactamente el que quedaba inalcanzable con el umbral 0.45.
+
+## Estado de Fase 0
+
+- [x] Columna `halfvec(2048)` + índice HNSW en uso (`Index Scan`, ~2,7 ms)
+- [x] Corpus re-embebido: 5.619/5.619, 0 faltantes
+- [x] Filas vestigiales eliminadas (6.420, con respaldo)
+- [x] Columnas de alcance restauradas (migración 113)
+- [x] Umbral calibrado y configurable (0.30)
+- [x] Traza declara `hnsw` y la cita coincide con la fila en BD
+
+**Techo actual:** recall@5 de 0.35. El límite ya no es el umbral ni la infraestructura, es el
+**ranking** → FASE 2.
