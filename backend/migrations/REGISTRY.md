@@ -333,3 +333,22 @@ era imposible. La migración siembra la vertical `BELLEZA` si la tabla está vac
 **Validado:** ejecutada dentro de una transacción contra la BD de producción y
 revertida con ROLLBACK; también aplicada dos veces seguidas para confirmar
 idempotencia. No se ha aplicado de forma persistente.
+
+## Separación de migraciones del RAG → `migrations/rag/`
+
+**Motivo:** `index.js` aplica `migrations/*.sql` contra `DATABASE_URL` (base principal),
+pero 035, 046, 048, 054 y 076 son del RAG (pgvector, `RAG_DATABASE_URL`). Contra la base
+principal fallaban siempre y el arranque mostraba 5 advertencias que parecían fallos de
+código: `could not access file "$libdir/vector"`, `column "metadata" does not exist`,
+`function uuid_generate_v4() does not exist`.
+
+**Qué se hizo:**
+- Las cinco se movieron a `migrations/rag/` (el runner de arranque no entra en subcarpetas).
+- Runner propio: `npm run rag:migrate` (`scripts/runRagMigrations.js`), registra en el
+  `schema_migrations` de la base RAG. Soporta `-- --dry`.
+- `054`: `uuid_generate_v4()` → `gen_random_uuid()` (la base RAG no tiene `uuid-ossp`);
+  verificado que `gen_random_uuid()` está disponible.
+
+**Pendiente conocido:** `076_rag_embedding_dimension_2048.sql` no es aplicable tal como
+está: pide `vector(2048)` con índice **ivfflat** y pgvector limita ivfflat a 2000
+dimensiones. Requiere decidir `halfvec(2048)` o índice `hnsw` antes de tocarla.
