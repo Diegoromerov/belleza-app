@@ -58,6 +58,8 @@ async function main() {
         applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
     `);
+    // La tabla ya existía en la base RAG sin `checksum` (la creó un runner anterior).
+    await pool.query('ALTER TABLE schema_migrations ADD COLUMN IF NOT EXISTS checksum TEXT;');
     const { rows } = await pool.query('SELECT filename, checksum FROM schema_migrations');
     const already = new Map(rows.map((r) => [r.filename, r.checksum]));
 
