@@ -20,7 +20,7 @@ semánticamente. Por eso es imposible "convertir" los vectores existentes: hay q
 
 ```
 1. Migración   → 076_rag_embedding_dimension_2048.sql   (columna halfvec(2048) + HNSW coseno 2048d)
-2. Re-ingesta  → node scripts/ingestBeautyKnowledge.js --source=corpus
+2. Re-ingesta  → node scripts/ingestCanonicalCorpus.js
 3. Umbral      → recalibrar (ver §"Umbral")
 4. Verificación→ traza debe declarar `hnsw` (ruta vectorial), no `fts`
 ```
@@ -33,9 +33,9 @@ semánticamente. Por eso es imposible "convertir" los vectores existentes: hay q
 ```bash
 cd backend
 # Dry-run primero (sin escribir): valida chunking, metadata y límites
-node scripts/ingestBeautyKnowledge.js --source=corpus --dry-run
+node scripts/ingestCanonicalCorpus.js --dry-run
 # Ingesta real (idempotente por (document_id, chunk_id); rate-limited 10 chunks/seg)
-node scripts/ingestBeautyKnowledge.js --source=corpus
+node scripts/ingestCanonicalCorpus.js
 ```
 
 Salida esperada: los ~5.619 chunks re-embebidos sin errores. El upsert es idempotente por
@@ -86,3 +86,12 @@ La columna se reconstruye como **`halfvec(2048)`** e índice
 `USING hnsw (embedding halfvec_cosine_ops)`. Requiere pgvector ≥ 0.7 (producción: 0.8.6).
 Consecuencia en código: las consultas castean el parámetro a `::halfvec`; un `halfvec`
 no es comparable con un `vector` sin cast explícito.
+
+### Corrección de script (2026-10-23)
+
+El script correcto es **`scripts/ingestCanonicalCorpus.js`**, no `ingestBeautyKnowledge.js`:
+este último usa el `pool` de la base PRINCIPAL y escribe en su tabla vestigial
+`beauty_knowledge_embeddings` (`embedding real[]`, 6 filas). El corpus real (6.420 chunks en
+`vector(1024)`) vive en la base RAG (`RAG_DATABASE_URL`) y `ingestCanonicalCorpus.js` es el
+único que usa `ragPool`. Flags: `--limit=N`, `--dry-run`. El guard de seguridad acepta
+`railway.internal`, así que se ejecuta dentro del contenedor.

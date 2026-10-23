@@ -364,3 +364,11 @@ Producción tiene pgvector 0.8.6, que soporta `halfvec` hasta 4000 dims con HNSW
 - Código: los 113 casts `::vector` de las consultas a `beauty_knowledge_embeddings`
   pasan a `::halfvec` (42 archivos). `aura_knowledge_chunks` sigue en `vector(1024)`.
 - Test de regresión acepta `halfvec` y `vector` en el DDL.
+
+## Re-ingesta: el script es `ingestCanonicalCorpus.js`
+
+`ingestBeautyKnowledge.js` usa el pool de la base PRINCIPAL y escribe en su tabla
+vestigial `beauty_knowledge_embeddings` (`embedding real[]`, 6 filas). El corpus real
+(6.420 chunks) vive en la base RAG y solo `scripts/ingestCanonicalCorpus.js` usa
+`ragPool`. Flags: `--limit=N`, `--dry-run`. Su guard de seguridad permite
+`railway.internal`, por eso corre dentro del contenedor.

@@ -33,7 +33,7 @@
 -- SECUENCIA DE DESPLIEGUE (obligatoria, en este orden):
 --   1) aplicar esta migración (columna a halfvec(2048) + HNSW),
 --   2) RE-INGESTA completa del corpus canónico con el modelo vivo:
---        node scripts/ingestBeautyKnowledge.js --source=corpus
+--        node scripts/ingestCanonicalCorpus.js
 --      (los ~6.420 chunks deben re-embeberse; los vectores previos pertenecían al
 --       espacio del modelo retirado y no son comparables),
 --   3) recalibrar el umbral de similitud (con el modelo vivo el acierto puntúa ~0.4156,
@@ -137,5 +137,5 @@ BEGIN
     RAISE NOTICE '=== MIGRACIÓN 076 COMPLETADA ===';
     RAISE NOTICE 'Tipo final embedding: % (esperado halfvec(2048))', final_type;
     RAISE NOTICE 'Índices vectoriales: %', idx_count;
-    RAISE NOTICE 'ACCIÓN PENDIENTE: re-ingesta del corpus (node scripts/ingestBeautyKnowledge.js --source=corpus)';
+    RAISE NOTICE 'ACCIÓN PENDIENTE: re-ingesta del corpus (node scripts/ingestCanonicalCorpus.js)';
 END $$;
