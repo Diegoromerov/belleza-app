@@ -384,3 +384,17 @@ devolvía `[]` siempre. No era el umbral: la búsqueda no llegaba a ejecutarse.
 113 las añade (`tenant_id INTEGER`, `deleted_at`/`expires_at` TIMESTAMPTZ) con las 5.619
 filas en `tenant_id NULL` = conocimiento global. Sin RLS: el aislamiento va en el WHERE
 (`appendTenantCondition`), y RLS necesitaría el GUC `app.tenant_id` que el pool del RAG no fija.
+
+## 114: índice GIN para la rama léxica
+
+Sin índice, `to_tsvector('spanish', title || content)` se calculaba sobre las 5.619 filas en
+cada consulta: p50 **1.036 ms** en el híbrido frente a 242 ms en vectorial. El índice usa la
+misma expresión que la consulta, o el planner no lo toma.
+
+## 115: columna generada `search_vector`
+
+El primer intento (114) dejó de escanear, pero `ts_rank_cd` seguía recalculando el tsvector
+fila a fila: **1.431 ms**. Con `search_vector` como columna generada y GIN propio, el plan pasa
+a `Bitmap Index Scan` y la consulta cuesta **12,4 ms**. Requiere
+`SET max_parallel_maintenance_workers = 0` para el build (mismo fallo de memoria compartida que
+en 076).
