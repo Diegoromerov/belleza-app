@@ -1,4 +1,4 @@
-// frontend/lib/screens/academy/course_detail_screen.dart
+﻿// frontend/lib/screens/academy/course_detail_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../services/api_service.dart';
@@ -20,7 +20,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
   Map<String, dynamic>? _courseData;
   String? _error;
   
-  // Lección activa seleccionada para reproducción/lectura
+  // LecciÃ³n activa seleccionada para reproducciÃ³n/lectura
   Map<String, dynamic>? _activeLesson;
 
   @override
@@ -36,15 +36,16 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
         _error = null;
       });
       final data = await ApiService.get('/api/academy/courses/${widget.courseId}');
+      if (!mounted) return;
       setState(() {
         _courseData = data;
         _isLoading = false;
         
-        // Seleccionar por defecto la primera lección no completada si existe
+        // Seleccionar por defecto la primera lecciÃ³n no completada si existe
         if (_activeLesson == null) {
           _selectFirstIncompleteLesson(data);
         } else {
-          // Refrescar el estado de la lección activa
+          // Refrescar el estado de la lecciÃ³n activa
           _refreshActiveLessonState(data);
         }
       });
@@ -71,7 +72,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
         }
       }
     }
-    // Si están todas completas, mostrar la primera lección si existe
+    // Si estÃ¡n todas completas, mostrar la primera lecciÃ³n si existe
     if (modules.isNotEmpty) {
       final List<dynamic> firstLessons = modules[0]['lessons'] ?? [];
       if (firstLessons.isNotEmpty) {
@@ -100,7 +101,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('🎉 ¡Lección completada con éxito!'),
+          content: Text('ðŸŽ‰ Â¡LecciÃ³n completada con Ã©xito!'),
           backgroundColor: Colors.green,
         ),
       );
@@ -109,7 +110,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al completar lección: $e'), backgroundColor: Colors.redAccent),
+        SnackBar(content: Text('Error al completar lecciÃ³n: $e'), backgroundColor: Colors.redAccent),
       );
     }
   }
@@ -144,7 +145,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(_error ?? 'Ocurrió un error inesperado'),
+              Text(_error ?? 'OcurriÃ³ un error inesperado'),
               const SizedBox(height: 16),
               ElevatedButton(onPressed: _loadCourseDetail, child: const Text('Reintentar'))
             ],
@@ -179,9 +180,9 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           constraints: const BoxConstraints(maxWidth: 720),
           child: Column(
         children: [
-          // 📽️ Panel de la lección activa. Antes mostraba una imagen de Unsplash y el
-          // texto "Streaming HD de lección disponible" aunque el video no existiera
-          // (o estuviera vacío): prometía reproducción que nunca ocurría.
+          // ðŸ“½ï¸ Panel de la lecciÃ³n activa. Antes mostraba una imagen de Unsplash y el
+          // texto "Streaming HD de lecciÃ³n disponible" aunque el video no existiera
+          // (o estuviera vacÃ­o): prometÃ­a reproducciÃ³n que nunca ocurrÃ­a.
           if (_activeLesson != null && _activeLesson!['locked'] == true)
             Container(
               width: double.infinity,
@@ -192,12 +193,12 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                   Icon(Icons.lock_outline, color: Colors.white70, size: 40),
                   SizedBox(height: 10),
                   Text(
-                    'Lección bloqueada',
+                    'LecciÃ³n bloqueada',
                     style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   SizedBox(height: 6),
                   Text(
-                    'Completa la lección anterior para desbloquear este contenido.',
+                    'Completa la lecciÃ³n anterior para desbloquear este contenido.',
                     style: TextStyle(color: Colors.white70, fontSize: 12),
                     textAlign: TextAlign.center,
                   ),
@@ -206,7 +207,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
             )
           else if (_activeLesson != null)
             Semantics(
-              label: 'Lección ${_activeLesson!['lesson_title'] ?? ''}',
+              label: 'LecciÃ³n ${_activeLesson!['lesson_title'] ?? ''}',
               child: Container(
                 width: double.infinity,
                 color: const Color(0xFF1F1A15),
@@ -217,14 +218,14 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                       const Icon(Icons.ondemand_video_outlined, color: Colors.white54, size: 40),
                       const SizedBox(height: 10),
                       const Text(
-                        'Esta lección no tiene video asociado',
+                        'Esta lecciÃ³n no tiene video asociado',
                         style: TextStyle(color: Colors.white70, fontSize: 13),
                         textAlign: TextAlign.center,
                       ),
                     ] else ...[
                       Semantics(
                         button: true,
-                        label: 'Copiar enlace del video de la lección',
+                        label: 'Copiar enlace del video de la lecciÃ³n',
                         child: IconButton(
                           icon: const Icon(Icons.play_circle_fill, size: 64, color: Colors.white),
                           onPressed: () async {
@@ -258,7 +259,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
               ),
             ),
 
-          // 📖 Contenido de texto y botones de acción rápida
+          // ðŸ“– Contenido de texto y botones de acciÃ³n rÃ¡pida
           if (_activeLesson != null)
             Padding(
               padding: const EdgeInsets.all(16.0),
@@ -271,13 +272,13 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                   ),
                   const SizedBox(height: 8),
                   
-                  // Inyectar el consentimiento interactivo de la Ley 1581 si es la lección de bienvenida del Módulo 0
+                  // Inyectar el consentimiento interactivo de la Ley 1581 si es la lecciÃ³n de bienvenida del MÃ³dulo 0
                   if (_activeLesson!['lesson_id'] == 'a0000000-0000-0000-0000-000000000000') ...[
                     const SizedBox(height: 10),
                     GlowConsentWidget(
                       onConsentGranted: () {
                         // Callback cuando el consentimiento es otorgado
-                        print("Consentimiento biométrico otorgado por el usuario.");
+                        print("Consentimiento biomÃ©trico otorgado por el usuario.");
                       },
                     ),
                     const SizedBox(height: 15),
@@ -285,7 +286,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
 
                   if (_activeLesson!['locked'] == true)
                     const Text(
-                      'El contenido de esta lección estará disponible cuando completes la anterior.',
+                      'El contenido de esta lecciÃ³n estarÃ¡ disponible cuando completes la anterior.',
                       style: TextStyle(fontSize: 14, color: Colors.grey, height: 1.4, fontStyle: FontStyle.italic),
                     )
                   else
@@ -307,8 +308,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                         )
                       else
                         ElevatedButton.icon(
-                          // El servidor rechaza completar una lección bloqueada: la UI
-                          // no debe ofrecer un botón que va a fallar.
+                          // El servidor rechaza completar una lecciÃ³n bloqueada: la UI
+                          // no debe ofrecer un botÃ³n que va a fallar.
                           onPressed: _activeLesson!['locked'] == true
                               ? null
                               : () => _completeLesson(_activeLesson!['lesson_id']),
@@ -318,7 +319,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                           ),
                           label: Text(
                             _activeLesson!['locked'] == true
-                                ? 'Completa la lección anterior'
+                                ? 'Completa la lecciÃ³n anterior'
                                 : 'Marcar como Completada',
                             style: const TextStyle(color: Colors.white),
                           ),
@@ -372,7 +373,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              '¡Felicidades! Completaste este curso y desbloqueaste la insignia: ${course['badge_name']}.',
+                              'Â¡Felicidades! Completaste este curso y desbloqueaste la insignia: ${course['badge_name']}.',
                               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.amber),
                             ),
                           ),
@@ -386,7 +387,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
 
           const Divider(height: 1),
 
-          // 🗂️ Lista de Módulos y Lecciones
+          // ðŸ—‚ï¸ Lista de MÃ³dulos y Lecciones
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.all(8.0),
@@ -398,7 +399,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                 return ExpansionTile(
                   initiallyExpanded: true,
                   title: Text(
-                    module['title'] ?? 'Módulo',
+                    module['title'] ?? 'MÃ³dulo',
                     style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
                   ),
                   children: lessons.map<Widget>((lesson) {
@@ -417,7 +418,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                         color: isCompleted ? Colors.green : (isLocked ? Colors.grey : (isCurrent ? themeColor : Colors.grey)),
                       ),
                       title: Text(
-                        lesson['lesson_title'] ?? 'Lección',
+                        lesson['lesson_title'] ?? 'LecciÃ³n',
                         style: TextStyle(
                           fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
                           color: isCurrent ? themeColor : (isLocked ? Colors.grey : Colors.black87),
@@ -428,7 +429,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                           ? () {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('Lección bloqueada: completa la lección anterior.'),
+                                content: Text('LecciÃ³n bloqueada: completa la lecciÃ³n anterior.'),
                                 backgroundColor: Colors.amber,
                                 duration: Duration(seconds: 2),
                               ),
@@ -441,7 +442,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                             AnalyticsService().logCourseLessonView(
                               courseId: widget.courseId,
                               lessonId: lesson['lesson_id']?.toString() ?? '',
-                              lessonTitle: lesson['lesson_title'] ?? 'Lección',
+                              lessonTitle: lesson['lesson_title'] ?? 'LecciÃ³n',
                             );
                           },
                     );

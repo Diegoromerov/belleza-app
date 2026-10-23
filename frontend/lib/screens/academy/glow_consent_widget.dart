@@ -1,4 +1,4 @@
-// frontend/lib/screens/academy/glow_consent_widget.dart
+﻿// frontend/lib/screens/academy/glow_consent_widget.dart
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
 import '../../shared/theme.dart';
@@ -25,6 +25,7 @@ class _GlowConsentWidgetState extends State<GlowConsentWidget> {
   Future<void> _checkConsentStatus() async {
     try {
       final res = await ApiService.get('/api/academy/consent/status');
+      if (!mounted) return;
       setState(() {
         _hasConsent = res['aceptado'] == true;
         _isChecking = false;
@@ -45,6 +46,7 @@ class _GlowConsentWidgetState extends State<GlowConsentWidget> {
     });
     try {
       final res = await ApiService.post('/api/academy/consent', {'aceptado': status});
+      if (!mounted) return;
       setState(() {
         _hasConsent = res['aceptado'] == true;
         _isSubmitting = false;
@@ -52,11 +54,11 @@ class _GlowConsentWidgetState extends State<GlowConsentWidget> {
       if (_hasConsent) {
         widget.onConsentGranted();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('✅ Consentimiento de Habeas Data firmado con éxito.'), backgroundColor: Colors.green),
+          const SnackBar(content: Text('âœ… Consentimiento de Habeas Data firmado con Ã©xito.'), backgroundColor: Colors.green),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('ℹ️ Consentimiento revocado.'), backgroundColor: Colors.orange),
+          const SnackBar(content: Text('â„¹ï¸ Consentimiento revocado.'), backgroundColor: Colors.orange),
         );
       }
     } catch (e) {
@@ -64,7 +66,7 @@ class _GlowConsentWidgetState extends State<GlowConsentWidget> {
         _isSubmitting = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('❌ Error al actualizar consentimiento: $e'), backgroundColor: Colors.redAccent),
+        SnackBar(content: Text('âŒ Error al actualizar consentimiento: $e'), backgroundColor: Colors.redAccent),
       );
     }
   }
@@ -97,9 +99,9 @@ class _GlowConsentWidgetState extends State<GlowConsentWidget> {
           ),
           const SizedBox(height: 8),
           const Text(
-            'Para realizar las prácticas del curso de colorimetría es obligatorio autorizar el tratamiento '
-            'de datos biométricos (fotos de clientas y cabello). Sus fotos se encriptan y se eliminan '
-            'automáticamente en 12 meses. Puede revocar este permiso en cualquier momento.',
+            'Para realizar las prÃ¡cticas del curso de colorimetrÃ­a es obligatorio autorizar el tratamiento '
+            'de datos biomÃ©tricos (fotos de clientas y cabello). Sus fotos se encriptan y se eliminan '
+            'automÃ¡ticamente en 12 meses. Puede revocar este permiso en cualquier momento.',
             style: TextStyle(fontSize: 12, color: Color(0xFF6B5855), height: 1.4),
           ),
           const SizedBox(height: 14),
@@ -108,7 +110,7 @@ class _GlowConsentWidgetState extends State<GlowConsentWidget> {
               children: [
                 const Icon(Icons.verified, color: Colors.green, size: 18),
                 const SizedBox(width: 6),
-                const Text('Autorización Activa', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 13)),
+                const Text('AutorizaciÃ³n Activa', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 13)),
                 const Spacer(),
                 OutlinedButton(
                   onPressed: _isSubmitting ? null : () => _submitConsent(false),
@@ -131,7 +133,7 @@ class _GlowConsentWidgetState extends State<GlowConsentWidget> {
               ),
               child: _isSubmitting
                   ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : const Text('He leído y Acepto los Términos', style: TextStyle(color: Colors.white)),
+                  : const Text('He leÃ­do y Acepto los TÃ©rminos', style: TextStyle(color: Colors.white)),
             ),
         ],
       ),
