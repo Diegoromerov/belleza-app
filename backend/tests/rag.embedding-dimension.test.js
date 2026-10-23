@@ -19,6 +19,9 @@ const path = require('path');
 
 const BACKEND_ROOT = path.join(__dirname, '..');
 const MIGRATIONS_DIR = path.join(BACKEND_ROOT, 'migrations');
+// Las migraciones del RAG viven en migrations/rag/ (runner propio contra
+// RAG_DATABASE_URL). Para los chequeos de contenido cuentan igual.
+const RAG_MIGRATIONS_DIR = path.join(MIGRATIONS_DIR, 'rag');
 const EMBEDDING_SERVICE = path.join(BACKEND_ROOT, 'src', 'services', 'embeddingService.js');
 const RAG_SERVICE = path.join(BACKEND_ROOT, 'src', 'services', 'ragService.js');
 
@@ -39,10 +42,15 @@ const stripSqlComments = (sql) => sql
   .replace(/--[^\n\r]*/g, ' ');
 
 /** Migraciones SQL aplicables (excluye .down.sql, igual que migrationRunner.js). */
-const applicableMigrations = () => fs.readdirSync(MIGRATIONS_DIR)
-  .filter((f) => f.endsWith('.sql') && !f.endsWith('.down.sql'))
-  .sort()
-  .map((file) => ({ file, sql: stripSqlComments(read(path.join(MIGRATIONS_DIR, file))) }));
+const applicableMigrations = () => {
+  const dirs = [MIGRATIONS_DIR, RAG_MIGRATIONS_DIR].filter((d) => fs.existsSync(d));
+  return dirs
+    .flatMap((dir) => fs.readdirSync(dir)
+      .filter((f) => f.endsWith('.sql') && !f.endsWith('.down.sql'))
+      .map((file) => ({ file, dir })))
+    .sort((a, b) => a.file.localeCompare(b.file))
+    .map(({ file, dir }) => ({ file, sql: stripSqlComments(read(path.join(dir, file))) }));
+};
 
 /**
  * Dimensión EFECTIVA de `beauty_knowledge_embeddings.embedding`: la última declaración
