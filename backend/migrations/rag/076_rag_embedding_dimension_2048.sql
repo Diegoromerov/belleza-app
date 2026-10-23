@@ -71,6 +71,12 @@ BEGIN
 END $$;
 
 -- Paso 2: Dropear índices vectoriales existentes (incompatibles con la nueva dimensión)
+--   El build de HNSW sobre 6.420 vectores de 2048d agota /dev/shm del host
+--   ("could not resize shared memory segment ... No space left on device").
+--   Los workers paralelos piden memoria compartida que el contenedor no tiene.
+SET max_parallel_maintenance_workers = 0;
+SET maintenance_work_mem = '256MB';
+
 DROP INDEX IF EXISTS idx_beauty_knowledge_embedding_hnsw;
 DROP INDEX IF EXISTS idx_beauty_knowledge_embedding_ivfflat;
 
