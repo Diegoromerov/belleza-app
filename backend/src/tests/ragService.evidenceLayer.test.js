@@ -137,7 +137,7 @@ describe('ragService · Evidence Layer — EvidencePacket', () => {
     expect(packet.state).toBe(EVIDENCE_STATES.SUPPORTED);
     expect(typeof packet.confidence).toBe('number');
     expect(packet.provenance.query_hash).toBeTruthy();
-    expect(['hnsw','fts']).toContain(packet.provenance.retrieval_mode); // HNSW requiere re-ingesta de 5.6k chunks
+    expect(['hnsw','hybrid','fts']).toContain(packet.provenance.retrieval_mode);
     expect(packet.provenance.gate.strong_score).toBe(SUFFICIENCY_POLICY.strong_score);
     expect(Array.isArray(packet.constraints)).toBe(true);
     expect(packet.constraints.length).toBeGreaterThan(0);
@@ -172,9 +172,9 @@ describe('ragService · Evidence Layer — integración con retrieval', () => {
     expect(packet.state).toBe(EVIDENCE_STATES.SUPPORTED);
     expect(packet.evidence).toHaveLength(1);
     expect(packet.evidence[0].retrieval_score).toBe(0.82);
-    // Debe ser vectorial de verdad: con el embedding mockeado y el pool mockeado
-    // no hay razon para caer al fallback.
-    expect(packet.provenance.retrieval_mode).toBe('hnsw');
+    // El default desde FASE 2 es híbrido: vía vectorial + rama léxica fusionadas.
+    // Lo que este test protege es que NO se cae al fallback fts (similitud inventada).
+    expect(packet.provenance.retrieval_mode).toBe('hybrid');
   });
 
   test('fallback FTS (NVIDIA caído) → packet RETRIEVAL_UNCERTAIN, sin inventar similitud', async () => {
