@@ -254,7 +254,9 @@ describe('geminiFallback', () => {
       // Verificar que se pasaron 8 herramientas
       expect(capturedTools).toBeDefined();
       const declarations = capturedTools[0]?.functionDeclarations || [];
-      expect(declarations.length).toBe(11);
+      // La fuente única (AURA_TOOLS_DEFINITIONS) declara 14 herramientas; la aserción
+      // quedó en 11 de cuando eran 11. Se fija al contrato real, no al recuerdo.
+      expect(declarations.length).toBe(14);
 
       const toolNames = declarations.map(d => d.name);
       expect(toolNames).toContain('query_user_biometric_profile');

@@ -111,7 +111,11 @@ class BiometricCryptoService {
     const [ivHex, authTagHex, encryptedText] = parts;
     const iv = Buffer.from(ivHex, 'hex');
     const authTag = Buffer.from(authTagHex, 'hex');
-    const decipher = crypto.createDecipheriv(ALGORITHM, activeCipherBuffer, iv);
+    // GCM con tag truncado: Node acepta tags de menos de 128 bits (DEP0182) y descifra
+    // igual, lo que debilita la autenticación. Se exige el tamaño exacto antes de usarlo.
+    if (iv.length !== 12) throw new Error('Invalid IV length');
+    if (authTag.length !== 16) throw new Error('Invalid auth tag length');
+    const decipher = crypto.createDecipheriv(ALGORITHM, activeCipherBuffer, iv, { authTagLength: 16 });
     decipher.setAuthTag(authTag);
 
     let decrypted;
