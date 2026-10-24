@@ -14,6 +14,23 @@ const { KNOWLEDGE_CATEGORIES } = require('../config/knowledgeCategories');
 const { pool } = require('../config/db');
 
 /**
+ * Etiquetas REALES del enum `estado_cita` de PostgreSQL.
+ * Comparar contra un valor que no exista en el enum aborta la consulta completa con
+ * `invalid input value for enum estado_cita: "FINALIZADA"`, aunque ese valor solo
+ * aparezca dentro de un CASE WHEN. Por eso todas las comparaciones usan
+ * `estado::text IN (...)` y estas listas.
+ */
+const ESTADOS_CITA = {
+  ejecutadas: ['COMPLETADA', 'FINALIZADA_PRESTADOR'],
+  confirmadas: ['CONFIRMADA', 'EN_PROGRESO'],
+  pendientes: ['PENDIENTE_PAGO', 'ESPERANDO_OTP', 'CHECKIN_REALIZADO'],
+  canceladas: ['CANCELADA'],
+};
+
+/** Lista de labels lista para un `IN (...)` de SQL. */
+const sqlIn = (labels) => `(${labels.map((l) => `'${l}'`).join(', ')})`;
+
+/**
  * Definicón de JSON Schemas de las herramientas (Tool Definitions) para DeepSeek / Gemini Function Calling
  */
 const AURA_TOOLS_DEFINITIONS = [
@@ -404,13 +421,13 @@ async function executeAuraTool(toolName, args, userId, userRole = 'provider', te
 
         let statusCondition = '';
         if (statusFilter === 'pending') {
-          statusCondition = "AND estado IN ('PENDIENTE_PAGO', 'CONFIRMADA', 'PENDIENTE')";
+          statusCondition = `AND estado::text IN ${sqlIn([...ESTADOS_CITA.pendientes, ...ESTADOS_CITA.confirmadas])}`;
         } else if (statusFilter === 'confirmed') {
-          statusCondition = "AND estado = 'CONFIRMADA'";
+          statusCondition = `AND estado::text IN ${sqlIn(ESTADOS_CITA.confirmadas)}`;
         } else if (statusFilter === 'completed') {
-          statusCondition = "AND estado IN ('COMPLETADA', 'FINALIZADA')";
+          statusCondition = `AND estado::text IN ${sqlIn(ESTADOS_CITA.ejecutadas)}`;
         } else if (statusFilter === 'cancelled') {
-          statusCondition = "AND estado IN ('CANCELADA', 'RECHAZADA')";
+          statusCondition = `AND estado::text IN ${sqlIn(ESTADOS_CITA.canceladas)}`;
         }
 
         // Filtro compartido por el conteo y la muestra: si divergen, el total miente.
@@ -503,13 +520,14 @@ async function executeAuraTool(toolName, args, userId, userRole = 'provider', te
         const query = `
           SELECT 
             COUNT(id) as total_citas,
-            COALESCE(SUM(CASE WHEN estado IN ('COMPLETADA', 'FINALIZADA', 'CONFIRMADA') THEN valor_bruto ELSE 0 END), 0) as facturacion_bruta,
-            COALESCE(SUM(CASE WHEN estado IN ('COMPLETADA', 'FINALIZADA', 'CONFIRMADA') THEN pago_neto_prestador ELSE 0 END), 0) as ingreso_neto_prestador,
-            COALESCE(SUM(CASE WHEN estado IN ('COMPLETADA', 'FINALIZADA', 'CONFIRMADA') THEN subtotal_base ELSE 0 END), 0) as total_subtotal_base,
-            COALESCE(SUM(CASE WHEN estado IN ('COMPLETADA', 'FINALIZADA', 'CONFIRMADA') THEN iva_valor ELSE 0 END), 0) as total_iva_recaudado,
-            COUNT(CASE WHEN estado IN ('COMPLETADA', 'FINALIZADA') THEN 1 END) as citas_ejecutadas,
-            COUNT(CASE WHEN estado IN ('CANCELADA', 'RECHAZADA') THEN 1 END) as citas_canceladas,
-            COUNT(CASE WHEN estado IN ('PENDIENTE_PAGO', 'CONFIRMADA') THEN 1 END) as citas_pendientes
+            COALESCE(SUM(CASE WHEN estado::text IN ${sqlIn(ESTADOS_CITA.ejecutadas)} THEN valor_bruto ELSE 0 END), 0) as facturacion_bruta,
+            COALESCE(SUM(CASE WHEN estado::text IN ${sqlIn(ESTADOS_CITA.confirmadas)} THEN valor_bruto ELSE 0 END), 0) as facturacion_confirmada,
+            COALESCE(SUM(CASE WHEN estado::text IN ${sqlIn(ESTADOS_CITA.ejecutadas)} THEN pago_neto_prestador ELSE 0 END), 0) as ingreso_neto_prestador,
+            COALESCE(SUM(CASE WHEN estado::text IN ${sqlIn(ESTADOS_CITA.ejecutadas)} THEN subtotal_base ELSE 0 END), 0) as total_subtotal_base,
+            COALESCE(SUM(CASE WHEN estado::text IN ${sqlIn(ESTADOS_CITA.ejecutadas)} THEN iva_valor ELSE 0 END), 0) as total_iva_recaudado,
+            COUNT(CASE WHEN estado::text IN ${sqlIn(ESTADOS_CITA.ejecutadas)} THEN 1 END) as citas_ejecutadas,
+            COUNT(CASE WHEN estado::text IN ${sqlIn(ESTADOS_CITA.canceladas)} THEN 1 END) as citas_canceladas,
+            COUNT(CASE WHEN estado::text IN ${sqlIn([...ESTADOS_CITA.pendientes, ...ESTADOS_CITA.confirmadas])} THEN 1 END) as citas_pendientes
           FROM bookings
           WHERE (provider_id = $1 OR business_profile_id = (
             SELECT id::text FROM business_profiles WHERE provider_id = $1 LIMIT 1
@@ -524,6 +542,7 @@ async function executeAuraTool(toolName, args, userId, userRole = 'provider', te
           status: 'success',
           period,
           facturacion_bruta: parseFloat(metrics.facturacion_bruta || 0),
+          facturacion_confirmada: parseFloat(metrics.facturacion_confirmada || 0),
           ingreso_neto_prestador: parseFloat(metrics.ingreso_neto_prestador || 0),
           subtotal_base: parseFloat(metrics.total_subtotal_base || 0),
           iva_recaudado: parseFloat(metrics.total_iva_recaudado || 0),
