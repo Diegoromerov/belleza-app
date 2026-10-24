@@ -12,6 +12,7 @@ import 'widgets/recommendation_card.dart';
 import 'widgets/product_card.dart';
 import 'widgets/color_palette.dart';
 import '../../services/social_share_service.dart';
+import 'evolution_screen.dart';
 
 // ---------------------------------------------------------------------------
 // Tokens de marca para esta pantalla estilo Pasaporte Editorial
@@ -155,6 +156,31 @@ class _ResultsScreenState extends State<ResultsScreen> {
                       _buildUVBanner(),
                       const SizedBox(height: 20),
                     ],
+                    // Y-F6: la serie completa, para ver el cambio contra escaneos
+                    // anteriores y no sólo el veredicto del último.
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const EvolutionScreen()),
+                        );
+                      },
+                      icon: const Icon(Icons.show_chart, color: _PassportColors.primary),
+                      label: const Text(
+                        '📈 Ver mi evolución',
+                        style: TextStyle(
+                          color: _PassportColors.textAccent,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 48),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
                     if (face != null) ...[
                       ColorPaletteWidget(
                         hexColor: _getHexColorFromSubtono(face.subtono),
@@ -380,6 +406,34 @@ class _ResultsScreenState extends State<ResultsScreen> {
   // ---------------------------------------------------------------------
   // Hero: anillo de score con la edad biométrica como hallazgo principal
   // ---------------------------------------------------------------------
+  /// Y-F3: una línea con el veredicto contra el baseline propio.
+  /// Devuelve null cuando no hubo comparación: mostrar "sin cambios" cuando en
+  /// realidad no se comparó sería una afirmación falsa.
+  String? _deltaLabel(BiometricResult result) {
+    final verdict = result.deltaVerdict;
+    if (verdict == null) return null;
+
+    final glow = result.deltaGlowScore;
+    final detalle = (glow != null && glow.abs() >= 1)
+        ? ' (Glow ${glow > 0 ? '+' : ''}${glow.toStringAsFixed(0)})'
+        : '';
+
+    switch (verdict) {
+      case 'MEJORO':
+        return 'Mejoró frente a tu escaneo anterior$detalle';
+      case 'EMPEORO':
+        return 'Empeoró frente a tu escaneo anterior$detalle';
+      case 'MIXTO':
+        return 'Cambió: unas métricas mejor, otras peor$detalle';
+      case 'SIN_CAMBIO':
+        return 'Sin cambios medibles frente a tu escaneo anterior';
+      case 'SIN_BASELINE':
+        return 'Primer escaneo: aún no hay con qué comparar';
+      default:
+        return null;
+    }
+  }
+
   Widget _buildHero(FaceScores face) {
     final hydrationFraction = (face.hydration.clamp(0, 100)) / 100;
 
@@ -428,7 +482,9 @@ class _ResultsScreenState extends State<ResultsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Piel hidratada, tono ${face.subtono}',
+                face.subtonoMedido
+                    ? 'Tono ${face.subtono} · piel ${face.pielTipo ?? 'sin dato'}'
+                    : 'Piel ${face.pielTipo ?? 'sin dato'} · subtono sin medir',
                 style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
@@ -443,6 +499,32 @@ class _ResultsScreenState extends State<ResultsScreen> {
                   color: _PassportColors.textEyebrow,
                 ),
               ),
+              // Y-F3: veredicto del cambio contra el escaneo anterior. Solo se muestra
+              // cuando el backend pudo comparar; nunca se inventa una mejora.
+              if (_deltaLabel(widget.result) != null) ...[
+                const SizedBox(height: 2),
+                Text(
+                  _deltaLabel(widget.result)!,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: _PassportColors.textAccent,
+                  ),
+                ),
+              ],
+              // Y-F5: si la medición se reutilizó, se dice. Presentar métricas recicladas
+              // como un análisis nuevo sería engañoso.
+              if (widget.result.cacheHit) ...[
+                const SizedBox(height: 2),
+                const Text(
+                  'Medición reutilizada de tu foto anterior',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontStyle: FontStyle.italic,
+                    color: _PassportColors.textEyebrow,
+                  ),
+                ),
+              ],
             ],
           ),
         ),

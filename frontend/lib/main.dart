@@ -40,6 +40,11 @@ import 'screens/provider_detail_screen.dart';
 import 'screens/provider_dashboard_screen.dart';
 import 'screens/salon_dashboard_screen.dart';
 import 'screens/salon/salon_hub_screen.dart';
+import 'screens/saas/team_management_screen.dart';
+import 'screens/saas/billing_screen.dart';
+import 'screens/superadmin/superadmin_screen.dart';
+import 'screens/saas/usage_screen.dart';
+import 'screens/saas/api_keys_screen.dart';
 import 'screens/client_bookings_screen.dart';
 import 'screens/provider_services_screen.dart';
 import 'screens/provider_portfolio_screen.dart';
@@ -297,6 +302,8 @@ class BeautyApp extends StatelessWidget {
                   final token = args is String ? args : (args is Map ? (args['token']?.toString()) : null);
                   return AcceptInvitationScreen(token: token);
                 },
+                '/superadmin': (_) => const SuperAdminScreen(),
+
                 '/onboarding': (_) => const OnboardingScreen(),
                 '/verification-pending': (_) => const VerificationPendingScreen(),
                 '/context-selection': (context) {
@@ -320,6 +327,12 @@ class BeautyApp extends StatelessWidget {
                   final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
                   return ProviderRouteScreen(booking: args);
                 },
+
+                // SaaS: equipo, facturación, uso y API keys
+                '/saas/team': (_) => const TeamManagementScreen(),
+                '/saas/billing': (_) => const BillingScreen(),
+                '/saas/usage': (_) => const UsageScreen(),
+                '/saas/api-keys': (_) => const ApiKeysScreen(),
 
                 // 4. Citas, Chat & Perfil
                 '/client-bookings': (_) => const ClientBookingsScreen(),
@@ -405,29 +418,41 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
   bool _isLoading = true;
   String? _errorMessage;
 
+  // ignore: unused_field
   bool _hasToken = false;
+  // ignore: unused_field
   String? _userRole;
-  final TextEditingController _searchController = TextEditingController();
-  final LatLng _bogotaCenter = const LatLng(4.6735, -74.1422);
-  LatLng? _userLocation;
 
-  // Legacy Tutorial state
+  // ignore: unused_field
   bool _showTutorial = false;
+  // ignore: unused_field
   int _tutorialStep = 0;
+  // ignore: unused_field
   bool _isMapMenuOpen = false;
 
   // GlowGuide Integration (I1)
+  // ignore: unused_field
   late final GlowGuideEngine _glowGuideEngine;
+  // ignore: unused_field
   late final ScreenVisibilityObserver _screenVisibilityObserver;
+  // ignore: unused_field
   late final AudioEngine _audioEngine;
+  // ignore: unused_field
   late final PersistenceEngine _persistenceEngine;
 
   // Legacy Mutex state
+  // ignore: unused_field
   bool _enableGlowGuide = false;
+  // ignore: unused_field
   bool _enableLegacy = false;
 
   // Start trigger idempotency guard (I3-START)
+  // ignore: unused_field
   bool _glowGuideStartScheduled = false;
+
+  final TextEditingController _searchController = TextEditingController();
+  final LatLng _bogotaCenter = const LatLng(4.6735, -74.1422);
+  LatLng? _userLocation;
 
   @override
   void initState() {

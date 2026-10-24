@@ -246,7 +246,7 @@ async function main() {
     const expectedSims = [];
     for (const expectedId of expectedIds) {
       const res = await ragPool.query(
-        'SELECT 1 - (embedding <=> $1::vector) AS sim FROM beauty_knowledge_embeddings WHERE chunk_id = $2',
+        'SELECT 1 - (embedding <=> $1::halfvec) AS sim FROM beauty_knowledge_embeddings WHERE chunk_id = $2',
         ['[' + queryEmb.join(',') + ']', expectedId]
       );
       expectedSims.push({ chunk_id: expectedId, similarity: res.rows[0]?.sim || null });
@@ -254,9 +254,9 @@ async function main() {
     
     // Get top 50
     const top50Res = await ragPool.query(
-      `SELECT chunk_id, 1 - (embedding <=> $1::vector) AS sim
+      `SELECT chunk_id, 1 - (embedding <=> $1::halfvec) AS sim
        FROM beauty_knowledge_embeddings
-       ORDER BY embedding <=> $1::vector
+       ORDER BY embedding <=> $1::halfvec
        LIMIT 50`,
       ['[' + queryEmb.join(',') + ']']
     );
@@ -298,7 +298,7 @@ async function main() {
     
     const queryEmb = await generateEmbedding(q.query);
     const top50Res = await ragPool.query(
-      `SELECT chunk_id FROM beauty_knowledge_embeddings ORDER BY embedding <=> $1::vector LIMIT 50`,
+      `SELECT chunk_id FROM beauty_knowledge_embeddings ORDER BY embedding <=> $1::halfvec LIMIT 50`,
       ['[' + queryEmb.join(',') + ']']
     );
     const top50 = top50Res.rows.map(r => r.chunk_id);
@@ -374,14 +374,14 @@ async function main() {
     
     // Expected doc similarity
     const expRes = await ragPool.query(
-      'SELECT 1 - (embedding <=> $1::vector) AS sim FROM beauty_knowledge_embeddings WHERE chunk_id = $2',
+      'SELECT 1 - (embedding <=> $1::halfvec) AS sim FROM beauty_knowledge_embeddings WHERE chunk_id = $2',
       [vecStr, expectedIds[0]]
     );
     const expectedSim = expRes.rows[0]?.sim || 0;
     
     // Random doc similarity
     const randRes = await ragPool.query(
-      `SELECT 1 - (embedding <=> $1::vector) AS sim FROM beauty_knowledge_embeddings 
+      `SELECT 1 - (embedding <=> $1::halfvec) AS sim FROM beauty_knowledge_embeddings 
        WHERE chunk_id != $2 ORDER BY random() LIMIT 1`,
       [vecStr, expectedIds[0]]
     );

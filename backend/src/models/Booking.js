@@ -105,6 +105,31 @@ const Booking = sequelize.define('Booking', {
     type: DataTypes.JSONB,
     allowNull: true,
     field: 'productos_adicionales'
+  },
+  // Columnas del ciclo del dinero (migraciones 097 y 098). Faltaban en el
+  // modelo: `rescheduleBooking` hacía `booking.reschedule_count = veces + 1` y
+  // Sequelize descartaba la propiedad, así que la reprogramación gratuita era
+  // infinita y `reschedule_count` se quedaba en 0 en la base.
+  reschedule_count: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0,
+    field: 'reschedule_count'
+  },
+  propina: {
+    type: DataTypes.DECIMAL(12, 2),
+    allowNull: true,
+    field: 'propina'
+  },
+  cancelado_por: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    field: 'cancelado_por'
+  },
+  cancelado_at: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    field: 'cancelado_at'
   }
 }, {
   tableName: 'bookings',

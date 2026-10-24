@@ -45,21 +45,21 @@ async function main() {
 
     // A. HNSW top-20 (productivo)
     const hnsw = await ragPool.query(
-      `SELECT id, chunk_id, document_id, title, 1-(embedding <=> $1::vector) AS sim
-       FROM beauty_knowledge_embeddings ORDER BY embedding <=> $1::vector LIMIT ${TOPK}`, [qv]);
+      `SELECT id, chunk_id, document_id, title, 1-(embedding <=> $1::halfvec) AS sim
+       FROM beauty_knowledge_embeddings ORDER BY embedding <=> $1::halfvec LIMIT ${TOPK}`, [qv]);
 
     // B. Exact scan top-20 (sesión temporal read-only)
     await ragPool.query('SET LOCAL enable_indexscan = off');
     await ragPool.query('SET LOCAL enable_bitmapscan = off');
     const exact = await ragPool.query(
-      `SELECT id, chunk_id, document_id, title, 1-(embedding <=> $1::vector) AS sim
-       FROM beauty_knowledge_embeddings ORDER BY embedding <=> $1::vector LIMIT ${TOPK}`, [qv]);
+      `SELECT id, chunk_id, document_id, title, 1-(embedding <=> $1::halfvec) AS sim
+       FROM beauty_knowledge_embeddings ORDER BY embedding <=> $1::halfvec LIMIT ${TOPK}`, [qv]);
 
     // C. Similitud exacta query→expected (scan sobre los IDs)
     const expSims = [];
     for (const expId of expected) {
       const er = await ragPool.query(
-        `SELECT chunk_id, title, 1-(embedding <=> $1::vector) AS sim
+        `SELECT chunk_id, title, 1-(embedding <=> $1::halfvec) AS sim
          FROM beauty_knowledge_embeddings WHERE chunk_id = $2`, [qv, expId]);
       if (er.rows.length) expSims.push({ chunk_id: expId, title: er.rows[0].title, sim: parseFloat(er.rows[0].sim.toFixed(4)) });
     }

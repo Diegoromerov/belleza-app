@@ -102,6 +102,17 @@ function isPerRequestTransactionEnabled() {
  */
 async function runInTenantTransaction(deps, tenantId, fn) {
   const client = await deps.pool.connect();
+
+  // Arnés de tests: varios dobles de config/db declaran `connect: jest.fn()`,
+  // que devuelve undefined. Se marca con un error propio para que el middleware
+  // pueda distinguir «el doble no puede abrir conexión» de un fallo real de
+  // Postgres, que sí debe responder 500.
+  if (!client || typeof client.query !== 'function') {
+    const error = new Error('runInTenantTransaction: el pool no entregó un cliente utilizable');
+    error.code = 'SIN_CLIENTE_DEDICADO';
+    throw error;
+  }
+
   let began = false;
 
   try {

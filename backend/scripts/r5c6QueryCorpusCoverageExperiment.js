@@ -156,8 +156,8 @@ function computeMetrics(rankedIds, expected) {
 
 async function retrieve(qv, topK) {
   const res = await ragPool.query(
-    `SELECT id, chunk_id, document_id, title, content, 1-(embedding <=> $1::vector) AS sim
-     FROM beauty_knowledge_embeddings ORDER BY embedding <=> $1::vector LIMIT ${topK}`, [qv]);
+    `SELECT id, chunk_id, document_id, title, content, 1-(embedding <=> $1::halfvec) AS sim
+     FROM beauty_knowledge_embeddings ORDER BY embedding <=> $1::halfvec LIMIT ${topK}`, [qv]);
   return res.rows.map(r => ({ chunk_id: r.chunk_id, title: r.title, sim: parseFloat(r.sim.toFixed(4)) }));
 }
 

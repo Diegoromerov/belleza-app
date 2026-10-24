@@ -4,6 +4,7 @@ const { pool } = require('../config/db');
 const { getJwtSecret, toApiRole } = require('../config/jwt');
 const redisClient = require('../config/redis');
 const emailService = require('../services/email.service');
+const consentService = require('../services/consentService');
 const { Membership, BusinessProfile } = require('../models');
 const {
   registerSchema,
@@ -581,7 +582,28 @@ exports.getReferralInfo = async (req, res) => {
 exports.deleteAccount = async (req, res) => {
   const userId = req.user.id;
   try {
-    // 1. Anonimizar datos personales en la base de datos
+    // 1. T-111: borrar los datos biométricos ANTES de tocar la cuenta.
+    //
+    // Antes esta ruta sólo anonimizaba el usuario y revocaba el consentimiento: los
+    // escaneos cifrados, sus comparaciones y la huella de la foto seguían en la base
+    // mientras la respuesta afirmaba que los datos habían sido eliminados. Se hace
+    // primero para que un fallo no deje la cuenta inutilizable a medio borrar y el
+    // reintento sea posible.
+    const biometricos = await consentService.deleteBiometricData(userId);
+    if (!biometricos.deleted) {
+      console.error(`❌ [LEGAL] No se pudieron borrar los datos biométricos del usuario ${userId}: ${biometricos.error || 'sin detalle'}`);
+      return res.status(500).json({
+        error: 'No pudimos eliminar tus datos biométricos, así que no hemos cerrado la cuenta. Inténtalo de nuevo o escríbenos.',
+      });
+    }
+
+    // 2. Revocar consentimientos biométricos activos si la tabla existe
+    await pool.query(
+      `UPDATE biometric_consents SET granted = FALSE, revoked_at = NOW(), updated_at = NOW() WHERE user_id = $1`,
+      [userId]
+    ).catch(() => {});
+
+    // 3. Anonimizar datos personales en la base de datos
     await pool.query(
       `UPDATE usuarios 
        SET nombre = 'Usuario Eliminado', 
@@ -594,23 +616,18 @@ exports.deleteAccount = async (req, res) => {
       [`deleted_${userId}_${Date.now()}@glowapp.deleted`, userId]
     );
 
-    // 2. Revocar consentimientos biométricos activos si la tabla existe
-    await pool.query(
-      `UPDATE biometric_consents SET granted = FALSE, revoked_at = NOW(), updated_at = NOW() WHERE user_id = $1`,
-      [userId]
-    ).catch(() => {});
+    console.log(`⚖️ [LEGAL COMPLIANCE] Cuenta de usuario ID ${userId} eliminada a solicitud del titular. Datos biométricos suprimidos: ${biometricos.recordsAffected}.`);
 
-    console.log(`⚖️ [LEGAL COMPLIANCE] Cuenta de usuario ID ${userId} eliminada a solicitud del titular.`);
-
-        res.json({
-          success: true,
-          message: 'Tu cuenta y datos personales han sido eliminados de GlowApp exitosamente.'
-        });
-      } catch (error) {
-        console.error('❌ Error al eliminar cuenta:', error.message);
-        res.status(500).json({ error: 'Error al procesar la solicitud de eliminación de cuenta.' });
-      }
-    };
+    res.json({
+      success: true,
+      message: 'Tu cuenta y tus datos personales y biométricos han sido eliminados de GlowApp.',
+      biometric_records_deleted: biometricos.recordsAffected,
+    });
+  } catch (error) {
+    console.error('❌ Error al eliminar cuenta:', error.message);
+    res.status(500).json({ error: 'Error al procesar la solicitud de eliminación de cuenta.' });
+  }
+};
 
 // ==========================================
 // 🔐 CAMBIAR CONTRASEÑA (Usuario autenticado conoce contraseña actual)

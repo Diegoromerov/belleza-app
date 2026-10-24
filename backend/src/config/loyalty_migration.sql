@@ -63,28 +63,30 @@ WHERE is_active = true AND estatus_verificacion = 'APROBADO';
 CREATE INDEX IF NOT EXISTS idx_providers_spatial_elite ON perfiles_prestador USING GIST (ubicacion)
 WHERE is_active = true AND estatus_verificacion = 'APROBADO' AND is_avant_garde_elite = true;
 
--- 7. Triggers for Dynamic Platform Commission Calculation (Style Hierarchy)
+-- 7. Split de la reserva: comisión única desde `platform_config` (D-GL-019/D-GL-023)
+--
+-- Esta función se redefine en CADA ARRANQUE de la aplicación, porque `index.js`
+-- ejecuta este archivo. Antes fijaba 12% de comisión + 8% de impuestos: cualquier
+-- despliegue revertía en silencio la migración 096 y devolvía producción al split
+-- viejo. Si se vuelve a tocar, tiene que seguir leyendo la configuración.
 CREATE OR REPLACE FUNCTION calc_booking_split()
 RETURNS TRIGGER AS $$
 DECLARE
-  p_tier VARCHAR(30);
-  comm_rate NUMERIC(4,2) := 0.12; -- Default 12% net commission (making 20% total with tax)
-  booking_dow INTEGER;
+  comm_rate NUMERIC(5,2);
 BEGIN
-  -- Fetch current loyalty tier of the provider
-  SELECT tier INTO p_tier FROM provider_loyalty WHERE provider_id = NEW.provider_id;
-  
-  -- Avant-Garde Elite receives 10% commission on Tuesdays (2) and Wednesdays (3) (18% total with tax)
-  IF p_tier = 'Avant-Garde Elite' THEN
-    booking_dow := EXTRACT(DOW FROM NEW.scheduled_at);
-    IF booking_dow IN (2, 3) THEN
-      comm_rate := 0.10;
-    END IF;
+  SELECT COALESCE(NULLIF(value, '')::NUMERIC, 20)
+    INTO comm_rate
+    FROM platform_config
+   WHERE key = 'comision_plataforma_pct';
+
+  -- Una configuración corrupta no puede vaciar el pago del prestador.
+  IF comm_rate IS NULL OR comm_rate < 0 OR comm_rate > 50 THEN
+    comm_rate := 20;
   END IF;
 
-  NEW.comision_plataforma := ROUND(NEW.valor_bruto * comm_rate, 2);
-  NEW.impuestos_estado := ROUND(NEW.valor_bruto * 0.08, 2);
-  NEW.pago_neto_prestador := NEW.valor_bruto - (NEW.comision_plataforma + NEW.impuestos_estado);
+  NEW.comision_plataforma := ROUND(NEW.valor_bruto * (comm_rate / 100.0), 2);
+  NEW.impuestos_estado    := 0;
+  NEW.pago_neto_prestador := NEW.valor_bruto - NEW.comision_plataforma;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -92,7 +94,7 @@ $$ LANGUAGE plpgsql;
 -- Recreate trigger if exists
 DROP TRIGGER IF EXISTS before_booking_insert_update ON bookings;
 CREATE TRIGGER before_booking_insert_update
-BEFORE INSERT OR UPDATE OF valor_bruto, scheduled_at, provider_id ON bookings
+BEFORE INSERT OR UPDATE OF valor_bruto ON bookings
 FOR EACH ROW EXECUTE FUNCTION calc_booking_split();
 
 -- 8. Trigger to Automatically Synchronize Elite Tier Flag to perfiles_prestador for Spatial Indexing

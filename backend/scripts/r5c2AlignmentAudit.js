@@ -41,17 +41,17 @@ async function main() {
 
     // ── A. Retrieval HNSW (productivo) top-10 ──
     const hnswRes = await ragPool.query(
-      `SELECT id, chunk_id, document_id, title, content, 1-(embedding <=> $1::vector) AS sim
+      `SELECT id, chunk_id, document_id, title, content, 1-(embedding <=> $1::halfvec) AS sim
        FROM beauty_knowledge_embeddings
-       ORDER BY embedding <=> $1::vector LIMIT 10`, [qv]);
+       ORDER BY embedding <=> $1::halfvec LIMIT 10`, [qv]);
 
     // ── B. Retrieval exact scan top-10 (sesión temporal read-only) ──
     await ragPool.query('SET LOCAL enable_indexscan = off');
     await ragPool.query('SET LOCAL enable_bitmapscan = off');
     const exactRes = await ragPool.query(
-      `SELECT id, chunk_id, document_id, title, content, 1-(embedding <=> $1::vector) AS sim
+      `SELECT id, chunk_id, document_id, title, content, 1-(embedding <=> $1::halfvec) AS sim
        FROM beauty_knowledge_embeddings
-       ORDER BY embedding <=> $1::vector LIMIT 10`, [qv]);
+       ORDER BY embedding <=> $1::halfvec LIMIT 10`, [qv]);
 
     const hnswIds = hnswRes.rows.map(r => r.chunk_id);
     const exactIds = exactRes.rows.map(r => r.chunk_id);
@@ -59,7 +59,7 @@ async function main() {
     // ── C. Similaridad exacta query→expected ──
     const expLit = '{' + q.expected_chunks.join(',') + '}';
     const expRes = await ragPool.query(
-      `SELECT chunk_id, document_id, title, content, 1-(embedding <=> $1::vector) AS sim
+      `SELECT chunk_id, document_id, title, content, 1-(embedding <=> $1::halfvec) AS sim
        FROM beauty_knowledge_embeddings WHERE chunk_id = ANY($2::text[])
        ORDER BY sim DESC`, [qv, q.expected_chunks]);
 

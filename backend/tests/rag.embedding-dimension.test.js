@@ -19,6 +19,9 @@ const path = require('path');
 
 const BACKEND_ROOT = path.join(__dirname, '..');
 const MIGRATIONS_DIR = path.join(BACKEND_ROOT, 'migrations');
+// Las migraciones del RAG viven en migrations/rag/ (runner propio contra
+// RAG_DATABASE_URL). Para los chequeos de contenido cuentan igual.
+const RAG_MIGRATIONS_DIR = path.join(MIGRATIONS_DIR, 'rag');
 const EMBEDDING_SERVICE = path.join(BACKEND_ROOT, 'src', 'services', 'embeddingService.js');
 const RAG_SERVICE = path.join(BACKEND_ROOT, 'src', 'services', 'ragService.js');
 
@@ -39,18 +42,25 @@ const stripSqlComments = (sql) => sql
   .replace(/--[^\n\r]*/g, ' ');
 
 /** Migraciones SQL aplicables (excluye .down.sql, igual que migrationRunner.js). */
-const applicableMigrations = () => fs.readdirSync(MIGRATIONS_DIR)
-  .filter((f) => f.endsWith('.sql') && !f.endsWith('.down.sql'))
-  .sort()
-  .map((file) => ({ file, sql: stripSqlComments(read(path.join(MIGRATIONS_DIR, file))) }));
+const applicableMigrations = () => {
+  const dirs = [MIGRATIONS_DIR, RAG_MIGRATIONS_DIR].filter((d) => fs.existsSync(d));
+  return dirs
+    .flatMap((dir) => fs.readdirSync(dir)
+      .filter((f) => f.endsWith('.sql') && !f.endsWith('.down.sql'))
+      .map((file) => ({ file, dir })))
+    .sort((a, b) => a.file.localeCompare(b.file))
+    .map(({ file, dir }) => ({ file, sql: stripSqlComments(read(path.join(dir, file))) }));
+};
 
 /**
  * Dimensión EFECTIVA de `beauty_knowledge_embeddings.embedding`: la última declaración
- * `embedding vector(N)` / `ALTER COLUMN embedding TYPE vector(N)` en orden de ejecución
+ * `embedding vector(N)` / `embedding halfvec(N)` / `ALTER COLUMN embedding TYPE ...` en
+ * orden de ejecución (pgvector limita HNSW/IVFFlat a 2000 dims con `vector`, por eso
+ * el corpus usa `halfvec(2048)`).
  * (nombres de archivo ordenados alfabéticamente, como los aplica migrationRunner).
  */
 const effectiveColumnDimension = () => {
-  const re = /embedding\s+(?:TYPE\s+)?vector\((\d+)\)/g;
+  const re = /embedding\s+(?:TYPE\s+)?(?:halfvec|vector)\((\d+)\)/g;
   let last = null;
   let lastFile = null;
   for (const { file, sql } of applicableMigrations()) {
@@ -116,14 +126,15 @@ describe('RAG · dimensión de embeddings vs modelo vivo', () => {
   test('existe una migración que reconstruye la columna a 2048 y recrea el índice HNSW', () => {
     const migrations = applicableMigrations();
     const target = migrations.filter(({ sql }) =>
-      /vector\(2048\)/.test(sql) && /USING\s+hnsw\s*\(\s*embedding\s+vector_cosine_ops\s*\)/i.test(sql)
+      /(?:halfvec|vector)\(2048\)/.test(sql) &&
+      /USING\s+hnsw\s*\(\s*embedding\s+(?:halfvec|vector)_cosine_ops\s*\)/i.test(sql)
     );
     expect(target.length).toBeGreaterThan(0);
   });
 
   test('la migración de dimensión documenta la re-ingesta obligatoria del corpus', () => {
     const migrations = applicableMigrations();
-    const target = migrations.find(({ sql }) => /vector\(2048\)/.test(sql));
+    const target = migrations.find(({ sql }) => /(?:halfvec|vector)\(2048\)/.test(sql));
     expect(target).toBeTruthy();
     expect(target.sql.toLowerCase()).toMatch(/re-?ingesta|re-?ingest/);
   });

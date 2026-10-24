@@ -248,7 +248,18 @@ const SCHEMA_SQL = `
     cufe VARCHAR(96),
     qr_factura TEXT,
     factura_emitida BOOLEAN DEFAULT FALSE,
-    factura_fecha TIMESTAMPTZ
+    factura_fecha TIMESTAMPTZ,
+    -- D-GL-023/024 (migraciones 096-098): cancelación, reprogramación, propina
+    cancelado_por VARCHAR(20),
+    cancelado_at TIMESTAMP,
+    completed_at TIMESTAMP,
+    reschedule_count INTEGER DEFAULT 0,
+    propina NUMERIC(10,2) DEFAULT 0,
+    credito_aplicado NUMERIC(10,2) DEFAULT 0,
+    checkin_lat NUMERIC(10,7),
+    checkin_lng NUMERIC(10,7),
+    service_lat NUMERIC(10,7),
+    service_lng NUMERIC(10,7)
   );
 
   CREATE TABLE IF NOT EXISTS transactions (
@@ -392,6 +403,20 @@ const SCHEMA_SQL = `
   CREATE INDEX IF NOT EXISTS idx_pedidos_tienda_comprador ON pedidos_tienda(comprador_id);
   CREATE INDEX IF NOT EXISTS idx_pedidos_tienda_booking ON pedidos_tienda(booking_id);
   CREATE INDEX IF NOT EXISTS idx_pedidos_tienda_comisionado ON pedidos_tienda(prestador_comisionado_id);
+  CREATE TABLE IF NOT EXISTS reembolsos (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    booking_id UUID,
+    client_id INTEGER,
+    monto NUMERIC(12,2) NOT NULL DEFAULT 0,
+    porcentaje_devolucion NUMERIC(5,2) NOT NULL DEFAULT 0,
+    tramo VARCHAR(20),
+    motivo TEXT,
+    estado VARCHAR(20) NOT NULL DEFAULT 'PENDIENTE',
+    referencia_pasarela VARCHAR(255),
+    creado_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    procesado_at TIMESTAMP
+  );
+
   CREATE TABLE IF NOT EXISTS provider_wallet (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     provider_id INTEGER NOT NULL UNIQUE,

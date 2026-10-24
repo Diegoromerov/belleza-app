@@ -10,6 +10,10 @@ class BiometricResult {
   final int? glowScore;
   final Map<String, dynamic>? dermoFamilies;
 
+  /// Y-F5: la medición se reutilizó de un escaneo previo con la misma foto
+  /// (no se gastó una unidad del proveedor).
+  final bool cacheHit;
+
   BiometricResult({
     this.profileId,
     this.face,
@@ -19,12 +23,33 @@ class BiometricResult {
     this.products,
     this.glowScore,
     this.dermoFamilies,
+    this.deltaVerdict,
+    this.deltaGlowScore,
+    this.deltaSignificant,
+    this.cacheHit = false,
   });
+
+  /// Y-F3: veredicto del cambio contra el baseline propio.
+  /// Valores: MEJORO, EMPEORO, MIXTO, SIN_CAMBIO, SIN_BASELINE, NO_DISPONIBLE.
+  final String? deltaVerdict;
+  final double? deltaGlowScore;
+  final int? deltaSignificant;
 
   factory BiometricResult.fromJson(Map<String, dynamic> json) {
     final data = json['results'] is Map<String, dynamic>
         ? json['results'] as Map<String, dynamic>
         : json;
+
+    // Y-F3: bloque de comparación contra el escaneo anterior (puede no venir).
+    final rawDelta = data['delta'] ?? json['delta'];
+    final deltaMap = rawDelta is Map ? rawDelta : null;
+    final deltaGlow = deltaMap?['glowScore'] is Map ? deltaMap!['glowScore'] as Map : null;
+    final rawGlowDelta = deltaGlow?['delta'];
+    final rawSignificant = deltaMap?['significant'];
+
+    // Y-F5: si la medición vino de la caché de la misma foto.
+    final rawCache = data['cache'] ?? json['cache'];
+    final cacheMap = rawCache is Map ? rawCache : null;
 
     final rawGlowScore = json['glowScore'] ?? data['glowScore'];
     int? parsedGlowScore = (rawGlowScore is num)
@@ -61,6 +86,14 @@ class BiometricResult {
           : (data['dermoFamilies'] is Map<String, dynamic>
               ? data['dermoFamilies'] as Map<String, dynamic>
               : null),
+      deltaVerdict: deltaMap?['verdict']?.toString(),
+      deltaGlowScore: rawGlowDelta is num
+          ? rawGlowDelta.toDouble()
+          : double.tryParse(rawGlowDelta?.toString() ?? ''),
+      deltaSignificant: rawSignificant is num
+          ? rawSignificant.toInt()
+          : int.tryParse(rawSignificant?.toString() ?? ''),
+      cacheHit: cacheMap?['hit'] == true,
     );
   }
 }
@@ -72,6 +105,11 @@ class FaceScores {
   final int pores;
   final String subtono;
   final int bioAge;
+  /// Y-F2: tipo de piel medido por YouCam (hd_skin_type). Antes se publicaba como
+  /// subtono; ahora viaja aparte.
+  final String? pielTipo;
+  /// 'ita_hue_propio' si el subtono se midió sobre la foto; 'no_medido' si no.
+  final String? subtonoFuente;
 
   FaceScores({
     required this.hydration,
@@ -80,7 +118,12 @@ class FaceScores {
     required this.pores,
     required this.subtono,
     required this.bioAge,
+    this.pielTipo,
+    this.subtonoFuente,
   });
+
+  /// Un subtono vacío significa que no se midió: no se inventa 'neutro'.
+  bool get subtonoMedido => subtono.isNotEmpty;
 
   factory FaceScores.fromJson(Map<String, dynamic> json) {
     return FaceScores(
@@ -88,8 +131,10 @@ class FaceScores {
       wrinkles: (json['wrinkles'] is num) ? (json['wrinkles'] as num).toInt() : (int.tryParse(json['wrinkles']?.toString() ?? '') ?? 0),
       spots: (json['spots'] is num) ? (json['spots'] as num).toInt() : (int.tryParse(json['spots']?.toString() ?? '') ?? 0),
       pores: (json['pores'] is num) ? (json['pores'] as num).toInt() : (int.tryParse(json['pores']?.toString() ?? '') ?? 0),
-      subtono: json['subtono']?.toString() ?? 'neutro',
+      subtono: json['subtono']?.toString() ?? '',
       bioAge: (json['bioAge'] is num) ? (json['bioAge'] as num).toInt() : (int.tryParse(json['bioAge']?.toString() ?? '') ?? 30),
+      pielTipo: json['pielTipo']?.toString(),
+      subtonoFuente: json['subtonoFuente']?.toString(),
     );
   }
 }

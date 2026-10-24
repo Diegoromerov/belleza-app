@@ -4,7 +4,7 @@
 -- 1. Tabla principal de audit trail de retención
 CREATE TABLE IF NOT EXISTS retention_audit_log (
     id SERIAL PRIMARY KEY,
-    execution_id UUID NOT NULL DEFAULT uuid_generate_v4(),
+    execution_id UUID NOT NULL DEFAULT gen_random_uuid(),
     started_at TIMESTAMPTZ NOT NULL,
     finished_at TIMESTAMPTZ,
     status VARCHAR(20) NOT NULL CHECK (status IN ('SUCCESS', 'PARTIAL_ERROR', 'TOTAL_ERROR')),

@@ -111,8 +111,8 @@ async function main() {
     // ── RETRIEVAL (top-100 natural, sin tocar) ──
     const qEmb = await generateEmbedding(q.query, 'query');
     const res = await ragPool.query(
-      `SELECT chunk_id, document_id, title, content, 1-(embedding <=> $1::vector) AS sim
-       FROM beauty_knowledge_embeddings ORDER BY embedding <=> $1::vector LIMIT ${TOPK}`, ['[' + qEmb.join(',') + ']']);
+      `SELECT chunk_id, document_id, title, content, 1-(embedding <=> $1::halfvec) AS sim
+       FROM beauty_knowledge_embeddings ORDER BY embedding <=> $1::halfvec LIMIT ${TOPK}`, ['[' + qEmb.join(',') + ']']);
     const pool = res.rows.map((r, i) => ({
       chunk_id: r.chunk_id, document_id: r.document_id || '', title: r.title || '', content: r.content || '',
       vector_score: +r.sim.toFixed(4), rank: i + 1,

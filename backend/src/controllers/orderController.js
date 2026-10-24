@@ -1,5 +1,6 @@
 const { pool } = require('../config/db');
 const { resolverPrecio } = require('../services/precioService');
+const { calcularEnvio } = require('../services/envioService');
 const wompiClient = require('../services/wompiClient');
 const { discriminarIva } = require('../utils/iva');
 
@@ -55,7 +56,10 @@ exports.createOrder = async (req, res) => {
     departamento,
     codigo_postal,
     referencia,
-    direccion_entrega_id
+    direccion_entrega_id,
+    // Campos del cotizador de envío (D-GL-011 v2)
+    ciudad_entrega,
+    peso_kg
   } = req.body;
 
   if (!items || !Array.isArray(items) || items.length === 0) {
@@ -200,40 +204,22 @@ exports.createOrder = async (req, res) => {
     const iva = ivaCent / 100;
     const totalProductos = subtotal + iva;
 
-    // Calcular envío e IVA usando el motor de cotización por zonas (L5)
-    // Si tiene descuento por reserva (entrega en cita), envío gratis
-    let costoEnvio = 0;
-    let transportadoraSugerida = null;
-    let diasEstimados = null;
-
-    if (!tieneDescuentoReserva) {
-      // Usar campos estructurados si vienen en el request, sino fallback a parsing direccion_entrega
-      const ciudad = req.body.ciudad;
-      const departamento = req.body.departamento;
-      const codigo_postal = req.body.codigo_postal;
-      const pesoEstimadoKg = req.body.peso_total_kg || 0.5; // default 500g
-
-      if (ciudad && departamento) {
-        try {
-          const cotizacion = await cotizarEnvio({
-            ciudad,
-            departamento,
-            codigo_postal,
-            peso_total_kg: pesoEstimadoKg,
-            valor_pedido: totalProductos
-          });
-          costoEnvio = cotizacion.costo;
-          transportadoraSugerida = cotizacion.transportadora;
-          diasEstimados = cotizacion.dias_estimados;
-        } catch (err) {
-          console.warn('⚠️ Error cotizando envío, usando tarifa plana:', err.message);
-          costoEnvio = 12000;
-        }
-      } else {
-        // Fallback tarifa plana si no hay dirección estructurada
-        costoEnvio = 12000;
-      }
-    }
+    // D-GL-011 v2 / D-GL-015: el envío sale de `zonas_envio` con la retención de
+    // gestión de 1.000 y gratis solo por encima del umbral de la zona. Si falta
+    // la dirección, el motor usa la zona más cara; nunca una constante inventada.
+    const unidades = processedItems.reduce((t, item) => t + (item.cantidad || 0), 0);
+    const envioDetalle = await calcularEnvio({
+      client,
+      ciudad: req.body.ciudad || ciudad_entrega,
+      direccion: req.body.direccion_entrega || direccion_entrega,
+      pesoKg: req.body.peso_total_kg || peso_kg,
+      subtotal: totalProductos,
+      unidades,
+      entregaEnCita: tieneDescuentoReserva
+    });
+    const costoEnvio = envioDetalle.envio;
+    const transportadoraSugerida = envioDetalle.transportadora;
+    const diasEstimados = null;
 
     const total = totalProductos + costoEnvio;
 
@@ -335,7 +321,8 @@ exports.createOrder = async (req, res) => {
       success: true,
       data: {
         order,
-        items: processedItems
+        items: processedItems,
+        envio: envioDetalle
       }
     });
 
@@ -348,6 +335,117 @@ exports.createOrder = async (req, res) => {
     res.status(500).json({ error: 'Error al procesar el checkout' });
   } finally {
     client.release();
+  }
+};
+
+// POST /api/store/envio/cotizacion → Desglose del pedido SIN crearlo.
+// Solo lectura: no inserta pedidos, no descuenta stock y no abre transacción
+// de escritura. La app lo usa para mostrar el envío y el total real antes de
+// abrir la pasarela de pago.
+exports.cotizarEnvio = async (req, res) => {
+  const userRole = req.user.role;
+  const { items, direccion_entrega, ciudad_entrega, peso_kg, booking_id } = req.body;
+
+  if (!items || !Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ error: 'Se requiere una lista de productos (items)' });
+  }
+
+  try {
+    let entregaEnCita = false;
+
+    // Mismas reglas que createOrder: solo el dueño de la reserva puede
+    // asociarla, y una reserva válida implica entrega en la cita (sin courier).
+    if (booking_id) {
+      if (userRole === 'provider') {
+        return res.status(400).json({ error: 'Un prestador no puede asociar compras a una reserva' });
+      }
+
+      const bookingRes = await pool.query(
+        'SELECT id, client_id FROM bookings WHERE id = $1;',
+        [booking_id]
+      );
+
+      if (bookingRes.rows.length === 0) {
+        return res.status(404).json({ error: 'Reserva no encontrada' });
+      }
+      if (bookingRes.rows[0].client_id !== req.user.id) {
+        return res.status(403).json({ error: 'No tienes acceso a esta reserva' });
+      }
+
+      entregaEnCita = true;
+    }
+
+    // El subtotal SIEMPRE se resuelve en el servidor con el mismo servicio que
+    // usa el checkout; nunca se acepta un subtotal enviado por el cliente.
+    let subtotal = 0;
+    let unidades = 0;
+
+    for (const item of items) {
+      const { producto_id, cantidad } = item || {};
+      const cantidadNum = Number(cantidad);
+      if (!producto_id || !Number.isFinite(cantidadNum) || cantidadNum <= 0) {
+        return res.status(400).json({ error: 'ID de producto y cantidad válidos son obligatorios' });
+      }
+
+      let resPrecio;
+      try {
+        resPrecio = await resolverPrecio({
+          rol: userRole,
+          productoId: producto_id,
+          cantidad: cantidadNum
+        });
+      } catch (precioErr) {
+        if (precioErr.code === 'MINIMO_NO_CUMPLIDO') {
+          return res.status(400).json({
+            error: precioErr.message,
+            unidad_minima: precioErr.unidad_minima,
+            lista: precioErr.lista
+          });
+        }
+        throw precioErr;
+      }
+
+      if (!resPrecio || resPrecio.estado === 'sin_precio' || resPrecio.precio === null || resPrecio.precio === undefined) {
+        return res.status(403).json({ error: `No hay precio disponible para el producto ${producto_id}` });
+      }
+
+      subtotal += resPrecio.precio * cantidadNum;
+      unidades += cantidadNum;
+    }
+
+    const envioDetalle = await calcularEnvio({
+      client: pool,
+      ciudad: ciudad_entrega,
+      direccion: direccion_entrega,
+      pesoKg: peso_kg,
+      subtotal,
+      unidades,
+      entregaEnCita
+    });
+
+    // Misma convención que createOrder: el precio de lista incluye IVA.
+    // `subtotal` sale como base neta (lo que se guarda en pedidos_tienda.subtotal)
+    // y `subtotal_con_iva` como el valor de vitrina. Antes la cotización devolvía el
+    // bruto en `subtotal` y el pedido guardaba la base: la pantalla mostraba 30.000
+    // y la fila decía 25.210, que es el descuadre que esta prueba vigila.
+    const iva = Math.round(subtotal - subtotal / 1.19);
+    const baseNeta = subtotal - iva;
+    const total = subtotal + envioDetalle.envio;
+
+    res.json({
+      success: true,
+      data: {
+        subtotal: baseNeta,
+        subtotal_con_iva: subtotal,
+        iva,
+        envio: envioDetalle.envio,
+        total,
+        envio_detalle: envioDetalle
+      }
+    });
+  } catch (error) {
+    console.error('❌ ERROR EN COTIZACIÓN DE ENVÍO:', error);
+    res.status(500).json({ error: 'Error al cotizar el envío' });
   }
 };
 

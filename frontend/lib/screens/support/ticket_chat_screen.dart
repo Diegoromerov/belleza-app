@@ -1,4 +1,4 @@
-// frontend/lib/screens/support/ticket_chat_screen.dart
+﻿// frontend/lib/screens/support/ticket_chat_screen.dart
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -51,6 +51,7 @@ class _TicketChatScreenState extends State<TicketChatScreen> {
 
   Future<void> _loadMyUserId() async {
     final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
     setState(() {
       _myUserId = prefs.getString('userId');
     });
@@ -83,7 +84,7 @@ class _TicketChatScreenState extends State<TicketChatScreen> {
     } catch (e) {
       if (!silent) {
         setState(() {
-          _error = 'Error de conexión: $e';
+          _error = 'Error de conexiÃ³n: $e';
         });
       }
     } finally {
@@ -224,12 +225,12 @@ class _TicketChatScreenState extends State<TicketChatScreen> {
             Icon(Icons.chat_bubble_outline, size: 48, color: AppTheme.primary.withValues(alpha: 0.5)),
             const SizedBox(height: 12),
             const Text(
-              '¡Chat de Soporte Técnico!',
+              'Â¡Chat de Soporte TÃ©cnico!',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.black87),
             ),
             const SizedBox(height: 6),
             const Text(
-              'Escribe tu inquietud abajo. Un agente de soporte revisará el caso y responderá en este hilo.',
+              'Escribe tu inquietud abajo. Un agente de soporte revisarÃ¡ el caso y responderÃ¡ en este hilo.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 12, color: Colors.grey),
             ),

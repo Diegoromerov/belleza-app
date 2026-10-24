@@ -5,6 +5,8 @@ const router = express.Router();
 const { authMiddleware } = require('../middleware/auth');
 const pilaCheck = require('../middleware/pilaCheck');
 const bookingController = require('../controllers/bookingController');
+const tipController = require('../controllers/tipController');
+const creditController = require('../controllers/creditController');
 
 // 🔹 CREAR RESERVA
 router.post('/bookings', authMiddleware, bookingController.createBooking);
@@ -20,6 +22,19 @@ router.patch('/bookings/:id/status', authMiddleware, pilaCheck, bookingControlle
 
 // 🔹 CANCELAR CITA
 router.patch('/bookings/:id/cancel', authMiddleware, bookingController.cancelBooking);
+
+// D-GL-023 — reprogramación única (bloqueo en API) y cancelación del prestador
+router.patch('/bookings/:id/reschedule', authMiddleware, bookingController.rescheduleBooking);
+router.patch('/bookings/:id/cancel-provider', authMiddleware, pilaCheck, bookingController.cancelBookingByProvider);
+
+// D-GL-023 — propina (100% al prestador) y compensación por no-show en créditos
+router.post('/bookings/:id/tip', authMiddleware, tipController.createTip);
+router.get('/bookings/:id/tip', authMiddleware, tipController.getTip);
+router.post('/bookings/:id/no-show', authMiddleware, creditController.reportProviderNoShow);
+
+// Créditos del usuario
+router.get('/credits/me', authMiddleware, creditController.getMyCredits);
+router.post('/credits/apply', authMiddleware, creditController.applyCredit);
 
 // 🔹 SIMULAR PAGO CON WOMPI
 router.post('/bookings/:id/pay', authMiddleware, bookingController.payBooking);

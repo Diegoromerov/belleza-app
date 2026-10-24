@@ -80,8 +80,8 @@ async function main() {
 
     // Candidatos top-20 (SQL read-only, topK 20 para estudio de profundidad)
     const cand = await ragPool.query(
-      `SELECT id, chunk_id, document_id, title, content, 1-(embedding <=> $1::vector) AS sim
-       FROM beauty_knowledge_embeddings ORDER BY embedding <=> $1::vector LIMIT 20`, [qv]);
+      `SELECT id, chunk_id, document_id, title, content, 1-(embedding <=> $1::halfvec) AS sim
+       FROM beauty_knowledge_embeddings ORDER BY embedding <=> $1::halfvec LIMIT 20`, [qv]);
     const candidates = cand.rows.map((r, i) => ({
       rank_original: i + 1,
       chunk_id: r.chunk_id,

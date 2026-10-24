@@ -29,7 +29,8 @@ jest.mock('../services/embeddingService', () => ({
 
 const { ragPool } = require('../config/db');
 const { generateEmbedding } = require('../services/embeddingService');
-const { searchBeautyKnowledge, formatKnowledgeContext } = require('../services/ragService');
+const { searchBeautyKnowledge, RRF_POOL, formatKnowledgeContext } = require('../services/ragService');
+const { RAG_SIMILARITY_THRESHOLD } = require('../config/ragConfig');
 
 describe('ragService retrieval', () => {
   beforeEach(() => {
@@ -90,8 +91,8 @@ describe('ragService retrieval', () => {
 
     // Y el tenant es un parámetro ligado, con el threshold/limit desplazados
     expect(params[1]).toBe(maliciousTenantId);
-    expect(params[2]).toBe(0.45);
-    expect(params[3]).toBe(5);
+    expect(params[2]).toBe(RAG_SIMILARITY_THRESHOLD);
+    expect(params[3]).toBe(RRF_POOL); // pool del híbrido, no el topK final
   });
 
   test('without tenantId only GLOBAL knowledge is searched (tenant_id IS NULL)', async () => {
@@ -197,8 +198,10 @@ describe('ragService · filtros contra los campos reales (Fase 1)', () => {
   test('si la búsqueda filtrada devuelve 0 filas, reintenta sin filtros de metadata pero SIN relajar el tenant', async () => {
     const tenantId = "10') OR TRUE --";
     ragPool.query
-      .mockResolvedValueOnce({ rows: [] })                                     // con filtros: vacío
-      .mockResolvedValueOnce({ rows: [{ id: 9, title: 'Z', content: 'c', similarity: '0.7', metadata: {} }] });
+      .mockResolvedValueOnce({ rows: [] })                                     // vector con filtros: vacío
+      .mockResolvedValueOnce({ rows: [] })                                     // léxico con filtros: vacío
+      .mockResolvedValueOnce({ rows: [{ id: 9, title: 'Z', content: 'c', similarity: '0.7', metadata: {}, chunk_id: 'z-1' }] })  // vector sin filtros
+      .mockResolvedValueOnce({ rows: [] });                                    // léxico sin filtros
     const trace = {};
 
     const rows = await searchBeautyKnowledge('consulta', {
@@ -208,16 +211,16 @@ describe('ragService · filtros contra los campos reales (Fase 1)', () => {
       trace,
     });
 
-    expect(ragPool.query).toHaveBeenCalledTimes(2);
+    expect(ragPool.query).toHaveBeenCalledTimes(4);
     const [sql1] = ragPool.query.mock.calls[0];
-    const [sql2, params2] = ragPool.query.mock.calls[1];
+    const [sql3, params3] = ragPool.query.mock.calls[2];
 
     expect(sql1).toContain("metadata->'skin_types'");
-    expect(sql2).not.toContain("metadata->'skin_types'");
+    expect(sql3).not.toContain("metadata->'skin_types'");
     // El aislamiento NO se relaja en el reintento
-    expect(sql2).toContain('tenant_id::text = $2');
-    expect(params2[1]).toBe(tenantId);
-    expect(params2).not.toContain('OR TRUE');
+    expect(sql3).toContain('tenant_id::text = $2');
+    expect(params3[1]).toBe(tenantId);
+    expect(params3).not.toContain('OR TRUE');
     expect(rows).toHaveLength(1);
     expect(trace.filters_relaxed).toBe(true);
   });
@@ -229,6 +232,7 @@ describe('ragService · filtros contra los campos reales (Fase 1)', () => {
     const rows = await searchBeautyKnowledge('normativa invima', {
       filters: { domain: 'BUSINESS', jurisdiction: 'NATIONAL' },
       trace,
+      mode: 'vector',
     });
 
     // Una sola consulta: no hay reintento sin filtros para un filtro de alcance
@@ -257,7 +261,7 @@ describe('ragService · filtros contra los campos reales (Fase 1)', () => {
     ragPool.query.mockResolvedValue({ rows: [{ id: 1, title: 'X', content: 'y', similarity: '0.66', metadata: {} }] });
     const trace = {};
 
-    await searchBeautyKnowledge('consulta', { threshold: 0.3, trace });
+    await searchBeautyKnowledge('consulta', { threshold: 0.3, trace, mode: 'vector' });
 
     expect(trace.threshold_used).toBe(0.3);
     expect(trace.mode).toBe('hnsw');

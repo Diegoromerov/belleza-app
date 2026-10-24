@@ -114,7 +114,7 @@ class _BankAccountFormDialogState extends State<BankAccountFormDialog> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
-                      'CUENTA DE RETIRO SAAS',
+                      'Cuenta de retiro',
                       style: TextStyle(
                         fontFamily: 'Didot',
                         fontSize: 16,
@@ -142,7 +142,7 @@ class _BankAccountFormDialogState extends State<BankAccountFormDialog> {
 
                 // ─── Preset Quick Bank Selector ──────────────────────────────
                 const Text(
-                  'ENTIDAD POPULAR RÁPIDA',
+                  'Entidad',
                   style: TextStyle(
                     fontFamily: 'JetBrainsMono',
                     fontSize: 10,
@@ -307,7 +307,7 @@ class _BankAccountFormDialogState extends State<BankAccountFormDialog> {
                       SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Protegido con encriptación AES-256 Banking Grade para dispersiones automáticas.',
+                          'Tus datos se guardan cifrados con AES-256.',
                           style: TextStyle(
                             fontSize: 10.5,
                             color: Color(0xFF047857),

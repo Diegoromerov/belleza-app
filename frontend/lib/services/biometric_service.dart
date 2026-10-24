@@ -11,7 +11,117 @@ import 'auth_service.dart';
 import 'location_service.dart';
 import '../models/biometric_result.dart';
 
+/// Y-F2: el backend rechazó la foto por calidad (HTTP 422). Los motivos vienen
+/// medidos (oscuridad, desenfoque, resolución), no son texto genérico.
+class CaptureRejectedException implements Exception {
+  final List<String> reasons;
+  CaptureRejectedException(this.reasons);
+
+  @override
+  String toString() => reasons.isEmpty
+      ? 'La foto no cumple los requisitos para medir piel.'
+      : reasons.join(' ');
+}
+
+/// Y-F1f (texto 2.1) — estado del consentimiento tal como lo ve el cliente.
+///
+/// Tres cosas distintas que antes se confundían en un solo booleano:
+///   * `granted`  — el usuario autorizó alguna vez,
+///   * `outdated` — autorizó con un texto anterior al vigente,
+///   * `canScan`  — autorizó **y** con el texto vigente.
+///
+/// Un usuario con 2.0 tiene permiso (`granted`) pero no el vigente: hay que pedirle
+/// que acepte el texto nuevo antes de volver a medir. La 2.1 añadió la sección de la
+/// huella de la foto, así que aceptar por él sería mantener un consentimiento que no
+/// corresponde a lo que se guarda.
+class BiometricConsentState {
+  final bool granted;
+  final bool outdated;
+  final String? version;
+  final String currentVersion;
+
+  /// `false` cuando no se pudo leer el estado (sin sesión, red, respuesta rara).
+  /// Un estado desconocido no autoriza a inventar: se dice que no se sabe.
+  final bool known;
+
+  const BiometricConsentState({
+    required this.granted,
+    required this.outdated,
+    required this.currentVersion,
+    this.version,
+    this.known = true,
+  });
+
+  /// Sin datos (sin sesión, error de red): no se asume permiso.
+  static const BiometricConsentState unknown = BiometricConsentState(
+    granted: false,
+    outdated: false,
+    currentVersion: BiometricService.consentVersion,
+    known: false,
+  );
+
+  bool get needsReconsent => granted && outdated;
+
+  /// Puede medir: autorizó con el texto que rige hoy.
+  bool get canScan => granted && !outdated;
+
+  /// `data` de `GET /api/consent/biometric/:tipo`.
+  ///
+  /// Tolera respuestas viejas del backend: si `current_version` no viaja, se usa la
+  /// constante del cliente (que una prueba mantiene en paridad con el servidor).
+  factory BiometricConsentState.fromJson(Map<String, dynamic> data) {
+    final consent = data['consent'];
+    final versionRaw = consent is Map ? consent['version_terms'] : null;
+    final currentRaw = data['current_version'];
+
+    return BiometricConsentState(
+      granted: data['allowed'] == true,
+      outdated: data['outdated'] == true,
+      version: versionRaw is String ? versionRaw : null,
+      currentVersion: currentRaw is String && currentRaw.isNotEmpty
+          ? currentRaw
+          : BiometricService.consentVersion,
+      known: true,
+    );
+  }
+}
+
 class BiometricService {
+  /// Versión del texto de consentimiento que la pantalla muestra al usuario.
+  /// Debe coincidir con `BIOMETRIC_CONSENT_VERSION` del backend
+  /// (`backend/src/config/consentConfig.js`); si no coincide, el análisis queda
+  /// marcado como autorizado con una versión desactualizada.
+  static const String consentVersion = '2.2';
+
+  /// Y-F6: serie de escaneos del usuario, tal como quedó guardada.
+  ///
+  /// El backend no recalcula nada: el GlowScore viene de `quality.glowScore` y el
+  /// veredicto de la comparación persistida. Un escaneo viejo sin puntaje llega con
+  /// `glowScore: null`, y la pantalla lo dice en vez de inventar un número.
+  static Future<List<Map<String, dynamic>>> getHistory({int limit = 20}) async {
+    final baseUrl = await getBaseUrl();
+    final token = await AuthService.getToken();
+    if (token == null) {
+      throw Exception('Tu sesión no está iniciada.');
+    }
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/api/biometric/history?limit=$limit'),
+      headers: {'Authorization': 'Bearer $token'},
+    ).timeout(const Duration(seconds: 20));
+
+    if (response.statusCode == 401) {
+      throw Exception('Tu sesión expiró. Vuelve a entrar.');
+    }
+    if (response.statusCode != 200) {
+      throw Exception('No se pudo cargar tu evolución (${response.statusCode}).');
+    }
+
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+    final scans = (data['scans'] as List<dynamic>? ?? const []);
+    return scans.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+  }
+
   static Future<String> getBaseUrl() async {
     await ApiService.ensureBaseUrl();
     return ApiService.baseUrl;
@@ -33,7 +143,7 @@ class BiometricService {
       body: jsonEncode({
         'consent_type': 'facial_analysis',
         'purpose': 'Análisis facial y recomendaciones personalizadas de cuidado de piel.',
-        'version_terms': '1.0',
+        'version_terms': consentVersion,
       }),
     );
 
@@ -42,28 +152,36 @@ class BiometricService {
     }
   }
 
-  static Future<bool> hasConsent() async {
+  /// Y-F1f: estado completo del consentimiento — permiso, versión aceptada y si el
+  /// texto quedó atrás. Es lo que permite pedir re-consentimiento en vez de asumir
+  /// que un permiso de hace tres versiones sigue cubriendo lo que se guarda hoy.
+  static Future<BiometricConsentState> getConsentState() async {
     final baseUrl = await getBaseUrl();
     final token = await AuthService.getToken();
-    if (token == null || token.isEmpty) return false;
+    if (token == null || token.isEmpty) return BiometricConsentState.unknown;
 
     try {
       final response = await http.get(
         Uri.parse('$baseUrl/api/consent/biometric/facial_analysis'),
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      );
+        headers: {'Authorization': 'Bearer $token'},
+      ).timeout(const Duration(seconds: 15));
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        return data['data']?['allowed'] == true;
-      }
+      if (response.statusCode != 200) return BiometricConsentState.unknown;
+
+      final body = jsonDecode(response.body);
+      final data = body is Map ? body['data'] : null;
+      if (data is! Map) return BiometricConsentState.unknown;
+
+      return BiometricConsentState.fromJson(Map<String, dynamic>.from(data));
     } catch (e) {
-      // Retornar falso si hay error de red o no autenticado
-      return false;
+      debugPrint('⚠️ No se pudo leer el estado del consentimiento: $e');
+      return BiometricConsentState.unknown;
     }
-    return false;
+  }
+
+  static Future<bool> hasConsent() async {
+    final state = await getConsentState();
+    return state.granted;
   }
 
   static Future<void> revokeConsent() async {
@@ -116,6 +234,7 @@ class BiometricService {
     required List<int> handsImageBytes,
     double? lat,
     double? lng,
+    Map<String, dynamic>? geometry,
   }) async {
     final baseUrl = await getBaseUrl();
     final token = await AuthService.getToken();
@@ -143,12 +262,19 @@ class BiometricService {
               'handsImage': base64Encode(compressedHands),
               'lat': lat,
               'lng': lng,
+              // Y-F4: sólo se envía si el cuadro validado traía geometría.
+              if (geometry != null) 'geometry': geometry,
             }),
           )
           .timeout(const Duration(seconds: 40));
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         return jsonDecode(response.body);
+      }
+      // Y-F2: la captura fue rechazada por calidad. Se propaga el motivo medido
+      // (oscuridad, desenfoque, resolución) en vez de un HTTP 422 opaco.
+      if (response.statusCode == 422) {
+        throw CaptureRejectedException(_captureReasons(response.body));
       }
       // A360-2026-09-22/C-04: antes se devolvían aquí datos biométricos
       // inventados (glowScore 84, bioAge 26…) ante cualquier respuesta no-2xx.
@@ -159,8 +285,34 @@ class BiometricService {
       );
     } catch (e) {
       debugPrint('❌ [BiometricService] Análisis biométrico fallido: $e');
+      // El rechazo de captura conserva sus motivos: envolverlo en un Exception
+      // genérico los borraría y el usuario volvería a ver un error opaco.
+      if (e is CaptureRejectedException) rethrow;
       throw Exception('No se pudo completar el análisis biométrico: $e');
     }
+  }
+
+  /// Motivos que midió el backend al rechazar la foto (Y-F2).
+  static List<String> _captureReasons(String body) {
+    try {
+      final decoded = jsonDecode(body);
+      if (decoded is Map) {
+        final capture = decoded['capture'];
+        if (capture is Map) {
+          final reasons = capture['reasons'];
+          if (reasons is List) {
+            return reasons
+                .whereType<Map>()
+                .map((r) => r['message']?.toString() ?? '')
+                .where((m) => m.isNotEmpty)
+                .toList();
+          }
+        }
+      }
+    } catch (_) {
+      // Cuerpo no-JSON: se cae al mensaje genérico de la excepción.
+    }
+    return const [];
   }
 
   /// Resultado de demostración. SÓLO puede invocarse desde un punto de entrada

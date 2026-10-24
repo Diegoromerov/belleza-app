@@ -22,6 +22,7 @@ function toGeminiSchema(schema, depth = 0) {
   if (out.items) out.items = toGeminiSchema(out.items, depth + 1);
   return out;
 }
+const { RAG_SIMILARITY_THRESHOLD } = require('../config/ragConfig');
 const { searchBeautyKnowledge, formatKnowledgeContext, generateEmbedding } = require('./ragService');
 const { breakers } = require('./circuitBreakerService');
 const { sanitizeForLog, hashIdForLog } = require('../utils/piiSanitizer');
@@ -322,8 +323,10 @@ function sanitizeContextForLLM(context, userId) {
  * @param {number|string} userId          - ID del usuario en la base de datos.
  * @param {string}        userMessageText - Texto del mensaje del usuario.
  * @param {string|null}   imageRelativePath - Ruta relativa de imagen adjunta (opcional).
+ * @param {string}        userRole        - Rol del usuario ('PRESTADOR', 'SALON', 'CLIENTE').
+ * @param {string|number|null} tenantId   - Tenant ID si aplica.
  */
-async function processAssistantMessage(userId, userMessageText, imageRelativePath) {
+async function processAssistantMessage(userId, userMessageText, imageRelativePath, userRole = 'CLIENTE', tenantId = null) {
   const traceId = generateTraceId();
   const totalStartTime = Date.now();
   
@@ -377,7 +380,7 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
 
       // Una sola fuente para el umbral: el mismo valor que se usa en la búsqueda es el que
       // se registra en la traza (antes la traza decía 0.72 mientras la consulta usaba 0.45).
-      const ragRetrievalOptions = { topK: 5, threshold: 0.45 };
+      const ragRetrievalOptions = { topK: 5, threshold: RAG_SIMILARITY_THRESHOLD };
       retrievalTrace = {};
 
       const [servicesCtx, chunks] = await Promise.all([
@@ -411,12 +414,26 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
     const beautyKnowledge = formatKnowledgeContext(beautyChunks);
 
     // ── 2. Construir systemInstruction con ambos contextos ─────────────────
-        const beautySection = beautyKnowledge
+    const isProviderOrSalon = userRole === 'PRESTADOR' || userRole === 'SALON' || userRole === 'ADMIN_SALON' || userRole === 'provider';
+    const roleInstruction = isProviderOrSalon
+      ? `\n\n--- MODO ASISTENTE DE NEGOCIOS (GLOWPRO CO-PILOT) ---
+El usuario actual es un PRESTADOR / PROFESIONAL O ADMINISTRADOR DE SALÓN de belleza en GlowApp.
+Tienes autorización para consultar sus datos operativos y de negocio en tiempo real usando tus herramientas:
+- Usa 'get_provider_appointments' si pregunta por citas (pendientes, ejecutadas, canceladas o de este mes/hoy/semana).
+- Usa 'get_provider_financial_metrics' si pregunta cuánto dinero ha facturado, ingresos netos, comisiones o IVA este mes o semana.
+- Usa 'get_salon_operational_summary' si administra una sede o salón y consulta por su equipo o rendimiento global.
+- Usa 'get_provider_b2b_insights' (VALKYRIE) para ocupación y promociones dinámicas.
+- Usa 'get_business_profile_summary' o 'get_business_tasks' para temas de bioseguridad y SST.
+Responde con tono profesional, empático y orientado a facilitarle la gestión de su negocio y agenda.`
+      : '';
+
+    const beautySection = beautyKnowledge
       ? `\n\n--- CONOCIMIENTO TÉCNICO DE BELLEZA (RAG) ---\n(DATOS OFICIALES: usa EXCLUSIVAMENTE los números de resolución, decretos y cifras de esta sección; no los sustituyas por otros que recuerdes)\n${beautyKnowledge}`
       : '';
 
     const systemInstruction =
           `${BASE_SYSTEM_INSTRUCTION}` +
+          `${roleInstruction}` +
           `\n\n--- CATÁLOGO DE SERVICIOS ACTIVOS EN GLOWAPP ---\n${servicesContext}` +
           `${beautySection}`;
 
@@ -644,10 +661,7 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
             console.log(`🛠️  Ejecutando herramienta: ${functionName}`);
 
             const toolStart = Date.now();
-            // RAG (BUS-RAG-001): el chat de cliente consulta SOLO conocimiento GLOBAL
-            // (tenant_id IS NULL) y no debe recibir documentos privados de un negocio.
-            // tenantId=null es intencional; userRole queda en el default del ejecutor.
-            const toolResult = await executeAuraTool(functionName, functionArgs, parsedUserId, undefined, null);
+            const toolResult = await executeAuraTool(functionName, functionArgs, parsedUserId, userRole, tenantId);
             const toolLatency = Date.now() - toolStart;
             
             toolCalls.push({
@@ -731,7 +745,7 @@ async function processAssistantMessage(userId, userMessageText, imageRelativePat
                       try {
                         console.log(`🔍 RAG Vectorial en fallback para: "${userMessageText.substring(0, 60)}..."`);
                         const fallbackRetrievalStart = Date.now();
-                        beautyChunksFallback = await searchBeautyKnowledge(userMessageText, { topK: 5, threshold: 0.45, trace: retrievalTrace });
+                        beautyChunksFallback = await searchBeautyKnowledge(userMessageText, { topK: 5, threshold: RAG_SIMILARITY_THRESHOLD, trace: retrievalTrace });
                         const fallbackRetrievalLatency = Date.now() - fallbackRetrievalStart;
                         console.log(`✅ RAG Fallback: ${beautyChunksFallback.length} chunks encontrados (latencia: ${fallbackRetrievalLatency}ms)`);
                         console.log(`📚 Chunks RAG fallback: ${beautyChunksFallback.map(c => c.title).join(' | ')}`);
@@ -846,8 +860,7 @@ const geminiTools = [{
                             console.log(`🛠️  [Fallback Gemini] Ejecutando herramienta: ${functionName}`);
                 
                 const toolStart = Date.now();
-                // RAG (BUS-RAG-001): ídem camino principal — solo conocimiento GLOBAL.
-                const toolResult = await executeAuraTool(functionName, functionArgs, parsedUserId, undefined, null);
+                const toolResult = await executeAuraTool(functionName, functionArgs, parsedUserId, userRole, tenantId);
                 const toolLatency = Date.now() - toolStart;
                 
                 toolCalls.push({

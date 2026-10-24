@@ -16,6 +16,7 @@
 //     del salón.
 
 const { pool } = require('../config/db');
+const { runInTenantTransaction } = require('../config/tenantRouting');
 
 // Sub-roles válidos en salon_miembros (alineados con salonController.inviteMember)
 const SUB_ROLES = Object.freeze({
@@ -57,13 +58,44 @@ function resolveSalonId(req) {
  * Membresía activa del usuario en el salón.
  * @returns {Promise<{sub_rol: string}|null>}
  */
-async function getActiveMembership(salonId, userId) {
-  const res = await pool.query(
-    `SELECT sub_rol
-       FROM salon_miembros
-      WHERE salon_id = $1 AND user_id = $2 AND estatus = $3`,
-    [salonId, userId, ESTATUS_ACTIVO]
-  );
+async function getActiveMembership(salonId, userId, tenantId) {
+  // `salon_miembros` está bajo RLS por `app.tenant_id`, y `usuarios` solo deja leer
+  // la fila propia cuando `app.current_user_id` está puesto. Consultar aquí sin
+  // contexto devolvía cero filas y el guard respondía 403 a un dueño legítimo:
+  // pasaba inadvertido porque los mocks no ejecutan RLS.
+  //
+  // Se resuelve dentro de UNA transacción, en este orden:
+  //   1. `app.user_id` con el id de la sesión          → permite leer la fila propia
+  //   2. `usuarios.tenant_id`                          → el inquilino real
+  //   3. `app.tenant_id`                               → habilita la política de salon_miembros
+  //   4. la membresía
+  // `tenantId` se usa si el token ya lo trae; si no, se resuelve en el paso 2. Así el
+  // guard no depende de que otro middleware haya fijado el contexto en otra conexión.
+  const consultar = async (client) => {
+    let tenant = tenantId === undefined || tenantId === null ? '' : String(tenantId);
+
+    await client.query("SELECT set_config('app.user_id', $1, true)", [String(userId)]);
+
+    if (tenant === '') {
+      const u = await client.query('SELECT tenant_id FROM usuarios WHERE id = $1', [userId]);
+      const filas = (u && u.rows) || [];
+      tenant = filas.length && filas[0].tenant_id !== null ? String(filas[0].tenant_id) : '';
+    }
+
+    if (tenant !== '') {
+      await client.query("SELECT set_config('app.tenant_id', $1, true)", [tenant]);
+    }
+
+    const r = await client.query(
+      `SELECT sub_rol
+         FROM salon_miembros
+        WHERE salon_id = $1 AND user_id = $2 AND estatus = $3`,
+      [salonId, userId, ESTATUS_ACTIVO]
+    );
+    return r;
+  };
+
+  const res = await runInTenantTransaction({ pool }, null, consultar);
   if (res.rows.length === 0) return null;
   return { sub_rol: String(res.rows[0].sub_rol || '').toUpperCase() };
 }
@@ -95,7 +127,7 @@ function makeSalonRoleGuard(roles, opts = {}) {
     }
 
     try {
-      const membership = await getActiveMembership(salonId, req.user.id);
+      const membership = await getActiveMembership(salonId, req.user.id, req.user.tenant_id);
 
       if (!membership) {
         return res.status(403).json({ error: notMemberMessage });
