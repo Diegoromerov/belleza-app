@@ -11,6 +11,82 @@ const {
   reconciliarConDian
 } = require('../services/ivaPrestador');
 
+// ─── CONTRATO DE COMISIÓN E INDEPENDENCIA (D-GL-023 · F8) ────────────────────
+// El prestador es independiente, no empleado. Se registra versión, fecha e IP:
+// sin ese registro no hay forma de probar el vínculo comercial.
+
+const CONTRATO_VERSION_ACTUAL = '2026-10';
+
+router.get('/provider/contract', authMiddleware, async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      // `responsable_iva` y `rut_responsabilidad_codigo` viven en `usuarios`
+      // (migraciones 086 y 087), no en `perfiles_prestador`. La consulta las pedía
+      // a la tabla equivocada y la ruta devolvía 500 en cada llamada, de modo que
+      // el prestador no podía ver ni aceptar su contrato.
+      `SELECT p.contrato_version, p.contrato_aceptado_at, p.independencia_aceptada_at,
+              u.responsable_iva, u.rut_responsabilidad_codigo
+         FROM perfiles_prestador p
+         JOIN usuarios u ON u.id = p.id
+        WHERE p.id = $1`,
+      [req.user.id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Perfil de prestador no encontrado.' });
+
+    res.json({
+      version_actual: CONTRATO_VERSION_ACTUAL,
+      ...rows[0],
+      aceptado: Boolean(rows[0].contrato_aceptado_at && rows[0].independencia_aceptada_at)
+    });
+  } catch (err) {
+    console.error('Error al consultar contrato:', err);
+    res.status(500).json({ error: 'Error al consultar el contrato.' });
+  }
+});
+
+router.post('/provider/contract/accept', authMiddleware, async (req, res) => {
+  const { version, independencia } = req.body;
+
+  if (!independencia) {
+    return res.status(400).json({
+      error: 'Debes aceptar expresamente la cláusula de independencia: la plataforma no es tu empleador.'
+    });
+  }
+
+  try {
+    const { rows } = await pool.query(
+      // `RETURNING` solo devuelve columnas de la tabla actualizada: las fiscales
+      // se leen de `usuarios` con un CTE. El `JOIN` dentro del UPDATE mezclaría
+      // las filas y dejaría el perfil sin actualizar.
+      `WITH actualizado AS (
+         UPDATE perfiles_prestador
+            SET contrato_version = $2,
+                contrato_aceptado_at = NOW(),
+                contrato_aceptado_ip = $3,
+                independencia_aceptada_at = NOW()
+          WHERE id = $1
+          RETURNING *
+       )
+       SELECT a.contrato_version, a.contrato_aceptado_at, a.independencia_aceptada_at,
+              u.responsable_iva, u.rut_responsabilidad_codigo
+         FROM actualizado a
+         JOIN usuarios u ON u.id = a.id`,
+      [req.user.id, version || CONTRATO_VERSION_ACTUAL, req.ip]
+    );
+
+    if (!rows.length) return res.status(404).json({ error: 'Perfil de prestador no encontrado.' });
+
+    res.json({
+      ok: true,
+      mensaje: 'Contrato aceptado. Ya puedes recibir pagos y retirar.',
+      contrato: rows[0]
+    });
+  } catch (err) {
+    console.error('Error al aceptar contrato:', err);
+    res.status(500).json({ error: 'Error al registrar la aceptación.' });
+  }
+});
+
 router.get('/providers', providerController.getProviders);
 router.get('/providers/:id', providerController.getProviderById);
 router.get('/providers/:id/slots', providerController.getProviderSlots);

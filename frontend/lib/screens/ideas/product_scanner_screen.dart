@@ -1,4 +1,4 @@
-// frontend/lib/screens/ideas/product_scanner_screen.dart
+﻿// frontend/lib/screens/ideas/product_scanner_screen.dart
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -64,6 +64,7 @@ class _ProductScannerScreenState extends State<ProductScannerScreen> {
   Future<void> _checkProduct(String barcode) async {
     try {
       final product = await BiometricService.checkProduct(barcode);
+      if (!mounted) return;
       setState(() {
         _scannedProduct = product;
         _isProcessing = false;
@@ -92,7 +93,7 @@ class _ProductScannerScreenState extends State<ProductScannerScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '📦 Resultado del producto',
+            'ðŸ“¦ Resultado del producto',
             style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
@@ -171,7 +172,7 @@ class _ProductScannerScreenState extends State<ProductScannerScreen> {
                                 ? product.compatibilityReason
                                 : (product.compatible
                                     ? 'Este producto es compatible con tu perfil.'
-                                    : 'Este producto podría no ser el más adecuado para ti.'),
+                                    : 'Este producto podrÃ­a no ser el mÃ¡s adecuado para ti.'),
                             style: TextStyle(
                               fontSize: 14,
                               color: product.compatible ? Colors.green[800] : Colors.orange[800],

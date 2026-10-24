@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import '../services/api_service.dart';
 import '../shared/theme.dart';
 import '../services/booking_recovery_service.dart';
@@ -380,26 +381,39 @@ class _BookingScreenState extends State<BookingScreen> {
     }
   }
 
-  void _nextStep() {
-    if (_currentStep < 3) {
-      setState(() => _currentStep++);
+  /// Mueve el asistente a [paso].
+  ///
+  /// La barra de progreso lee `_currentStep` y el contenido lo dibuja el
+  /// PageView con `_pageController`: son dos fuentes distintas. Si la animación
+  /// no corría —controlador sin montar, por ejemplo durante una ruta modal— el
+  /// número avanzaba y la página se quedaba, dejando la barra en "Confirmación"
+  /// con el contenido del paso 1. Ahora, sin clientes, se salta al paso en el
+  /// siguiente frame y la barra nunca se separa del contenido.
+  void _irAlPaso(int paso) {
+    if (paso < 0 || paso > 3) return;
+    setState(() => _currentStep = paso);
+
+    if (_pageController.hasClients) {
       _pageController.animateToPage(
-        _currentStep,
+        paso,
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
+      return;
     }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_pageController.hasClients) return;
+      _pageController.jumpToPage(_currentStep);
+    });
+  }
+
+  void _nextStep() {
+    if (_currentStep < 3) _irAlPaso(_currentStep + 1);
   }
 
   void _prevStep() {
-    if (_currentStep > 0) {
-      setState(() => _currentStep--);
-      _pageController.animateToPage(
-        _currentStep,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-    }
+    if (_currentStep > 0) _irAlPaso(_currentStep - 1);
   }
 
   @override
@@ -1234,7 +1248,11 @@ class _BookingScreenState extends State<BookingScreen> {
         orElse: () => <String, dynamic>{},
       );
       if (s.isNotEmpty) {
-        servicesPrice += _parseDouble(s['price']);
+        // El servicio puede llegar con `precio` (fila de BD, flujo del mapa y
+        // del chat) o con `price` (respuesta de /api/providers/:id). Leer solo
+        // `price` dejaba esta tarjeta en $0 mientras la de abajo, que ya usa el
+        // fallback, mostraba el valor correcto.
+        servicesPrice += _parseDouble(s['precio'] ?? s['price']);
         serviceNames.add(s['name']?.toString() ?? 'Servicio');
       }
     }
@@ -1244,7 +1262,7 @@ class _BookingScreenState extends State<BookingScreen> {
     _selectedProductsQty.forEach((id, qty) {
       final prod = _recommendedProducts.firstWhere((p) => p['id'].toString() == id, orElse: () => <String, dynamic>{});
       if (prod.isNotEmpty) {
-        productsSubtotal += _parseDouble(prod['precio']) * qty;
+        productsSubtotal += _parseDouble(prod['precio'] ?? prod['price']) * qty;
       }
     });
 
@@ -1416,7 +1434,7 @@ class _BookingScreenState extends State<BookingScreen> {
     }
     return Column(
       children: widget.services.map((service) {
-        final price = _parseDouble(service['price']);
+        final price = _parseDouble(service['precio'] ?? service['price']);
         final name = service['name']?.toString() ?? 'Sin nombre';
         final id = service['id']?.toString() ?? '';
         final description = service['description']?.toString() ?? '';
@@ -1657,7 +1675,23 @@ class _BookingScreenState extends State<BookingScreen> {
           final unitPrice = _parseDouble(p['precio'] ?? p['price']);
           return sum + (unitPrice * qty);
         });
-    final double total = subtotal; // Aquí pueden añadirse impuestos, descuentos, etc.
+    // El servicio también cuesta: sumarlo es lo que hacía falta aquí. Antes el
+    // total era solo el de los productos complementarios, así que con el servicio
+    // ya elegido y sin productos la tarjeta mostraba $0.00 y parecía que el
+    // servicio era gratis. Los precios publicados ya incluyen IVA (D-GL-023,
+    // regla 8), por eso se suman tal cual, sin volver a gravarlos.
+    final double servicesTotal = selectedServiceIds.fold<double>(
+      0.0,
+      (sum, id) {
+        final s = widget.services.firstWhere(
+          (srv) => srv['id']?.toString() == id,
+          orElse: () => <String, dynamic>{},
+        );
+        if (s.isEmpty) return sum;
+        return sum + _parseDouble(s['precio'] ?? s['price']);
+      },
+    );
+    final double total = servicesTotal + subtotal;
 
     return Semantics(
       label:
@@ -1707,7 +1741,7 @@ class _BookingScreenState extends State<BookingScreen> {
               ),
             ),
             Text(
-              '\$${total.toStringAsFixed(2)}',
+              NumberFormat(r'$#,##0', 'es_CO').format(total),
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.bold,

@@ -6,6 +6,7 @@ import 'package:camera/camera.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../shared/theme.dart';
+import '../../services/biometric_service.dart';
 import 'processing_screen.dart';
 import 'widgets/face_overlay_painter.dart';
 import 'widgets/hand_overlay_painter.dart';
@@ -31,6 +32,10 @@ class _CaptureScreenState extends State<CaptureScreen>
 
   // Imágenes capturadas
   Uint8List? _faceImage;
+  /// Y-F4: geometría del último cuadro válido (ángulos y proporción del rostro).
+  /// Viaja con la foto para que el backend la vuelva a validar: el cliente no es
+  /// la única autoridad sobre si la captura sirve.
+  Map<String, dynamic>? _captureGeometry;
   Uint8List? _handsImage;
 
   // Estado de validación
@@ -73,6 +78,40 @@ class _CaptureScreenState extends State<CaptureScreen>
     );
 
     _initializeCamera();
+    // Y-F1f: si el permiso es de un texto anterior (o no hay permiso), no se abre la
+    // cámara a medir. El backend también lo rechaza, pero negarse a capturar es más
+    // honesto que pedir una foto para luego devolver un 403.
+    _verificarConsentimiento();
+  }
+
+  Future<void> _verificarConsentimiento() async {
+    final estado = await BiometricService.getConsentState();
+    if (!mounted || !estado.known || estado.canScan) return;
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: Text(estado.needsReconsent ? 'Actualizamos el aviso' : 'Falta tu autorización'),
+        content: Text(
+          estado.needsReconsent
+              ? 'Autorizaste el análisis con una versión anterior del aviso. La versión '
+                  '${estado.currentVersion} explica qué huella de tu foto se conserva y para qué. '
+                  'Acéptala para volver a medir.'
+              : 'Para analizar tu piel necesitamos tu autorización sobre el tratamiento de datos '
+                  'biométricos. Vuelve al inicio y acéptala para continuar.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Entendido'),
+          ),
+        ],
+      ),
+    );
+
+    // Sin autorización vigente no se captura: se sale de la pantalla.
+    if (mounted) Navigator.of(context).pop();
   }
 
   @override
@@ -424,6 +463,10 @@ class _CaptureScreenState extends State<CaptureScreen>
         _detectedFace = face;
         _isFaceValid = isValid;
         _qualityScore = quality;
+        // Y-F4: se guarda la geometría del cuadro que se va a capturar.
+        if (isValid) {
+          _captureGeometry = _buildGeometry(face, imageSize);
+        }
         _instruction = isValid
             ? '✨ ¡Rostro Alineado 3D! Mantén la posición (Captura en 1.5s...)'
             : _getFaceInstruction(face, imageSize);
@@ -440,6 +483,26 @@ class _CaptureScreenState extends State<CaptureScreen>
         _validFramesCount = 0;
       }
     }
+  }
+
+  /// Y-F4: geometría que el backend vuelve a validar. Mismas unidades que ML Kit
+  /// (grados) y proporción del rostro sobre el ancho de la imagen, que es la
+  /// aproximación de distancia cuando no hay profundidad.
+  Map<String, dynamic> _buildGeometry(Face face, Size imageSize) {
+    final box = face.boundingBox;
+    final imageWidth = imageSize.width;
+    final imageHeight = imageSize.height;
+
+    return {
+      'yaw': face.headEulerAngleY ?? 0.0,
+      'roll': face.headEulerAngleZ ?? 0.0,
+      'pitch': face.headEulerAngleX ?? 0.0,
+      'faceRatio': imageWidth > 0 ? box.width / imageWidth : 0.0,
+      'aspectRatio': box.width > 0 ? box.height / box.width : 0.0,
+      'centerOffset': imageWidth > 0 && imageHeight > 0
+          ? (box.center.dx - imageWidth / 2).abs() / (imageWidth / 2)
+          : 0.0,
+    };
   }
 
   bool _validateFace(Face face, Size imageSize) {
@@ -657,6 +720,8 @@ class _CaptureScreenState extends State<CaptureScreen>
         builder: (_) => ProcessingScreen(
           faceImage: _faceImage!,
           handsImage: _handsImage!,
+          // Y-F4: la geometría medida en el cliente viaja con la foto.
+          geometry: _captureGeometry,
         ),
       ),
     );

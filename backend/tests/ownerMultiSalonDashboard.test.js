@@ -333,6 +333,14 @@ describe('Fase 3: Multi-Sede OWNER Dashboard & Endpoints Integration Tests', () 
 // mismo rol de aplicación que producción, con RLS activo. Solo se salta si no hay BD declarada.
 
 const REAL_QUERY = pool.query; // referencia real capturada antes de que corran los mocks de arriba
+
+// El guard abre una transacción real (runInTenantTransaction) y necesita
+// `pool.connect`. Los bloques mockeados solo reemplazan `pool.query`, así que se
+// les entrega un cliente que delega en el mock; contra la base real, el original.
+const REAL_CONNECT = pool.connect.bind(pool);
+pool.connect = async () => (pool.query === REAL_QUERY
+  ? REAL_CONNECT()
+  : { query: (text, params) => pool.query(text, params), release: () => {} });
 const describeE2EReal = HAY_BD_REAL ? describe : describe.skip;
 
 describeE2EReal('E2E REAL contra PostgreSQL: OWNER multi-sede (sin mocks de pool.query)', () => {
@@ -600,9 +608,12 @@ describeE2EReal('E2E REAL contra PostgreSQL: OWNER multi-sede (sin mocks de pool
     expect(m.sedes_compartidas).toBe(true);
 
     // Bajo RLS las membresías de OTRO inquilino son invisibles, así que el detector
-    // cross-tenant no encuentra filas. El test mockeado de arriba afirmaba `true` porque
-    // el mock se saltaba el aislamiento: esa es exactamente la clase de diferencia que
-    // sólo un E2E contra la base real puede revelar.
+    // cross-tenant no encuentra filas.
+    //
+    // La premisa original era correcta, pero no se cumplía: la petición no abría
+    // transacción con su inquilino y RLS no tenía contexto (de ahí el 403 y el
+    // `true` que se veía aquí). Con `tenantContext` montado en ownerRoutes la
+    // aislamiento sí aplica y esta aserción vuelve a ser la verdadera.
     expect(m.prestadores_cross_tenant).toBe(false);
     expect(m.prestadores_externos).toEqual([]);
     expect(m.advertencia).toBeUndefined();

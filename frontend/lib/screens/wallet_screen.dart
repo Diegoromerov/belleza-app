@@ -1,4 +1,4 @@
-// frontend/lib/screens/wallet_screen.dart
+﻿// frontend/lib/screens/wallet_screen.dart
 // Pantalla de Wallet del Prestador: saldo, historial, retiros
 
 import 'package:flutter/material.dart';
@@ -57,6 +57,7 @@ class _WalletScreenState extends State<WalletScreen>
     });
     try {
       final res = await ApiService.get('/api/wallet');
+      if (!mounted) return;
       setState(() {
         _wallet = res;
         _loading = false;
@@ -115,8 +116,9 @@ class _WalletScreenState extends State<WalletScreen>
     final wallet = _wallet!;
     final disponible =
         double.tryParse(wallet['saldo_disponible'].toString()) ?? 0;
-    final minimo =
-        double.tryParse(wallet['minimo_retiro_cop'].toString()) ?? 50000;
+    // El ciclo semanal no tiene mÃ­nimo; el mÃ­nimo de 100.000 es solo para el
+    // adelanto (D-GL-024), asÃ­ que aquÃ­ no se bloquea por monto.
+    const minimo = 0.0;
 
     final TextEditingController montoCtrl = TextEditingController(
       text: disponible.toStringAsFixed(0),
@@ -143,7 +145,7 @@ class _WalletScreenState extends State<WalletScreen>
       if (textParsed.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('⚠️ Debes ingresar un monto válido para el retiro.'),
+            content: Text('âš ï¸ Debes ingresar un monto vÃ¡lido para el retiro.'),
             backgroundColor: Colors.orange,
           ),
         );
@@ -153,7 +155,7 @@ class _WalletScreenState extends State<WalletScreen>
       if (montoFinal <= 0) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('⚠️ El monto a retirar debe ser mayor que \$0 COP.'),
+            content: Text('âš ï¸ El monto a retirar debe ser mayor que \$0 COP.'),
             backgroundColor: Colors.orange,
           ),
         );
@@ -162,7 +164,7 @@ class _WalletScreenState extends State<WalletScreen>
       if (montoFinal < minimo) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('⚠️ El monto mínimo de retiro es de \$${_formatCOP.format(minimo)}.'),
+            content: Text('âš ï¸ El monto mÃ­nimo de retiro es de \$${_formatCOP.format(minimo)}.'),
             backgroundColor: Colors.orange,
           ),
         );
@@ -171,7 +173,7 @@ class _WalletScreenState extends State<WalletScreen>
       if (montoFinal > disponible) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('⚠️ El monto excede el saldo disponible en tu wallet.'),
+            content: Text('âš ï¸ El monto excede el saldo disponible en tu wallet.'),
             backgroundColor: Colors.redAccent,
           ),
         );
@@ -185,12 +187,12 @@ class _WalletScreenState extends State<WalletScreen>
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: const Text(
-            '¿Confirmar retiro?',
+            'Â¿Confirmar retiro?',
             style: TextStyle(
                 color: Color(0xFF4A3E3D), fontWeight: FontWeight.bold),
           ),
           content: Text(
-            'Estás a punto de retirar ${_formatCOP.format(montoFinal)} a tu cuenta $targetCuenta. Esta acción no se puede deshacer.',
+            'EstÃ¡s a punto de retirar ${_formatCOP.format(montoFinal)} a tu cuenta $targetCuenta. Esta acciÃ³n no se puede deshacer.',
             style: const TextStyle(color: Color(0xFF8E7D7A), fontSize: 14),
           ),
           actions: [
@@ -216,12 +218,15 @@ class _WalletScreenState extends State<WalletScreen>
       if (verificado == true) {
         if (!mounted) return;
         try {
-          await ApiService.post('/api/wallet/withdraw', {'monto': montoFinal});
+          await ApiService.post('/api/wallet/withdraw', {
+            'monto': montoFinal,
+            'tipo_origen': 'SEMANAL',
+          });
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content:
-                    Text('✅ Retiro solicitado. Llegará en 1-2 días hábiles.'),
+                    Text('âœ… Retiro solicitado. LlegarÃ¡ en 1-2 dÃ­as hÃ¡biles.'),
                 backgroundColor: Color(0xFF10B981),
               ),
             );
@@ -229,10 +234,18 @@ class _WalletScreenState extends State<WalletScreen>
           }
         } catch (e) {
           if (mounted) {
+            // Hasta que la cuenta tenga activo "Pagos a terceros" de Wompi, el
+            // backend responde 503 PAYOUTS_NOT_CONFIGURED antes de debitar. Al
+            // prestador hay que decirle que su saldo estÃ¡ intacto, no mostrarle
+            // el cÃ³digo de error.
+            final texto = e.toString();
+            final sinDispersion = texto.contains('PAYOUTS_NOT_CONFIGURED') ||
+                texto.contains('503');
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(
-                    'Error: ${e.toString().replaceAll('Exception: ', '')}'),
+                content: Text(sinDispersion
+                    ? 'Los retiros se habilitan pronto. No se descontÃ³ nada de tu saldo.'
+                    : 'Error: ${texto.replaceAll('Exception: ', '')}'),
                 backgroundColor: Colors.red,
               ),
             );
@@ -325,7 +338,7 @@ class _WalletScreenState extends State<WalletScreen>
           constraints: const BoxConstraints(maxWidth: 680),
           child: CustomScrollView(
             slivers: [
-              // ─── Header con saldo principal ──────────────────────────────
+              // â”€â”€â”€ Header con saldo principal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
               SliverToBoxAdapter(
                 child: Container(
                   color: const Color(0xFFFAF8F5),
@@ -448,10 +461,10 @@ class _WalletScreenState extends State<WalletScreen>
                                       child: const Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Icon(Icons.diamond_outlined, size: 12, color: Color(0xFF1F1A15)),
+                                          Icon(Icons.account_balance_wallet_outlined, size: 12, color: Color(0xFF1F1A15)),
                                           SizedBox(width: 4),
                                           Text(
-                                            'GLOW BLACK VIP',
+                                            'BILLETERA',
                                             style: TextStyle(
                                               fontFamily: 'Inter',
                                               fontSize: 10,
@@ -468,7 +481,7 @@ class _WalletScreenState extends State<WalletScreen>
                                 ),
                                 const SizedBox(height: 18),
                                 const Text(
-                                  'Saldo disponible',
+                                  'Disponible para retirar',
                                   style: TextStyle(
                                     fontFamily: 'Inter',
                                     color: Color(0xFFC5B8A8),
@@ -489,7 +502,7 @@ class _WalletScreenState extends State<WalletScreen>
                                   ),
                                 ),
                                 const SizedBox(height: 24),
-                                // Botón de retiro premium
+                                // BotÃ³n de retiro premium
                                 SizedBox(
                                   width: double.infinity,
                                   child: AnimatedOpacity(
@@ -513,8 +526,8 @@ class _WalletScreenState extends State<WalletScreen>
                                       ),
                                       label: Text(
                                         puedeRetirar
-                                            ? (disponible < (double.tryParse(wallet['minimo_retiro_cop']?.toString() ?? '50000') ?? 50000))
-                                                ? 'MÍNIMO DE RETIRO \$50.000 COP'
+                                            ? (disponible < (double.tryParse(wallet['minimo_retiro_cop']?.toString() ?? '100000') ?? 100000))
+                                                ? 'ADELANTO DISPONIBLE DESDE \$${_formatCOP.format(double.tryParse(wallet['minimo_retiro_cop']?.toString() ?? '100000') ?? 100000)}'
                                                 : 'TRANSFERIR A ${wallet['banco']?.toString().toUpperCase() ?? 'MI CUENTA'}'
                                             : (wallet['cuenta_verificada'] != true)
                                                 ? 'VINCULAR CUENTA DE RETIRO'
@@ -584,7 +597,7 @@ class _WalletScreenState extends State<WalletScreen>
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text('En camino', style: TextStyle(color: Colors.white70, fontSize: 11)),
+                                    const Text('En custodia', style: TextStyle(color: Colors.white70, fontSize: 11)),
                                     const SizedBox(height: 2),
                                     Text(
                                       _formatCOP.format(pendiente),
@@ -637,7 +650,7 @@ class _WalletScreenState extends State<WalletScreen>
                       padding: const EdgeInsets.only(top: 12),
                       child: Center(
                         child: Text(
-                          'Próximo retiro automático: ${DateFormat('dd MMM, hh:mm a', 'es').format(DateTime.parse(wallet['proxima_fecha_retiro']))}',
+                          'PrÃ³ximo retiro automÃ¡tico: ${DateFormat('dd MMM, hh:mm a', 'es').format(DateTime.parse(wallet['proxima_fecha_retiro']))}',
                           style: const TextStyle(
                               color: AppTheme.text, fontSize: 12, fontWeight: FontWeight.w500),
                         ),
@@ -648,7 +661,7 @@ class _WalletScreenState extends State<WalletScreen>
             ),
           ),
 
-          // ─── Tabs ─────────────────────────────────────────────────
+          // â”€â”€â”€ Tabs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           SliverPersistentHeader(
             pinned: true,
             delegate: _TabDelegate(
@@ -666,7 +679,7 @@ class _WalletScreenState extends State<WalletScreen>
             ),
           ),
 
-          // ─── Contenido de tabs ────────────────────────────────────
+          // â”€â”€â”€ Contenido de tabs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           SliverFillRemaining(
             child: TabBarView(
               controller: _tabController,
@@ -738,7 +751,7 @@ class _WalletScreenState extends State<WalletScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        esCredito ? 'Ingreso Acreditado' : 'Débito / Retiro',
+                        esCredito ? 'Ingreso Acreditado' : 'DÃ©bito / Retiro',
                         style: const TextStyle(
                           fontFamily: 'CormorantGaramond',
                           fontSize: 20,
@@ -770,7 +783,7 @@ class _WalletScreenState extends State<WalletScreen>
               child: Column(
                 children: [
                   const Text(
-                    'Monto Total de Operación',
+                    'Monto Total de OperaciÃ³n',
                     style: TextStyle(color: Color(0xFFC5B8A8), fontSize: 12),
                   ),
                   const SizedBox(height: 4),
@@ -809,7 +822,7 @@ class _WalletScreenState extends State<WalletScreen>
                 Navigator.pop(ctx);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('📋 ID de Referencia copiado al portapapeles'),
+                    content: Text('ðŸ“‹ ID de Referencia copiado al portapapeles'),
                     backgroundColor: Color(0xFFC5A052),
                     duration: Duration(seconds: 2),
                   ),
@@ -857,7 +870,7 @@ class _WalletScreenState extends State<WalletScreen>
     }
     if (_transacciones.isEmpty) {
       return const Center(
-        child: Text('Sin movimientos aún',
+        child: Text('Sin movimientos aÃºn',
             style: TextStyle(color: Color(0xFF8E7D7A), fontSize: 14)),
       );
     }
@@ -879,7 +892,7 @@ class _WalletScreenState extends State<WalletScreen>
 
     return Column(
       children: [
-        // ─── Filter Pills ─────────────────────────────────────────────
+        // â”€â”€â”€ Filter Pills â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
           child: Row(
@@ -895,7 +908,7 @@ class _WalletScreenState extends State<WalletScreen>
         Expanded(
           child: filtrados.isEmpty
               ? const Center(
-                  child: Text('No hay movimientos en esta categoría',
+                  child: Text('No hay movimientos en esta categorÃ­a',
                       style: TextStyle(color: Color(0xFF8E7D7A), fontSize: 13)),
                 )
               : ListView.builder(
@@ -920,7 +933,7 @@ class _WalletScreenState extends State<WalletScreen>
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12)),
                           ),
-                          child: const Text('Cargar más movimientos',
+                          child: const Text('Cargar mÃ¡s movimientos',
                               style: TextStyle(fontSize: 14)),
                         ),
                       );
@@ -989,7 +1002,7 @@ class _WalletScreenState extends State<WalletScreen>
     if (retiros.isEmpty) {
       return const Center(
         child: Text(
-          'Sin retiros aún',
+          'Sin retiros aÃºn',
           style: TextStyle(color: Color(0xFF8E7D7A), fontSize: 14),
         ),
       );
@@ -1100,7 +1113,7 @@ class _WalletScreenState extends State<WalletScreen>
                 ],
               ),
               const SizedBox(height: 14),
-              // ─── Visual Mini Stepper (Solicitado -> Procesando -> Acreditado) ───
+              // â”€â”€â”€ Visual Mini Stepper (Solicitado -> Procesando -> Acreditado) â”€â”€â”€
               Row(
                 children: [
                   _buildStepperNode(1, 'Solicitado', currentStep >= 1),
@@ -1163,15 +1176,18 @@ class _WalletScreenState extends State<WalletScreen>
     final totalGanado = double.tryParse(wallet['total_ganado'].toString()) ?? 0;
     final totalRetirado =
         double.tryParse(wallet['total_retirado'].toString()) ?? 0;
-    final modelo = wallet['modelo_retiro'] ?? 'DEMANDA';
+    final modelo = wallet['modelo_retiro'] ?? 'SEMANAL';
 
     final ratioRetiro = totalGanado > 0 ? (totalRetirado / totalGanado).clamp(0.0, 1.0) : 0.0;
-    final porcentajeRetiroStr = (ratioRetiro * 100).toStringAsFixed(0);
+    // Sin ganancias no hay ratio: mostrar 0% sugerirÃ­a que retirÃ³ cero de algo
+    // que no existe (divisiÃ³n por cero disfrazada).
+    final porcentajeRetiroStr =
+        totalGanado > 0 ? '${(ratioRetiro * 100).toStringAsFixed(0)}%' : 'Sin retiros';
 
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
-        // ─── Tarjeta Ratio de Liquidez Concierge ──────────────────────
+        // â”€â”€â”€ Tarjeta Ratio de Liquidez Concierge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         Container(
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
@@ -1198,7 +1214,7 @@ class _WalletScreenState extends State<WalletScreen>
                   const Icon(Icons.analytics_outlined, color: Color(0xFFC5A052), size: 20),
                   const SizedBox(width: 8),
                   const Text(
-                    'Ratio de Liquidez Concierge',
+                    'Retirado sobre ganado',
                     style: TextStyle(
                       fontFamily: 'Inter',
                       color: Color(0xFFFFFDF8),
@@ -1208,7 +1224,7 @@ class _WalletScreenState extends State<WalletScreen>
                   ),
                   const Spacer(),
                   Text(
-                    '$porcentajeRetiroStr% Retirado',
+                    porcentajeRetiroStr,
                     style: const TextStyle(
                       color: Color(0xFFC5A052),
                       fontWeight: FontWeight.bold,
@@ -1253,7 +1269,7 @@ class _WalletScreenState extends State<WalletScreen>
         ),
         const SizedBox(height: 12),
         _ResumenCard(
-          titulo: 'Total retirado efectivo',
+          titulo: 'Total retirado',
           monto: totalRetirado,
           icon: Icons.arrow_upward,
           color: AppTheme.primary,
@@ -1395,23 +1411,31 @@ class _WalletScreenState extends State<WalletScreen>
 
   String _nombreModelo(String modelo) {
     switch (modelo) {
+      case 'SEMANAL':
+        return 'Semanal';
       case 'QUINCENA':
-        return 'Automático cada 15 días';
+        return 'AutomÃ¡tico cada 15 dÃ­as';
       case 'MENSUAL':
-        return 'Automático mensual';
+        return 'AutomÃ¡tico mensual';
+      case 'DEMANDA':
+        return 'Adelanto inmediato';
       default:
-        return 'Por demanda';
+        return 'Semanal';
     }
   }
 
   String _descripcionModelo(String modelo) {
     switch (modelo) {
+      case 'SEMANAL':
+        return 'Retira cada lunes, sin costo';
       case 'QUINCENA':
-        return 'Retiro automático los días 15 y último del mes';
+        return 'Retiro automÃ¡tico los dÃ­as 15 y Ãºltimo del mes';
       case 'MENSUAL':
-        return 'Retiro automático el último día de cada mes';
+        return 'Retiro automÃ¡tico el Ãºltimo dÃ­a de cada mes';
+      case 'DEMANDA':
+        return 'Adelanta tu saldo maduro: cuesta 1.849 + 0,4%';
       default:
-        return 'Retira cuando quieras, mín. \$50.000 cada 3 días';
+        return 'Retira cada lunes, sin costo';
     }
   }
 
@@ -1419,7 +1443,7 @@ class _WalletScreenState extends State<WalletScreen>
     final wallet = _wallet;
     if (wallet == null) return;
 
-    String modeloSeleccionado = wallet['modelo_retiro'] ?? 'DEMANDA';
+    String modeloSeleccionado = wallet['modelo_retiro'] ?? 'SEMANAL';
 
     await showModalBottomSheet(
       context: context,
@@ -1441,13 +1465,14 @@ class _WalletScreenState extends State<WalletScreen>
                       fontWeight: FontWeight.bold)),
               const SizedBox(height: 20),
               ...[
-                ('DEMANDA', 'Por demanda', 'Cada 3 días, mín. \$50.000'),
+                ('SEMANAL', 'Semanal', 'Cada lunes, sin costo'),
                 (
                   'QUINCENA',
-                  'Cada 15 días',
-                  'Automático los días 15 y último del mes'
+                  'Cada 15 dÃ­as',
+                  'AutomÃ¡tico los dÃ­as 15 y Ãºltimo del mes'
                 ),
-                ('MENSUAL', 'Mensual', 'Automático el último día del mes'),
+                ('MENSUAL', 'Mensual', 'AutomÃ¡tico el Ãºltimo dÃ­a del mes'),
+                ('DEMANDA', 'Adelanto inmediato', 'Desde \$100.000, cuesta 1.849 + 0,4%'),
               ].map((m) => RadioListTile<String>(
                     value: m.$1,
                     groupValue: modeloSeleccionado,
@@ -1508,7 +1533,7 @@ class _WalletScreenState extends State<WalletScreen>
   }
 }
 
-// ─── WIDGETS AUXILIARES ────────────────────────────────────────────────────────
+// â”€â”€â”€ WIDGETS AUXILIARES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 
 class _TransaccionTile extends StatelessWidget {
@@ -1666,7 +1691,7 @@ class _ResumenCard extends StatelessWidget {
   }
 }
 
-// ─── BOTTOM SHEET RETIRO ──────────────────────────────────────────────────────
+// â”€â”€â”€ BOTTOM SHEET RETIRO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _RetiroBottomSheet extends StatefulWidget {
   final double disponible;
@@ -1768,8 +1793,10 @@ class _RetiroBottomSheetState extends State<_RetiroBottomSheet> {
                   color: AppTheme.primary,
                   fontSize: 24,
                   fontWeight: FontWeight.bold),
-              helperText:
-                  'Mínimo: ${NumberFormat.currency(locale: 'es_CO', symbol: '\$', decimalDigits: 0).format(widget.minimo)}',
+              // El ciclo semanal no tiene mÃ­nimo; solo el adelanto lo tiene.
+              helperText: widget.minimo > 0
+                  ? 'MÃ­nimo: ${NumberFormat.currency(locale: 'es_CO', symbol: '\$', decimalDigits: 0).format(widget.minimo)}'
+                  : 'Sin mÃ­nimo. Retiras lo que tengas madurado.',
               helperStyle:
                   const TextStyle(color: Color(0xFF8E7D7A), fontSize: 12),
               filled: true,
@@ -1801,7 +1828,7 @@ class _RetiroBottomSheetState extends State<_RetiroBottomSheet> {
           ),
           const SizedBox(height: 12),
           const Text(
-            '⏱ El dinero llegará en 1-2 días hábiles. La plataforma asume el costo de transferencia.',
+            'â± El dinero llegarÃ¡ en 1-2 dÃ­as hÃ¡biles. La plataforma asume el costo de transferencia.',
             style: TextStyle(color: Color(0xFF8E7D7A), fontSize: 12),
           ),
           const SizedBox(height: 20),
@@ -1836,7 +1863,7 @@ class _RetiroBottomSheetState extends State<_RetiroBottomSheet> {
   }
 }
 
-// ─── TAB DELEGATE ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ TAB DELEGATE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _TabDelegate extends SliverPersistentHeaderDelegate {
   final TabBar tabBar;

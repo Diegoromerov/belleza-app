@@ -41,6 +41,7 @@ router.put('/admin/products/:id', authMiddleware, requireRol('admin'), productCo
 router.delete('/admin/products/:id', authMiddleware, requireRol('admin'), productController.deleteProduct);
 
 // --- Rutas de Pedidos de GlowStore ---
+router.post('/store/envio/cotizacion', authMiddleware, orderController.cotizarEnvio);
 router.post('/store/checkout', authMiddleware, orderController.createOrder);
 router.get('/store/orders', authMiddleware, orderController.getOrders);
 router.get('/store/orders/:id', authMiddleware, orderController.getOrderById);

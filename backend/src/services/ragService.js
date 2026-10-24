@@ -33,6 +33,7 @@
 require('dotenv').config();
 const crypto = require('crypto');
 const { ragPool, pool } = require('../config/db');
+const { RAG_SIMILARITY_THRESHOLD } = require('../config/ragConfig');
 const { generateEmbedding: generateQueryEmbedding } = require('./embeddingService');
 const { resolveCategory } = require('../config/knowledgeCategories');
 
@@ -234,11 +235,11 @@ async function runVectorSearch({ queryEmbedding, filters, tenantId, threshold, t
 
   const sql = `
       SELECT${SELECTED_COLUMNS},
-        1 - (embedding <=> $1::vector) AS similarity
+        1 - (embedding <=> $1::halfvec) AS similarity
       FROM beauty_knowledge_embeddings
       ${finalWhere}
-      ${finalWhere ? 'AND' : 'WHERE'} 1 - (embedding <=> $1::vector) >= $${thresholdIndex}
-      ORDER BY embedding <=> $1::vector
+      ${finalWhere ? 'AND' : 'WHERE'} 1 - (embedding <=> $1::halfvec) >= $${thresholdIndex}
+      ORDER BY embedding <=> $1::halfvec
       LIMIT $${limitIndex};
     `;
 
@@ -291,6 +292,169 @@ async function runFullTextSearch({ query, filters, tenantId, topK, useMetadataFi
   };
 }
 
+// ─── FASE 2: ranking léxico + fusión RRF ────────────────────────────────────────────────
+/** Tamaño del pool de candidatos por rama antes de fusionar (el "top-50" del plan). */
+const RRF_POOL = 50;
+/**
+ * Constante de RRF y peso del brazo léxico, elegidos por barrido sobre GOLD-V5
+ * (18 consultas, topK=5, umbral 0.30):
+ *
+ *   k   | peso léxico | R@5    | recall core | MRR
+ *   60  | 1.0         | 0.3426 | 0.3333      | 0.3889
+ *   60  | 0.6         | 0.3657 | 0.3333      | 0.3704
+ *   20  | 1.0         | 0.3287 | 0.3111      | 0.4028
+ *   20  | 0.6         | 0.3519 | 0.3556      | 0.3843   <- única que no baja ninguna métrica
+ *   10  | 0.6         | 0.3380 | 0.3333      | 0.4120
+ *
+ * El léxico pesa menos que el vectorial porque en preguntas naturales aporta ruido
+ * (términos frecuentes como "piel" o "tratamiento"), pero sigue subiendo el recall.
+ */
+const RRF_K = 20;
+const DEFAULT_LEXICAL_WEIGHT = 0.6;
+
+/**
+ * Búsqueda léxica ordenada por relevancia.
+ * Diferencias con `runFullTextSearch` (que sigue siendo el fallback de emergencia):
+ *   - `websearch_to_tsquery` entiende preguntas naturales mejor que `plainto_tsquery`
+ *   - ordena por `ts_rank_cd`, no por el orden físico de la tabla
+ *   - conserva ILIKE como red cuando el tsquery sale vacío (preguntas con solo stopwords)
+ */
+async function runLexicalSearch({ query, filters, tenantId, topK, useMetadataFilters = true }) {
+  const { whereClause, params: filterParams, nextIndex, applied, dropped } =
+    buildMetadataFilters(useMetadataFilters ? filters : {}, 4, null);
+
+  // Columna generada (migración 115): el tsvector se calcula al escribir, no en cada consulta.
+  const vectorText = 'search_vector';
+
+  // `websearch_to_tsquery` une los términos con AND, y con una pregunta real eso deja
+  // 3 candidatos de 5.619. Se pasan los términos unidos por OR (sintaxis de websearch)
+  // para que la rama léxica aporte un pool comparable al vectorial y RRF tenga de dónde elegir.
+  const terms = extractQueryTerms(query);
+  const tsQueryText = terms.length ? terms.join(' or ') : query;
+
+  const additionalConditions = [`${vectorText} @@ websearch_to_tsquery('spanish', $1)`];
+  if (whereClause) additionalConditions.push(`(${whereClause})`);
+
+  const params = [tsQueryText, topK, ...filterParams];
+  appendTenantCondition(additionalConditions, params, nextIndex, tenantId);
+  additionalConditions.push('deleted_at IS NULL');
+  additionalConditions.push('(expires_at IS NULL OR expires_at > NOW())');
+
+  const sql = `
+        SELECT${SELECTED_COLUMNS},
+          ts_rank_cd(${vectorText}, websearch_to_tsquery('spanish', $1))::double precision AS lexical_score
+        FROM beauty_knowledge_embeddings
+        WHERE ${additionalConditions.join(' AND ')}
+        ORDER BY lexical_score DESC, id
+        LIMIT $2::int;
+      `;
+
+  const dbPool = ragPool || pool;
+  const result = await dbPool.query(sql, params);
+  return {
+    rows: result.rows.map(r => ({
+      ...r,
+      lexical_score: Number(r.lexical_score) || 0,
+      similarity: null,
+      mode: 'lexical',
+    })),
+    applied,
+    dropped,
+  };
+}
+
+/**
+ * Reciprocal Rank Fusion: cada rama aporta 1/(k + rank). No compara escalas
+ * (coseno vs ts_rank) — solo posiciones, que es exactamente el problema a resolver.
+ * Deduplica por `chunk_id` quedándose con la mejor posición de cada rama.
+ */
+function rrfFuse(vectorRows, lexicalRows, { k = RRF_K, topK = 5, lexicalWeight = 1 } = {}) {
+  const byId = new Map();
+
+  const add = (rows, branch) => {
+    const branchWeight = branch === 'lexical' ? lexicalWeight : 1;
+    rows.forEach((row, index) => {
+      const id = row.chunk_id || `id:${row.id}`;
+      const contribution = branchWeight / (k + index + 1);
+      const current = byId.get(id) || { row: { ...row }, rrf: 0, branches: [] };
+      if (!current.branches.includes(branch)) {
+        current.rrf += contribution;
+        current.branches.push(branch);
+      }
+      // La similitud coseno, si existe, manda para mostrar; el léxico no la inventa.
+      if (row.similarity !== null && row.similarity !== undefined) {
+        current.row.similarity = row.similarity;
+      }
+      if (row.lexical_score !== undefined) {
+        current.row.lexical_score = row.lexical_score;
+      }
+      byId.set(id, current);
+    });
+  };
+
+  add(vectorRows, 'vector');
+  add(lexicalRows, 'lexical');
+
+  return [...byId.values()]
+    .sort((a, b) => b.rrf - a.rrf || (b.row.similarity || 0) - (a.row.similarity || 0))
+    .slice(0, topK)
+    .map(({ row, rrf, branches }) => ({
+      ...row,
+      rrf_score: round3(rrf),
+      branches,
+      mode: branches.length > 1 ? 'hybrid' : branches[0],
+    }));
+}
+
+/**
+ * Rerank determinista del pool fusionado (FASE 2.3).
+ *
+ * El pool llega con R@50 = 0.664 pero R@5 = 0.317: los aciertos están ahí, el orden
+ * no. Este rerank no inventa señal nueva, pondera tres que ya existen y que RRF
+ * ignora: cuánto de la consulta aparece en el texto, si aparece en el título, y la
+ * posición que dio la fusión.
+ *
+ * Pesos elegidos por barrido sobre GOLD-V5 (ver docs/rag-audit-2026-09-22/FASE2_RANKING.md);
+ * sin dependencias externas, ~0 ms y reproducible.
+ */
+const DEFAULT_RERANK_WEIGHTS = { rrf: 0.5, coverage: 0.3, title: 0.2 };
+
+function resolveWeights(weights) {
+  if (Array.isArray(weights) && weights.length === 3 && weights.every((n) => Number.isFinite(n) && n >= 0)) {
+    const [rrf, coverage, title] = weights;
+    if (rrf + coverage + title > 0) return { rrf, coverage, title };
+  }
+  return DEFAULT_RERANK_WEIGHTS;
+}
+
+function rerankCandidates(candidates, query, { topK = 5, weights = null } = {}) {
+  if (!candidates.length) return candidates;
+
+  const terms = extractQueryTerms(query);
+  const maxRrf = Math.max(...candidates.map((c) => c.rrf_score || 0), 1e-9);
+  const W = resolveWeights(weights);
+
+  const scored = candidates.map((c) => {
+    const normRrf = (c.rrf_score || 0) / maxRrf;
+    const text = normalizeForMatching(`${c.title || ''} ${c.content || ''}`);
+    const titleText = normalizeForMatching(c.title || '');
+
+    const coverage = terms.length ? terms.filter((t) => text.includes(t)).length / terms.length : 1;
+    const titleHit = terms.length ? terms.filter((t) => titleText.includes(t)).length / terms.length : 0;
+
+    return {
+      ...c,
+      rerank_score: round3(W.rrf * normRrf + W.coverage * coverage + W.title * titleHit),
+      rerank: { coverage: round3(coverage), title_hit: round3(titleHit) },
+    };
+  });
+
+  scored.sort(
+    (a, b) => b.rerank_score - a.rerank_score || (b.similarity || 0) - (a.similarity || 0)
+  );
+  return scored.slice(0, topK);
+}
+
 // ─── Búsqueda principal con aislamiento Multi-Tenant ────────────────────────────────────
 /**
  * @param {string} query - consulta del usuario
@@ -300,11 +464,19 @@ async function runFullTextSearch({ query, filters, tenantId, topK, useMetadataFi
  * @returns {Promise<Array>} chunks con similarity (null si vino del fallback full-text)
  */
 async function searchBeautyKnowledge(query, options = {}) {
-  const { topK = 5, threshold = 0.45, filters = {}, tenantId = null, trace = null } = options;
+  const {
+    topK = 5,
+    threshold = RAG_SIMILARITY_THRESHOLD,
+    filters = {},
+    tenantId = null,
+    trace = null,
+    mode = 'hybrid',
+  } = options;
 
   if (trace) {
     trace.threshold_used = threshold;
     trace.top_k = topK;
+    trace.ranking = mode;
     trace.fallback_triggered = false;
     trace.filters_relaxed = false;
     trace.mode = null;
@@ -312,6 +484,11 @@ async function searchBeautyKnowledge(query, options = {}) {
 
   // Sólo se relaja si hay filtros que son pistas de relevancia (nunca filtros de alcance).
   const hasRelaxableFilters = Object.keys(filters || {}).some(k => !SCOPE_FILTERS.includes(k));
+  const poolSize = mode === 'hybrid' ? Math.max(topK, RRF_POOL) : topK;
+  // Rerank apagado por defecto: el barrido de pesos mostró que cambia recall por MRR
+  // (mejor caso 0.7/0.2/0.1 → MRR 0.479 pero R@5 0.284; baseline R@5 0.306). Se activa
+  // con `rerank: true` + `rerankWeights` cuando el producto priorice el primer acierto.
+  const wantsRerank = mode === 'hybrid' && options.rerank === true;
 
   try {
     const embStart = Date.now();
@@ -320,12 +497,67 @@ async function searchBeautyKnowledge(query, options = {}) {
       trace.query_embedding_latency_ms = Date.now() - embStart;
     }
 
+    // Rama léxica + fusión RRF (FASE 2). Si la rama léxica falla, el híbrido
+    // degrada a vectorial: un problema del índice de texto no puede tumbar la búsqueda.
+    const runHybrid = async (useMetadataFilters) => {
+      const vector = await runVectorSearch({
+        queryEmbedding, filters, tenantId, threshold, topK: poolSize, useMetadataFilters,
+      });
+      let lexical = { rows: [], applied: [] };
+      try {
+        lexical = await runLexicalSearch({
+          query, filters, tenantId, topK: poolSize, useMetadataFilters,
+        });
+      } catch (lexError) {
+        if (trace) trace.lexical_error = lexError.message;
+      }
+      const fused = rrfFuse(vector.rows, lexical.rows, {
+        topK: poolSize,
+        k: options.rrfK || RRF_K,
+        lexicalWeight: options.lexicalWeight === undefined ? DEFAULT_LEXICAL_WEIGHT : options.lexicalWeight,
+      });
+      return {
+        rows: wantsRerank ? rerankCandidates(fused, query, { topK, weights: options.rerankWeights }) : fused.slice(0, topK),
+        fused_count: fused.length,
+        applied: vector.applied,
+        dropped: vector.dropped,
+        candidates: { vector: vector.rows.length, lexical: lexical.rows.length },
+      };
+    };
+
+    if (mode === 'hybrid') {
+      let attempt = await runHybrid(true);
+
+      // Misma red de seguridad que la ruta vectorial: un filtro de metadata que el
+      // corpus no tiene devolvía 0 filas como si no hubiera conocimiento.
+      if (attempt.rows.length === 0 && hasRelaxableFilters) {
+        const relaxed = await runHybrid(false);
+        if (relaxed.rows.length > 0) {
+          if (trace) {
+            trace.filters_relaxed = true;
+            trace.relaxed_reason = '0 filas con filtros de metadata; reintento sin filtros (tenant y vigencia intactos)';
+          }
+          attempt = { ...relaxed, dropped: attempt.dropped };
+        }
+      }
+
+      if (trace) {
+        trace.mode = 'hybrid';
+        trace.candidates = attempt.candidates;
+        trace.fused_count = attempt.fused_count;
+        trace.rerank_applied = wantsRerank;
+        trace.rrf_config = { k: options.rrfK || RRF_K, lexical_weight: options.lexicalWeight === undefined ? DEFAULT_LEXICAL_WEIGHT : options.lexicalWeight };
+        trace.filters_applied = attempt.applied;
+        trace.filters_dropped = attempt.dropped;
+        trace.all_scores = attempt.rows.map(r => r.similarity);
+        trace.rrf = attempt.rows.map(r => ({ chunk_id: r.chunk_id, rrf: r.rrf_score, branches: r.branches }));
+      }
+      return attempt.rows;
+    }
+
+    // mode === 'vector': comportamiento previo, se conserva para experimentos y A/B.
     let attempt = await runVectorSearch({ queryEmbedding, filters, tenantId, threshold, topK });
 
-    // Red de seguridad: un filtro de metadata que no existe en el corpus (categoría
-    // desconocida, skin_type con datos sucios) devolvía 0 filas como si no hubiera
-    // conocimiento. Se reintenta UNA vez sin esos filtros. Los filtros de ALCANCE
-    // (domain/jurisdiction) NO se relajan: acotan el tema de la respuesta.
     if (attempt.rows.length === 0 && hasRelaxableFilters) {
       const relaxed = await runVectorSearch({ queryEmbedding, filters, tenantId, threshold, topK, useMetadataFilters: false });
       if (relaxed.rows.length > 0) {
@@ -345,7 +577,6 @@ async function searchBeautyKnowledge(query, options = {}) {
     }
 
     return attempt.rows;
-
   } catch (error) {
     if (trace) {
       trace.fallback_triggered = true;
@@ -681,4 +912,9 @@ module.exports = {
   evaluateSufficiency,
   buildEvidencePacket,
   searchWithEvidence,
+  // Ranking (FASE 2) — expuesto para pruebas unitarias de la fusión
+  rrfFuse,
+  rerankCandidates,
+  RRF_K,
+  RRF_POOL,
 };

@@ -1,4 +1,4 @@
-// frontend/lib/widgets/wompi_payment_sheet.dart
+﻿// frontend/lib/widgets/wompi_payment_sheet.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
@@ -15,7 +15,7 @@ Future<bool?> showWompiCheckoutSheet({
   required String providerName,
   VoidCallback? onSuccess,
   String itemType = 'service',
-  // Desglose del IVA tal como lo calculó el servidor. Llegan en 0 cuando el
+  // Desglose del IVA tal como lo calculÃ³ el servidor. Llegan en 0 cuando el
   // prestador no es responsable de IVA, y entonces no se muestra desglose.
   double subtotalBase = 0,
   double ivaValor = 0,
@@ -45,7 +45,7 @@ class WompiCheckoutWidget extends StatefulWidget {
   final VoidCallback? onSuccess;
 
   /// Base gravable y IVA discriminados por el servidor a partir del `valor_bruto`.
-  /// Sólo se usan para DESGLOSAR el precio en pantalla: el monto que se cobra
+  /// SÃ³lo se usan para DESGLOSAR el precio en pantalla: el monto que se cobra
   /// sigue siendo `price`. Vienen en 0 si el prestador no es responsable de IVA.
   final double subtotalBase;
   final double ivaValor;
@@ -71,14 +71,14 @@ class WompiCheckoutWidget extends StatefulWidget {
 }
 
 class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
-  /// Método seleccionado, por su nombre EXACTO de Wompi. Antes era un índice de
-  /// pestaña (`_selectedTab`), que con más de dos métodos se vuelve un mapa
-  /// entero→método duplicado en cada rama.
+  /// MÃ©todo seleccionado, por su nombre EXACTO de Wompi. Antes era un Ã­ndice de
+  /// pestaÃ±a (`_selectedTab`), que con mÃ¡s de dos mÃ©todos se vuelve un mapa
+  /// enteroâ†’mÃ©todo duplicado en cada rama.
   String _metodo = 'NEQUI';
 
-  /// Métodos ofrecidos en la app. El backend acepta además las otras
-  /// transferencias bancarias (`BANCO_DE_*_TRANSFER`); se añaden aquí cuando
-  /// producto lo pida: la rama de redirección ya es la misma.
+  /// MÃ©todos ofrecidos en la app. El backend acepta ademÃ¡s las otras
+  /// transferencias bancarias (`BANCO_DE_*_TRANSFER`); se aÃ±aden aquÃ­ cuando
+  /// producto lo pida: la rama de redirecciÃ³n ya es la misma.
   static const List<Map<String, String>> _metodosOfrecidos = [
     {'id': 'NEQUI', 'label': 'Nequi'},
     {'id': 'CARD', 'label': 'Tarjeta'},
@@ -87,8 +87,8 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
     {'id': 'DAVIPLATA', 'label': 'Daviplata'},
   ];
 
-  /// Métodos que NO cobran al crear la transacción: Wompi devuelve una URL de
-  /// autorización (`async_payment_url`) que el usuario debe abrir. Sin abrirla el
+  /// MÃ©todos que NO cobran al crear la transacciÃ³n: Wompi devuelve una URL de
+  /// autorizaciÃ³n (`async_payment_url`) que el usuario debe abrir. Sin abrirla el
   /// cobro queda PENDING para siempre.
   static const Set<String> _metodosRedireccion = {
     'PSE', 'BANCOLOMBIA_TRANSFER', 'DAVIPLATA',
@@ -109,14 +109,14 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
 
   final _nequiCtrl = TextEditingController();
 
-  // Datos del pagador para los métodos de redirección (los exige Wompi).
+  // Datos del pagador para los mÃ©todos de redirecciÃ³n (los exige Wompi).
   final _nombreCtrl = TextEditingController();
   final _telefonoCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _bancoCtrl = TextEditingController();
 
   /// Porcentaje de IVA que se muestra en el desglose, derivado de los montos que
-  /// calculó el servidor (no se escribe 19% fijo: si la tarifa cambia, la
+  /// calculÃ³ el servidor (no se escribe 19% fijo: si la tarifa cambia, la
   /// etiqueta cambia con ella).
   int _porcentajeIvaMostrado() {
     final base = _safeParseDouble(widget.subtotalBase);
@@ -131,9 +131,9 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
   Map<String, dynamic>? _successData;
   String? _errorMsg;
 
-  /// URL de autorización devuelta por Wompi para PSE/Bancolombia/Daviplata.
-  /// Mientras no sea null, la hoja muestra la pantalla de redirección en vez del
-  /// formulario: el cobro ya existe y sólo falta que el usuario lo autorice.
+  /// URL de autorizaciÃ³n devuelta por Wompi para PSE/Bancolombia/Daviplata.
+  /// Mientras no sea null, la hoja muestra la pantalla de redirecciÃ³n en vez del
+  /// formulario: el cobro ya existe y sÃ³lo falta que el usuario lo autorice.
   String? _redireccionUrl;
 
   @override
@@ -150,7 +150,7 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
   void initState() {
     super.initState();
     // A360-2026-09-22/C-03: no se emite el evento de checkout si no hay un
-    // identificador real de compra (antes se enviaba un id fabricado 'STORE_…').
+    // identificador real de compra (antes se enviaba un id fabricado 'STORE_â€¦').
     final itemId = widget.bookingId.trim();
     if (itemId.isEmpty) return;
     AnalyticsService().logInitiateCheckout(
@@ -168,15 +168,16 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
     if (!_formKey.currentState!.validate()) return;
 
     // A360-2026-09-22/C-01: no hay pasarela integrada para compras sin reserva
-    // real (p. ej. GlowShop). Antes se devolvía aquí un pago 'APPROVED' fabricado
+    // real (p. ej. GlowShop). Antes se devolvÃ­a aquÃ­ un pago 'APPROVED' fabricado
     // tras un Future.delayed, con una referencia inventada y sin ninguna llamada
-    // HTTP. Ese camino se elimina: sin pasarela => fallo explícito, nunca éxito.
+    // HTTP. Ese camino se elimina: sin pasarela => fallo explÃ­cito, nunca Ã©xito.
     if (widget.bookingId.trim().isEmpty) {
       await HapticFeedback.vibrate();
+      if (!mounted) return;
       setState(() {
         _isProcessing = false;
-        _errorMsg = 'La pasarela de pago no está integrada para este tipo de '
-            'compra. No se realizó ningún cobro.';
+        _errorMsg = 'La pasarela de pago no estÃ¡ integrada para este tipo de '
+            'compra. No se realizÃ³ ningÃºn cobro.';
       });
       return;
     }
@@ -189,7 +190,7 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
     try {
       final method = _metodo;
 
-      // Token de aceptación (Habeas Data) - obligatorio
+      // Token de aceptaciÃ³n (Habeas Data) - obligatorio
       final consentimiento = await ApiService.fetchWompiAcceptanceToken();
       final acceptanceToken = consentimiento['acceptance_token'] as String?;
       if (acceptanceToken == null || acceptanceToken.isEmpty) {
@@ -200,19 +201,19 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
         String? paymentMethodToken;
         
         if (widget.itemType == 'service') {
-          // Para servicios: modal de tokenización
+          // Para servicios: modal de tokenizaciÃ³n
           final publicKey = await ApiService.fetchWompiPublicKey();
           
           // Mostrar formulario de tarjeta para recolectar datos
           final cardData = await _showCardForm(context);
           if (!mounted) return;
           if (cardData == null) {
-            // Usuario canceló
+            // Usuario cancelÃ³
             setState(() { _isProcessing = false; });
             return;
           }
           
-          // Tokenizar con Wompi (POST /tokens/cards con llave pública)
+          // Tokenizar con Wompi (POST /tokens/cards con llave pÃºblica)
           final tokenResponse = await http.post(
             Uri.parse('https://sandbox.wompi.co/v1/tokens/cards'),
             headers: {
@@ -239,7 +240,7 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
           if (!_formKey.currentState!.validate()) return;
           
           // Extraer datos del formulario inline (necesitamos controllers)
-          // Por simplicidad, usamos el mismo modal también para productos
+          // Por simplicidad, usamos el mismo modal tambiÃ©n para productos
           final publicKey = await ApiService.fetchWompiPublicKey();
           
           final cardData = await _showCardForm(context);
@@ -272,7 +273,7 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
           paymentMethodToken = tokenData['id'] as String;
         }
         
-        // Crear transacción con el token
+        // Crear transacciÃ³n con el token
         final res = await _crearTransaccion(
           method: method,
           paymentMethodToken: paymentMethodToken,
@@ -280,16 +281,16 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
         );
         
         if (res['success'] != true) {
-          throw Exception(res['error']?.toString() ?? 'La pasarela no confirmó el pago.');
+          throw Exception(res['error']?.toString() ?? 'La pasarela no confirmÃ³ el pago.');
         }
         
         await _onPaymentSuccess(res);
         return;
       }
 
-      // ─── Métodos de redirección: PSE, Bancolombia, Daviplata ───
-      // Wompi NO cobra al crear la transacción: devuelve una URL de autorización
-      // que el usuario debe abrir en su banco. El backend la reenvía como
+      // â”€â”€â”€ MÃ©todos de redirecciÃ³n: PSE, Bancolombia, Daviplata â”€â”€â”€
+      // Wompi NO cobra al crear la transacciÃ³n: devuelve una URL de autorizaciÃ³n
+      // que el usuario debe abrir en su banco. El backend la reenvÃ­a como
       // `async_payment_url`. Sin esa URL el cobro queda PENDING para siempre.
       if (_esRedireccion) {
         final res = await _crearTransaccion(
@@ -301,7 +302,7 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
             'full_name': _nombreCtrl.text.trim(),
             'phone_number': _telefonoCtrl.text.trim(),
             // PSE obliga a elegir entidad financiera; Wompi rechaza la
-            // transacción sin ella.
+            // transacciÃ³n sin ella.
             if (method == 'PSE')
               'financial_institution_code': _bancoCtrl.text.trim(),
           },
@@ -309,10 +310,10 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
 
         final url = res['async_payment_url'] as String?;
         if (url == null || url.isEmpty) {
-          // Sin URL no hay forma de autorizar. Fallo explícito, nunca un
-          // "éxito" que dejaría al cliente creyendo que ya pagó.
+          // Sin URL no hay forma de autorizar. Fallo explÃ­cito, nunca un
+          // "Ã©xito" que dejarÃ­a al cliente creyendo que ya pagÃ³.
           throw Exception(
-            'Wompi no devolvió la URL de autorización. No se realizó ningún cobro; '
+            'Wompi no devolviÃ³ la URL de autorizaciÃ³n. No se realizÃ³ ningÃºn cobro; '
             'no vuelvas a pagar sin revisar el estado de la reserva.'
           );
         }
@@ -339,10 +340,10 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
       // NEQUI flow
       final telefono = _nequiCtrl.text.trim();
       if (telefono.isEmpty) {
-        throw Exception('Ingresa el número de celular asociado a tu Nequi.');
+        throw Exception('Ingresa el nÃºmero de celular asociado a tu Nequi.');
       }
 
-      // Única fuente de verdad del resultado: la respuesta HTTP del backend.
+      // Ãšnica fuente de verdad del resultado: la respuesta HTTP del backend.
       final res = await _crearTransaccion(
         method: method,
         phoneNumber: telefono,
@@ -350,7 +351,7 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
       );
       
       if (res['success'] != true) {
-        throw Exception(res['error']?.toString() ?? 'La pasarela no confirmó el pago.');
+        throw Exception(res['error']?.toString() ?? 'La pasarela no confirmÃ³ el pago.');
       }
       
       if (widget.itemType == 'product') {
@@ -373,8 +374,9 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
 
       await _onPaymentSuccess(res);
     } catch (e) {
-      // Respuesta táctil háptica en caso de error
+      // Respuesta tÃ¡ctil hÃ¡ptica en caso de error
       await HapticFeedback.vibrate();
+      if (!mounted) return;
       setState(() {
         _isProcessing = false;
         _errorMsg = e.toString().replaceFirst('Exception: ', '');
@@ -492,7 +494,7 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
         const Icon(Icons.check_circle, color: Color(0xFF10B981), size: 72),
         const SizedBox(height: 16),
         const Text(
-          '¡Pago Exitoso!',
+          'Â¡Pago Exitoso!',
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87),
         ),
         const SizedBox(height: 8),
@@ -556,11 +558,11 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
     );
   }
 
-  /// Pantalla de autorización para PSE / Bancolombia / Daviplata.
+  /// Pantalla de autorizaciÃ³n para PSE / Bancolombia / Daviplata.
   ///
-  /// La transacción YA existe en Wompi (PENDING) pero NO está cobrada: el banco
-  /// debe autorizarla en su propia página. Esta pantalla entrega el enlace y deja
-  /// claro que el pago aún no se completó — mostrar aquí un "pago exitoso" sería
+  /// La transacciÃ³n YA existe en Wompi (PENDING) pero NO estÃ¡ cobrada: el banco
+  /// debe autorizarla en su propia pÃ¡gina. Esta pantalla entrega el enlace y deja
+  /// claro que el pago aÃºn no se completÃ³ â€” mostrar aquÃ­ un "pago exitoso" serÃ­a
   /// mentir sobre el dinero del cliente.
   Widget _buildRedireccionView() {
     return Column(
@@ -594,9 +596,9 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
               ),
               SizedBox(height: 8),
               Text(
-                'El cobro quedó reservado, pero NO se ha pagado todavía. Abre el enlace '
-                'de autorización en tu navegador y completa el proceso allí. '
-                'El pago se confirma automáticamente cuando el banco responde.',
+                'El cobro quedÃ³ reservado, pero NO se ha pagado todavÃ­a. Abre el enlace '
+                'de autorizaciÃ³n en tu navegador y completa el proceso allÃ­. '
+                'El pago se confirma automÃ¡ticamente cuando el banco responde.',
                 style: TextStyle(fontSize: 13, color: Color(0xFF5D4037)),
               ),
             ],
@@ -617,7 +619,7 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
         ),
         const SizedBox(height: 8),
         const Text(
-          'Ya lo copiamos al portapapeles: pégalo en tu navegador si no se abrió.',
+          'Ya lo copiamos al portapapeles: pÃ©galo en tu navegador si no se abriÃ³.',
           style: TextStyle(fontSize: 11, color: Colors.grey),
           textAlign: TextAlign.center,
         ),
@@ -650,7 +652,7 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
           ),
           onPressed: () => Navigator.pop(context),
           child: const Text(
-            'Entendido, pagaré desde el enlace',
+            'Entendido, pagarÃ© desde el enlace',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
           ),
         ),
@@ -661,7 +663,7 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
             Icon(Icons.security, size: 12, color: Colors.grey),
             SizedBox(width: 4),
             Text(
-              'Transacción protegida por Wompi Colombia',
+              'TransacciÃ³n protegida por Wompi Colombia',
               style: TextStyle(fontSize: 10, color: Colors.grey),
             ),
           ],
@@ -709,9 +711,9 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
                   children: [
                     if (_safeParseDouble(widget.ivaValor) > 0) ...[
                       // Desglose del IVA (art. 476 num. 1 lit. a) del Estatuto
-                      // Tributario: los tratamientos de belleza están gravados).
+                      // Tributario: los tratamientos de belleza estÃ¡n gravados).
                       // El total NO cambia: el impuesto ya estaba incluido en el
-                      // precio publicado y aquí sólo se hace visible. El
+                      // precio publicado y aquÃ­ sÃ³lo se hace visible. El
                       // porcentaje se deriva de los montos, no se escribe fijo.
                       Text(
                         'Valor: \$${_safeParseDouble(widget.subtotalBase).toStringAsFixed(0)}',
@@ -724,9 +726,9 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
                     ],
                     Text(
                       // Se muestra EXACTAMENTE el monto que el backend va a cobrar
-                      // (`valor_bruto` de la reserva). Antes se mostraba un cálculo
-                      // propio (base + add-on − cashback) que el servidor no podía
-                      // reproducir: el cliente veía un precio y se le cobraba otro.
+                      // (`valor_bruto` de la reserva). Antes se mostraba un cÃ¡lculo
+                      // propio (base + add-on âˆ’ cashback) que el servidor no podÃ­a
+                      // reproducir: el cliente veÃ­a un precio y se le cobraba otro.
                       '\$${_safeParseDouble(widget.price).toStringAsFixed(0)} COP',
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF5C288D)),
                     ),
@@ -738,9 +740,9 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
 
 
           const SizedBox(height: 16),
-          // Selector de método. Antes eran 2 pestañas fijas (Nequi / Tarjeta); con
-          // los métodos de redirección el índice de pestaña dejaba de mapear 1:1
-          // con el método, así que el estado ahora guarda el NOMBRE del método.
+          // Selector de mÃ©todo. Antes eran 2 pestaÃ±as fijas (Nequi / Tarjeta); con
+          // los mÃ©todos de redirecciÃ³n el Ã­ndice de pestaÃ±a dejaba de mapear 1:1
+          // con el mÃ©todo, asÃ­ que el estado ahora guarda el NOMBRE del mÃ©todo.
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -777,7 +779,7 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
           if (_errorMsg != null) ...[
             const SizedBox(height: 16),
             Text(
-              '❌ $_errorMsg',
+              'âŒ $_errorMsg',
               textAlign: TextAlign.center,
               style: const TextStyle(color: Colors.redAccent, fontSize: 13, fontWeight: FontWeight.w500),
             ),
@@ -815,7 +817,7 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
               Icon(Icons.security, size: 12, color: Colors.grey),
               SizedBox(width: 4),
               Text(
-                'Transacción protegida por Wompi Colombia',
+                'TransacciÃ³n protegida por Wompi Colombia',
                 style: TextStyle(fontSize: 10, color: Colors.grey),
               ),
             ],
@@ -826,39 +828,22 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
   }
 
   Widget _buildNequiForm() {
-    if (widget.itemType == 'service') {
-      return Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFFF8E1),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFFFE082)),
-        ),
-        child: const Row(
-          children: [
-            Icon(Icons.info_outline, color: Color(0xFFF57F17), size: 20),
-            SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'El cobro en línea para citas de servicio no requiere ingresar número de celular. El pago se procesa directamente en el establecimiento.',
-                style: TextStyle(fontSize: 13, color: Color(0xFF5D4037)),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
+    // D-GL-023 (regla 18): el anticipo es del 100% al reservar, tambiÃ©n para
+    // servicios. AquÃ­ se pedÃ­a el celular en `_handlePayment` pero el campo solo
+    // se dibujaba para productos: con un servicio, `_nequiCtrl` siempre estaba
+    // vacÃ­o y el pago lanzaba "Ingresa el nÃºmero de celular" sin que existiera
+    // dÃ³nde escribirlo. La nota que decÃ­a "el pago se procesa en el
+    // establecimiento" era falsa: la transacciÃ³n se crea contra Wompi.
     return TextFormField(
       controller: _nequiCtrl,
       keyboardType: TextInputType.phone,
       enabled: !_isProcessing,
       style: const TextStyle(fontSize: 14),
-      decoration: _inputDecoration('Número de celular (Nequi)', Icons.phone_android),
+      decoration: _inputDecoration('NÃºmero de celular (Nequi)', Icons.phone_android),
       validator: (val) {
-        if (val == null || val.isEmpty) return 'El número es requerido';
+        if (val == null || val.isEmpty) return 'El nÃºmero es requerido';
         if (val.length != 10 || !RegExp(r'^[0-9]+$').hasMatch(val)) {
-          return 'Debe ser un número celular de 10 dígitos';
+          return 'Debe ser un nÃºmero celular de 10 dÃ­gitos';
         }
         return null;
       },
@@ -866,7 +851,7 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
   }
 
   Widget _buildCardForm() {
-    // Para servicios: ya no se piden datos aquí, se tokeniza en un modal aparte
+    // Para servicios: ya no se piden datos aquÃ­, se tokeniza en un modal aparte
     // cuando el usuario toca "Pagar" (ver _handlePayment).
     if (widget.itemType == 'service') {
       return Container(
@@ -882,7 +867,7 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
             SizedBox(width: 12),
             Expanded(
               child: Text(
-                'El pago con tarjeta se procesa de forma segura. Al confirmar, se abrirá un formulario para ingresar los datos de tu tarjeta (tokenización directa con Wompi).',
+                'El pago con tarjeta se procesa de forma segura. Al confirmar, se abrirÃ¡ un formulario para ingresar los datos de tu tarjeta (tokenizaciÃ³n directa con Wompi).',
                 style: TextStyle(fontSize: 13, color: Color(0xFF1B5E20)),
               ),
             ),
@@ -892,18 +877,18 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
     }
 
     // Para productos (GlowStore): mostrar formulario inline como antes
-    // Pero ahora SÍ se usan los datos (tokenización con Wompi)
+    // Pero ahora SÃ se usan los datos (tokenizaciÃ³n con Wompi)
     return Column(
       children: [
         TextFormField(
           keyboardType: TextInputType.number,
           enabled: !_isProcessing,
           style: const TextStyle(fontSize: 14),
-          decoration: _inputDecoration('Número de tarjeta', Icons.credit_card),
+          decoration: _inputDecoration('NÃºmero de tarjeta', Icons.credit_card),
           validator: (val) {
             if (val == null || val.isEmpty) return 'Requerido';
             final digits = val.replaceAll(' ', '');
-            if (!RegExp(r'^\d{13,19}$').hasMatch(digits)) return 'Número inválido';
+            if (!RegExp(r'^\d{13,19}$').hasMatch(digits)) return 'NÃºmero invÃ¡lido';
             return null;
           },
           onChanged: (v) {
@@ -913,7 +898,7 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
               (m) => '${m.group(0)} ',
             ).trim();
             if (formatted != v) {
-              // Nota: no hay controller aquí, pero para inline funciona
+              // Nota: no hay controller aquÃ­, pero para inline funciona
             }
           },
         ),
@@ -928,7 +913,7 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
                 validator: (val) {
                   if (val == null || val.isEmpty) return 'MM';
                   final m = int.tryParse(val);
-                  if (m == null || m < 1 || m > 12) return 'Inválido';
+                  if (m == null || m < 1 || m > 12) return 'InvÃ¡lido';
                   return null;
                 },
               ),
@@ -938,11 +923,11 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
               child: TextFormField(
                 keyboardType: TextInputType.number,
                 enabled: !_isProcessing,
-                decoration: _inputDecoration('Año (YY)', Icons.calendar_today),
+                decoration: _inputDecoration('AÃ±o (YY)', Icons.calendar_today),
                 validator: (val) {
                   if (val == null || val.isEmpty) return 'YY';
                   final y = int.tryParse(val);
-                  if (y == null || y < 24 || y > 40) return 'Inválido';
+                  if (y == null || y < 24 || y > 40) return 'InvÃ¡lido';
                   return null;
                 },
               ),
@@ -957,7 +942,7 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
           decoration: _inputDecoration('CVC', Icons.lock_outline),
           validator: (val) {
             if (val == null || val.isEmpty) return 'CVC';
-            if (!RegExp(r'^\d{3,4}$').hasMatch(val)) return 'Inválido';
+            if (!RegExp(r'^\d{3,4}$').hasMatch(val)) return 'InvÃ¡lido';
             return null;
           },
         ),
@@ -990,9 +975,9 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
     );
   }
 
-  /// Datos del pagador que exige Wompi para los métodos de redirección.
+  /// Datos del pagador que exige Wompi para los mÃ©todos de redirecciÃ³n.
   /// El backend responde 400 si falta `email`, `full_name` o `phone_number`;
-  /// PSE además exige la entidad financiera.
+  /// PSE ademÃ¡s exige la entidad financiera.
   Widget _buildRedirectForm() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1012,11 +997,11 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
           enabled: !_isProcessing,
           keyboardType: TextInputType.emailAddress,
           style: const TextStyle(fontSize: 14),
-          decoration: _inputDecoration('Correo electrónico', Icons.email_outlined),
+          decoration: _inputDecoration('Correo electrÃ³nico', Icons.email_outlined),
           validator: (val) {
             if (val == null || val.trim().isEmpty) return 'El correo es requerido';
             if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(val.trim())) {
-              return 'Correo inválido';
+              return 'Correo invÃ¡lido';
             }
             return null;
           },
@@ -1027,17 +1012,17 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
           enabled: !_isProcessing,
           keyboardType: TextInputType.phone,
           style: const TextStyle(fontSize: 14),
-          decoration: _inputDecoration('Número de celular', Icons.phone_android),
+          decoration: _inputDecoration('NÃºmero de celular', Icons.phone_android),
           validator: (val) {
-            if (val == null || val.isEmpty) return 'El número es requerido';
+            if (val == null || val.isEmpty) return 'El nÃºmero es requerido';
             if (val.length != 10 || !RegExp(r'^[0-9]+$').hasMatch(val)) {
-              return 'Debe ser un número celular de 10 dígitos';
+              return 'Debe ser un nÃºmero celular de 10 dÃ­gitos';
             }
             return null;
           },
         ),
-        // Sólo PSE: Wompi exige el código de la entidad financiera en la propia
-        // transacción; sin él la rechaza.
+        // SÃ³lo PSE: Wompi exige el cÃ³digo de la entidad financiera en la propia
+        // transacciÃ³n; sin Ã©l la rechaza.
         if (_metodo == 'PSE') ...[
           const SizedBox(height: 12),
           TextFormField(
@@ -1045,9 +1030,9 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
             enabled: !_isProcessing,
             keyboardType: TextInputType.number,
             style: const TextStyle(fontSize: 14),
-            decoration: _inputDecoration('Código de tu banco (PSE, ej. 1007)', Icons.account_balance),
+            decoration: _inputDecoration('CÃ³digo de tu banco (PSE, ej. 1007)', Icons.account_balance),
             validator: (val) =>
-                (val == null || val.trim().isEmpty) ? 'El código del banco es requerido' : null,
+                (val == null || val.trim().isEmpty) ? 'El cÃ³digo del banco es requerido' : null,
           ),
         ],
         const SizedBox(height: 12),
@@ -1063,8 +1048,8 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
               SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Al continuar crearemos la transacción y te daremos el enlace de tu banco para autorizarla. '
-                  'El pago no se completa hasta que lo autorices allí.',
+                  'Al continuar crearemos la transacciÃ³n y te daremos el enlace de tu banco para autorizarla. '
+                  'El pago no se completa hasta que lo autorices allÃ­.',
                   style: TextStyle(fontSize: 12, color: Colors.black54),
                 ),
               ),
@@ -1096,7 +1081,7 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
     );
   }
 
-  /// Muestra un diálogo modal para recolectar datos de tarjeta
+  /// Muestra un diÃ¡logo modal para recolectar datos de tarjeta
   /// Retorna null si el usuario cancela, o un mapa con los datos si confirma
   Future<Map<String, String>?> _showCardForm(BuildContext context) async {
     final numberCtrl = TextEditingController();
@@ -1130,7 +1115,7 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
                     keyboardType: TextInputType.number,
                     enabled: !isProcessing,
                     decoration: const InputDecoration(
-                      labelText: 'Número de tarjeta',
+                      labelText: 'NÃºmero de tarjeta',
                       hintText: '1234 5678 9012 3456',
                       prefixIcon: Icon(Icons.credit_card),
                     ),
@@ -1138,12 +1123,12 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
                       if (v == null || v.isEmpty) return 'Requerido';
                       final digits = v.replaceAll(' ', '');
                       if (!RegExp(r'^\d{13,19}$').hasMatch(digits)) {
-                        return 'Número inválido';
+                        return 'NÃºmero invÃ¡lido';
                       }
                       return null;
                     },
                     onChanged: (v) {
-                      // Formato automático: grupos de 4
+                      // Formato automÃ¡tico: grupos de 4
                       final digits = v.replaceAll(' ', '');
                       final formatted = digits.replaceAllMapped(
                         RegExp(r'.{4}'),
@@ -1172,7 +1157,7 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
                           validator: (v) {
                             if (v == null || v.isEmpty) return 'Requerido';
                             final m = int.tryParse(v);
-                            if (m == null || m < 1 || m > 12) return 'Inválido';
+                            if (m == null || m < 1 || m > 12) return 'InvÃ¡lido';
                             return null;
                           },
                         ),
@@ -1184,13 +1169,13 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
                           keyboardType: TextInputType.number,
                           enabled: !isProcessing,
                           decoration: const InputDecoration(
-                            labelText: 'Año (YY)',
+                            labelText: 'AÃ±o (YY)',
                             hintText: '28',
                           ),
                           validator: (v) {
                             if (v == null || v.isEmpty) return 'Requerido';
                             final y = int.tryParse(v);
-                            if (y == null || y < 24 || y > 40) return 'Inválido';
+                            if (y == null || y < 24 || y > 40) return 'InvÃ¡lido';
                             return null;
                           },
                         ),
@@ -1209,7 +1194,7 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
                     ),
                     validator: (v) {
                       if (v == null || v.isEmpty) return 'Requerido';
-                      if (!RegExp(r'^\d{3,4}$').hasMatch(v)) return 'Inválido';
+                      if (!RegExp(r'^\d{3,4}$').hasMatch(v)) return 'InvÃ¡lido';
                       return null;
                     },
                   ),
@@ -1242,13 +1227,13 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
                       if (!formKey.currentState!.validate()) return;
                       setDialogState(() => isProcessing = true);
                       
-                      // Validar fecha de expiración no pasada
+                      // Validar fecha de expiraciÃ³n no pasada
                       final now = DateTime.now();
                       final expMonth = int.parse(expMonthCtrl.text);
                       final expYear = int.parse('20${expYearCtrl.text}');
                       if (DateTime(expYear, expMonth).isBefore(DateTime(now.year, now.month))) {
                         setDialogState(() {
-                          errorMsg = 'La tarjeta está vencida';
+                          errorMsg = 'La tarjeta estÃ¡ vencida';
                           isProcessing = false;
                         });
                         return;
@@ -1276,20 +1261,20 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
     );
   }
 
-  /// A dónde vuelve el usuario tras autorizar en su banco. Wompi lo exige y el
-  /// backend rechaza la transacción sin él (400). Se usa el dominio público de la
+  /// A dÃ³nde vuelve el usuario tras autorizar en su banco. Wompi lo exige y el
+  /// backend rechaza la transacciÃ³n sin Ã©l (400). Se usa el dominio pÃºblico de la
   /// app, el mismo que ya se emplea para los enlaces compartibles
   /// (`provider_detail_screen.dart`: `https://glowapp.co/p/<id>`), y que coincide
   /// con `FRONTEND_URL` de `backend/.env.example`.
   static const String _redirectUrlPago = 'https://glowapp.co/pago/resultado';
 
-  /// Muestra la URL de autorización que devolvió Wompi.
+  /// Muestra la URL de autorizaciÃ³n que devolviÃ³ Wompi.
   ///
-  /// El proyecto NO tiene `url_launcher` ni `webview_flutter`: es una omisión
+  /// El proyecto NO tiene `url_launcher` ni `webview_flutter`: es una omisiÃ³n
   /// deliberada (`forced_update_dialog.dart` resuelve lo mismo con el
-  /// portapapeles "porque no es dependencia del proyecto"). Se sigue ese patrón:
-  /// se copia el enlace y se indica abrirlo. Si producto acepta añadir
-  /// `url_launcher`, aquí se sustituye `Clipboard.setData` por `launchUrl`.
+  /// portapapeles "porque no es dependencia del proyecto"). Se sigue ese patrÃ³n:
+  /// se copia el enlace y se indica abrirlo. Si producto acepta aÃ±adir
+  /// `url_launcher`, aquÃ­ se sustituye `Clipboard.setData` por `launchUrl`.
   /// Un solo punto de salida para crear la transaccion. Reservas y pedidos de
   /// tienda usan endpoints distintos (`/bookings/:id/pay` vs `/store/orders/:id/pay`).
   /// Antes la hoja llamaba SIEMPRE a payBooking: el checkout de la tienda pegaba
@@ -1367,7 +1352,7 @@ class _WompiCheckoutWidgetState extends State<WompiCheckoutWidget> {
     });
   }
 
-  /// Maneja el éxito del pago (común para NEQUI y CARD)
+  /// Maneja el Ã©xito del pago (comÃºn para NEQUI y CARD)
   Future<void> _onPaymentSuccess(Map<String, dynamic> res) async {
     await BookingRecoveryService.clearPendingBooking();
     await HapticFeedback.lightImpact();

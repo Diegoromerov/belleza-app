@@ -47,6 +47,9 @@ const path = require('path');
 const vm = require('vm');
 
 const SRC_DIR = path.join(__dirname, '..', 'src');
+// config/consentConfig.js es configuración pura (versión vigente y encargados del
+// tratamiento). El sandbox la inyecta para no depender del allowlist de requires.
+const CONSENT_CONFIG = require(path.join(SRC_DIR, 'config', 'consentConfig.js'));
 const MW_PATH = path.join(SRC_DIR, 'middleware', 'biometricConsent.js');
 const SVC_PATH = path.join(SRC_DIR, 'services', 'consentService.js');
 const ROUTE_BIO = path.join(SRC_DIR, 'routes', 'biometricConsentRoutes.js');
@@ -175,11 +178,13 @@ function montarEndpointBiometrico({ fallarEnDelete = false, reemplazarDelete = n
 
   const svc = cargarModulo(SVC_PATH, {
     '../config/db': { pool },
+    '../config/consentConfig': CONSENT_CONFIG,
     '../middleware/rateLimiter': { getRedisClient: async () => null },
   });
 
   const mw = cargarModulo(MW_PATH, {
     '../config/db': { pool },
+    '../config/consentConfig': CONSENT_CONFIG,
     './rateLimiter': { getRedisClient: async () => null },
     '../services/consentService': svc,
   });
@@ -194,6 +199,7 @@ function montarEndpointBiometrico({ fallarEnDelete = false, reemplazarDelete = n
     '../utils/expressAsync': { wrapRouterAsync: () => {} },
     '../middleware/auth': { authMiddleware: (req, res, next) => next() },
     '../middleware/biometricConsent': mw,
+    '../config/consentConfig': CONSENT_CONFIG,
   });
 
   return () =>
@@ -212,6 +218,7 @@ function montarEndpointConsent({ fallarEnDelete = false, reemplazarDelete = null
 
   const svc = cargarModulo(SVC_PATH, {
     '../config/db': { pool },
+    '../config/consentConfig': CONSENT_CONFIG,
     '../middleware/rateLimiter': { getRedisClient: async () => null },
   });
 
@@ -227,6 +234,7 @@ function montarEndpointConsent({ fallarEnDelete = false, reemplazarDelete = null
     // lanzaba «require no soportado» y la ruta /data no llegaba a registrarse, así que
     // C1/C2/C3 fallaban sin llegar a ejercitar el handler.
     '../config/db': { pool },
+    '../config/consentConfig': CONSENT_CONFIG,
   });
 
   return () =>

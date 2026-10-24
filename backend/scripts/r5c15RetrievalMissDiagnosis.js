@@ -90,23 +90,23 @@ async function main() {
     const qEmb = await generateEmbedding(g.query, 'query');
     const vec = '[' + qEmb.join(',') + ']';
     const hnsw = await ragPool.query(
-      `SELECT id, chunk_id, document_id, 1-(embedding <=> $1::vector) AS sim
-       FROM beauty_knowledge_embeddings ORDER BY embedding <=> $1::vector LIMIT ${TOPK}`, [vec]);
+      `SELECT id, chunk_id, document_id, 1-(embedding <=> $1::halfvec) AS sim
+       FROM beauty_knowledge_embeddings ORDER BY embedding <=> $1::halfvec LIMIT ${TOPK}`, [vec]);
     const hnswTop = hnsw.rows.map(r => ({ chunk_id: r.chunk_id, sim: +r.sim.toFixed(4) }));
     const hnswIds = hnswTop.map(r => r.chunk_id);
 
     // ── F1/F3: EXACT scan top-10 (oráculo técnico) ──
     const exact = await ragPool.query(
-      `SELECT id, chunk_id, document_id, 1-(embedding <=> $1::vector) AS sim
+      `SELECT id, chunk_id, document_id, 1-(embedding <=> $1::halfvec) AS sim
        FROM beauty_knowledge_embeddings
-       ORDER BY embedding <=> $1::vector::vector LIMIT ${TOPK}
+       ORDER BY embedding <=> $1::halfvec::halfvec LIMIT ${TOPK}
        OFFSET 0`, [vec]);
     // exact scan con SET LOCAL para forzar seq scan (desactivar index scan)
     await ragPool.query('SET LOCAL enable_indexscan = off; SET LOCAL enable_bitmapscan = off;');
     const exactScan = await ragPool.query(
-      `SELECT id, chunk_id, document_id, 1-(embedding <=> $1::vector) AS sim
+      `SELECT id, chunk_id, document_id, 1-(embedding <=> $1::halfvec) AS sim
        FROM beauty_knowledge_embeddings
-       ORDER BY embedding <=> $1::vector LIMIT ${TOPK}`, [vec]);
+       ORDER BY embedding <=> $1::halfvec LIMIT ${TOPK}`, [vec]);
     await ragPool.query('SET LOCAL enable_indexscan = on; SET LOCAL enable_bitmapscan = on;');
     const exactTop = exactScan.rows.map(r => ({ chunk_id: r.chunk_id, sim: +r.sim.toFixed(4) }));
     const exactIds = exactTop.map(r => r.chunk_id);
@@ -120,7 +120,7 @@ async function main() {
     }
     // Scores del gold (búsqueda directa de similitud)
     const goldSims = await ragPool.query(
-      `SELECT chunk_id, 1-(embedding <=> $1::vector) AS sim
+      `SELECT chunk_id, 1-(embedding <=> $1::halfvec) AS sim
        FROM beauty_knowledge_embeddings WHERE chunk_id = ANY($2::text[])`, [vec, goldAll]);
     for (const r of goldSims.rows) {
       if (goldRanks[r.chunk_id]) goldRanks[r.chunk_id].sim = +r.sim.toFixed(4);
@@ -154,8 +154,8 @@ async function main() {
     for (const rf of REFORMULATIONS[qid]) {
       const rEmb = await generateEmbedding(rf, 'query');
       const rRes = await ragPool.query(
-        `SELECT chunk_id, 1-(embedding <=> $1::vector) AS sim
-         FROM beauty_knowledge_embeddings ORDER BY embedding <=> $1::vector LIMIT ${TOPK}`, ['[' + rEmb.join(',') + ']']);
+        `SELECT chunk_id, 1-(embedding <=> $1::halfvec) AS sim
+         FROM beauty_knowledge_embeddings ORDER BY embedding <=> $1::halfvec LIMIT ${TOPK}`, ['[' + rEmb.join(',') + ']']);
       const rIds = rRes.rows.map(r => r.chunk_id);
       const rGold = goldAll.filter(id => rIds.includes(id));
       const rRanks = {};
@@ -179,8 +179,8 @@ async function main() {
     const docText = DOC_CENTRIC[qid];
     const dEmb = await generateEmbedding(docText, 'query');
     const dRes = await ragPool.query(
-      `SELECT chunk_id, 1-(embedding <=> $1::vector) AS sim
-       FROM beauty_knowledge_embeddings ORDER BY embedding <=> $1::vector LIMIT ${TOPK}`, ['[' + dEmb.join(',') + ']']);
+      `SELECT chunk_id, 1-(embedding <=> $1::halfvec) AS sim
+       FROM beauty_knowledge_embeddings ORDER BY embedding <=> $1::halfvec LIMIT ${TOPK}`, ['[' + dEmb.join(',') + ']']);
     const dIds = dRes.rows.map(r => r.chunk_id);
     const docCentric = {
       text: docText,
@@ -196,8 +196,8 @@ async function main() {
     for (const ef of [40, 100, 200, 400]) {
       await ragPool.query(`SET LOCAL hnsw.ef_search = ${ef};`);
       const efRes = await ragPool.query(
-        `SELECT chunk_id, 1-(embedding <=> $1::vector) AS sim
-         FROM beauty_knowledge_embeddings ORDER BY embedding <=> $1::vector LIMIT ${TOPK}`, [vec]);
+        `SELECT chunk_id, 1-(embedding <=> $1::halfvec) AS sim
+         FROM beauty_knowledge_embeddings ORDER BY embedding <=> $1::halfvec LIMIT ${TOPK}`, [vec]);
       const efIds = efRes.rows.map(r => r.chunk_id);
       const bestEf = (() => { const r = goldAll.map(id => efIds.indexOf(id) + 1).filter(x => x > 0); return r.length ? Math.min(...r) : -1; })();
       efResults[`ef_${ef}`] = {

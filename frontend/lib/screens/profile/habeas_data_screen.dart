@@ -1,4 +1,4 @@
-// lib/screens/profile/habeas_data_screen.dart
+﻿// lib/screens/profile/habeas_data_screen.dart
 import 'package:flutter/material.dart';
 import '../../core/theme/belleza_luxe_theme.dart';
 import '../../services/biometric_service.dart';
@@ -24,6 +24,7 @@ class _HabeasDataScreenState extends State<HabeasDataScreen> {
   Future<void> _loadConsent() async {
     try {
       final allowed = await BiometricService.hasConsent();
+      if (!mounted) return;
       if (mounted) setState(() { _biometricConsent = allowed; _isLoading = false; });
     } catch (_) {
       if (mounted) setState(() { _biometricConsent = false; _isLoading = false; });
@@ -40,7 +41,7 @@ class _HabeasDataScreenState extends State<HabeasDataScreen> {
           context: context,
           builder: (context) => AlertDialog(
             title: const Text('Revocar y eliminar datos'),
-            content: const Text('Se revocará el consentimiento y se solicitará borrar los datos biométricos guardados. Esta acción no se puede deshacer.'),
+            content: const Text('Se revocarÃ¡ el consentimiento y se solicitarÃ¡ borrar los datos biomÃ©tricos guardados. Esta acciÃ³n no se puede deshacer.'),
             actions: [
               TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
               FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Revocar y eliminar')),
@@ -55,7 +56,7 @@ class _HabeasDataScreenState extends State<HabeasDataScreen> {
       }
       if (mounted) {
         setState(() => _biometricConsent = value);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(value ? 'Consentimiento biométrico otorgado.' : 'Consentimiento biométrico revocado.')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(value ? 'Consentimiento biomÃ©trico otorgado.' : 'Consentimiento biomÃ©trico revocado.')));
       }
     } catch (error) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.toString().replaceFirst('Exception: ', ''))));
@@ -124,7 +125,7 @@ class _HabeasDataScreenState extends State<HabeasDataScreen> {
                         Icon(Icons.gavel_outlined, color: LuxeColors.nude900, size: 22),
                         SizedBox(width: 10),
                         Text(
-                          'PROTECCIÓN DE DATOS SENSIBLES',
+                          'PROTECCIÃ“N DE DATOS SENSIBLES',
                           style: TextStyle(
                             fontFamily: 'Didot',
                             fontSize: 13,
@@ -137,7 +138,7 @@ class _HabeasDataScreenState extends State<HabeasDataScreen> {
                     ),
                     SizedBox(height: 12),
                     Text(
-                      'Tus análisis y perfiles biométricos se guardan en GlowApp mientras mantengas el consentimiento. Puedes revocarlo y solicitar la eliminación de estos datos desde esta pantalla.',
+                      'Tus anÃ¡lisis y perfiles biomÃ©tricos se guardan en GlowApp mientras mantengas el consentimiento. Puedes revocarlo y solicitar la eliminaciÃ³n de estos datos desde esta pantalla.',
                       style: TextStyle(
                         fontFamily: 'CormorantGaramond',
                         fontSize: 14,
@@ -152,7 +153,7 @@ class _HabeasDataScreenState extends State<HabeasDataScreen> {
               const SizedBox(height: LuxeSpacing.xxl),
 
               const Text(
-                'GESTIÓN DE CONSENTIMIENTOS',
+                'GESTIÃ“N DE CONSENTIMIENTOS',
                 style: TextStyle(
                   fontFamily: 'JetBrainsMono',
                   fontSize: 11,
@@ -178,7 +179,7 @@ class _HabeasDataScreenState extends State<HabeasDataScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Procesamiento Biométrico Facial',
+                            'Procesamiento BiomÃ©trico Facial',
                             style: TextStyle(
                               fontFamily: 'Didot',
                               fontSize: 14,
@@ -188,7 +189,7 @@ class _HabeasDataScreenState extends State<HabeasDataScreen> {
                           ),
                           SizedBox(height: 2),
                           Text(
-                            'Permite el análisis facial y las recomendaciones de cuidado de piel',
+                            'Permite el anÃ¡lisis facial y las recomendaciones de cuidado de piel',
                             style: TextStyle(
                               fontFamily: 'CormorantGaramond',
                               fontSize: 13,
@@ -218,7 +219,7 @@ class _HabeasDataScreenState extends State<HabeasDataScreen> {
                   onPressed: _isBusy ? null : _exportData,
                   icon: const Icon(Icons.download_outlined, color: LuxeColors.nude900, size: 18),
                   label: const Text(
-                    'Descargar Mi Expediente Biométrico (JSON)',
+                    'Descargar Mi Expediente BiomÃ©trico (JSON)',
                     style: TextStyle(
                       fontFamily: 'CormorantGaramond',
                       fontSize: 15,

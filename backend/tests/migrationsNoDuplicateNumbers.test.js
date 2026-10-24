@@ -204,7 +204,11 @@ grupo('Guard de numeración de migraciones (backend/migrations)', () => {
   });
 
   caso('cada .down.sql de rollback tiene su migración `up` correspondiente', () => {
-    const ups = new Set(listarMigraciones(MIGRATIONS_DIR));
+    // El `up` puede estar en migrations/ o en migrations/rag/ (RAG).
+    const ups = new Set([
+      ...listarMigraciones(MIGRATIONS_DIR),
+      ...listarMigraciones(path.join(MIGRATIONS_DIR, 'rag')),
+    ]);
     // Array.from(): readdirSync devuelve un array del realm del host y deepStrictEqual
     // compara prototipos — sin normalizar, dos listas vacías fallan con "no visual difference".
     const huerfanos = Array.from(
@@ -222,8 +226,15 @@ grupo('Guard de numeración de migraciones (backend/migrations)', () => {
   caso('la asignación de Fase D está materializada con números distintos', () => {
     const numerosVistos = new Map();
     for (const [numero, archivo] of Object.entries(ASIGNACION_FASE_D)) {
+      // Las migraciones del RAG viven en migrations/rag/ y las aplica su propio
+      // runner contra RAG_DATABASE_URL (ver REGISTRY.md). Materializar cuenta en
+      // cualquiera de las dos carpetas.
+      const ubicaciones = [
+        path.join(MIGRATIONS_DIR, archivo),
+        path.join(MIGRATIONS_DIR, 'rag', archivo),
+      ];
       assert.ok(
-        fs.existsSync(path.join(MIGRATIONS_DIR, archivo)),
+        ubicaciones.some((p) => fs.existsSync(p)),
         `Falta ${archivo} (asignación de Fase D). Ver backend/migrations/REGISTRY.md.`
       );
       assert.ok(

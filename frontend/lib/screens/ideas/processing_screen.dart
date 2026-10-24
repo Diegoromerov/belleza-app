@@ -10,10 +10,16 @@ class ProcessingScreen extends StatefulWidget {
   final Uint8List faceImage;
   final Uint8List handsImage;
 
+  /// Y-F4: geometría medida por ML Kit (yaw, roll, pitch, faceRatio, aspectRatio).
+  /// El backend la revalida y la guarda con la sesión; si falta, el análisis sigue
+  /// pero queda marcado como «sin geometría».
+  final Map<String, dynamic>? geometry;
+
   const ProcessingScreen({
     super.key,
     required this.faceImage,
     required this.handsImage,
+    this.geometry,
   });
 
   @override
@@ -65,6 +71,9 @@ class _ProcessingScreenState extends State<ProcessingScreen> {
         handsImageBytes: widget.handsImage,
         lat: position?.latitude,
         lng: position?.longitude,
+        // Y-F4: sin esto el backend no puede distinguir una foto torcida de un
+        // cliente que no valida nada.
+        geometry: widget.geometry,
       );
 
       // Etapa 4: Procesamiento de resultados

@@ -52,7 +52,7 @@ async function upsertChunk(chunk) {
   const sql = `
     INSERT INTO beauty_knowledge_embeddings
     (title, category, content, metadata, embedding, document_id, document_version, chunk_id, content_hash, fuente, seccion, updated_at)
-    VALUES ($1, $2, $3, $4, $5::vector, $6, $7, $8, $9, $10, $11, NOW())
+    VALUES ($1, $2, $3, $4, $5::halfvec, $6, $7, $8, $9, $10, $11, NOW())
     ON CONFLICT (document_id, chunk_id) DO UPDATE SET
       title = EXCLUDED.title,
       category = EXCLUDED.category,
@@ -338,9 +338,9 @@ async function main() {
     const testEmbedding = await generateEmbedding('test query for hnsw');
     const vecStr = '[' + testEmbedding.join(',') + ']';
     const hnswTest = await ragPool.query(
-      `SELECT chunk_id, title, 1 - (embedding <=> $1::vector) AS similarity
+      `SELECT chunk_id, title, 1 - (embedding <=> $1::halfvec) AS similarity
        FROM beauty_knowledge_embeddings
-       ORDER BY embedding <=> $1::vector
+       ORDER BY embedding <=> $1::halfvec
        LIMIT 5`,
       [vecStr]
     );
@@ -367,9 +367,9 @@ async function main() {
       const emb = await generateEmbedding(q);
       const vecStr = '[' + emb.join(',') + ']';
       const res = await ragPool.query(
-        `SELECT chunk_id, title, 1 - (embedding <=> $1::vector) AS similarity
+        `SELECT chunk_id, title, 1 - (embedding <=> $1::halfvec) AS similarity
          FROM beauty_knowledge_embeddings
-         ORDER BY embedding <=> $1::vector
+         ORDER BY embedding <=> $1::halfvec
          LIMIT 5`,
         [vecStr]
       );
@@ -394,7 +394,7 @@ async function main() {
         const emb = await generateEmbedding(q.query);
         const vecStr = '[' + emb.join(',') + ']';
         const res = await ragPool.query(
-          `SELECT chunk_id FROM beauty_knowledge_embeddings ORDER BY embedding <=> $1::vector LIMIT 5`,
+          `SELECT chunk_id FROM beauty_knowledge_embeddings ORDER BY embedding <=> $1::halfvec LIMIT 5`,
           [vecStr]
         );
         const top5 = res.rows.map(r => r.chunk_id);
@@ -444,9 +444,9 @@ async function main() {
         const emb = await generateEmbedding(q.query);
         const vecStr = '[' + emb.join(',') + ']';
         const res = await ragPool.query(
-          `SELECT chunk_id, 1 - (embedding <=> $1::vector) AS similarity
+          `SELECT chunk_id, 1 - (embedding <=> $1::halfvec) AS similarity
            FROM beauty_knowledge_embeddings
-           ORDER BY embedding <=> $1::vector
+           ORDER BY embedding <=> $1::halfvec
            LIMIT 50`,
           [vecStr]
         );

@@ -254,8 +254,7 @@ describe('geminiFallback', () => {
       // Verificar que se pasaron 8 herramientas
       expect(capturedTools).toBeDefined();
       const declarations = capturedTools[0]?.functionDeclarations || [];
-      // La fuente única (AURA_TOOLS_DEFINITIONS) declara 14 herramientas; la aserción
-      // quedó en 11 de cuando eran 11. Se fija al contrato real, no al recuerdo.
+      // 14: la fuente única declara las 14 herramientas AURA (antes 11).
       expect(declarations.length).toBe(14);
 
       const toolNames = declarations.map(d => d.name);

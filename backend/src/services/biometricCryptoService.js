@@ -109,13 +109,25 @@ class BiometricCryptoService {
       throw new Error('Invalid ciphertext format');
     }
     const [ivHex, authTagHex, encryptedText] = parts;
+
+    // Validación explícita antes de tocar crypto. `Buffer.from(str, 'hex')` NO
+    // rechaza un carácter inválido: lo descarta y devuelve un buffer más corto,
+    // así que un authTag corrupto se convertía en uno de 15 bytes y `final()`
+    // podía no lanzar. El resultado dependía de la versión de Node; con Node 22 el
+    // caso "invalid hex in authTag" dejaba de fallar. GCM exige 16 bytes exactos.
+    const HEX = /^[0-9a-fA-F]+$/;
+    if (!HEX.test(ivHex) || ivHex.length !== 24) {
+      throw new Error('Invalid IV');
+    }
+    if (!HEX.test(authTagHex)) {
+      throw new Error('Invalid authentication tag');
+    }
     const iv = Buffer.from(ivHex, 'hex');
     const authTag = Buffer.from(authTagHex, 'hex');
-    // GCM con tag truncado: Node acepta tags de menos de 128 bits (DEP0182) y descifra
-    // igual, lo que debilita la autenticación. Se exige el tamaño exacto antes de usarlo.
-    if (iv.length !== 12) throw new Error('Invalid IV length');
-    if (authTag.length !== 16) throw new Error('Invalid auth tag length');
-    const decipher = crypto.createDecipheriv(ALGORITHM, activeCipherBuffer, iv, { authTagLength: 16 });
+    if (authTag.length !== 16) {
+      throw new Error('Invalid authentication tag length');
+    }
+    const decipher = crypto.createDecipheriv(ALGORITHM, activeCipherBuffer, iv);
     decipher.setAuthTag(authTag);
 
     let decrypted;

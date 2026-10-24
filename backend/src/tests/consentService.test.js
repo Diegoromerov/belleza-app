@@ -222,6 +222,8 @@ describe('consentService', () => {
   describe('deleteBiometricData', () => {
         test('debe eliminar datos biométricos y retornar conteo de las tablas persistidas', async () => {
           mockPool.query
+            .mockResolvedValueOnce({ rowCount: 3 })  // biometric_scan_comparisons
+            .mockResolvedValueOnce({ rowCount: 4 })  // biometric_scan_sessions
             .mockResolvedValueOnce({ rowCount: 2 })  // user_photos
             .mockResolvedValueOnce({ rowCount: 7 })  // biometric_history
             .mockResolvedValueOnce({ rowCount: 5 })  // beauty_profiles
@@ -232,7 +234,8 @@ describe('consentService', () => {
           const result = await deleteBiometricData('user-123');
       
           expect(result.deleted).toBe(true);
-          expect(result.recordsAffected).toBe(24); // 2+7+5+1+3+6
+          // T-111: los escaneos y sus comparaciones entran en la cuenta.
+          expect(result.recordsAffected).toBe(31); // 3+4+2+7+5+1+3+6
           // Verificar que se hizo DELETE en biometric_history
           expect(mockPool.query).toHaveBeenCalledWith(
             expect.stringContaining('DELETE FROM biometric_history'),

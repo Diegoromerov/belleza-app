@@ -12,7 +12,7 @@ const bcrypt = require('bcryptjs');
 const wompiService = require('../services/wompiService');
 const wompiClient = require('../services/wompiClient');
 const wompiPayoutsClient = require('../services/wompiPayoutsClient');
-const { aCentavos, aDecimal, calcularRetenciones, sumarMontos } = require('../utils/money');
+const { aCentavos, aDecimal, sumarMontos } = require('../utils/money');
 
 // ─── UTILIDADES ──────────────────────────────────────────────────────────────
 
@@ -62,6 +62,23 @@ async function requireAdmin(req, res) {
 
 // ─── CHECK-IN GPS ────────────────────────────────────────────────────────────
 
+/**
+ * Distancia en metros entre dos coordenadas (haversine).
+ * Devuelve null si falta cualquiera de los dos puntos: sin referencia no se
+ * puede validar, y fingir que se validó es peor que no validar.
+ */
+function distanciaMetros(lat1, lng1, lat2, lng2) {
+  if ([lat1, lng1, lat2, lng2].some((v) => !Number.isFinite(v))) return null;
+  const R = 6371000;
+  const rad = (g) => (g * Math.PI) / 180;
+  const dLat = rad(lat2 - lat1);
+  const dLng = rad(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2 +
+            Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+
+// ─── Aceite de términos de Wompi (Habeas Data) ───────────────────────────────
 // ─── Aceite de términos de Wompi (Habeas Data) ───────────────────────────────
 /**
  * `GET /api/payments/wompi/acceptance-token`
@@ -144,6 +161,7 @@ router.get(
   })
 );
 
+
 router.post('/bookings/:id/checkin', authMiddleware, async (req, res) => {
   if (!await requirePrestador(req, res)) return;
 
@@ -168,18 +186,43 @@ router.post('/bookings/:id/checkin', authMiddleware, async (req, res) => {
     }
 
     const tolerancia = parseInt(await getConfig('gps_tolerancia_metros', '500'));
+    const booking = rows[0];
+
+    // La tolerancia se leía y nunca se validaba: el check-in era decorativo.
+    // Si la reserva tiene coordenadas de referencia, se exige estar dentro del
+    // radio. Si no las tiene, se registra el punto y se marca como no validado
+    // (la dirección estructurada no se puede geocodificar aquí).
+    const distancia = distanciaMetros(
+      Number(latitud), Number(longitud),
+      booking.service_lat != null ? Number(booking.service_lat) : null,
+      booking.service_lng != null ? Number(booking.service_lng) : null
+    );
+
+    if (distancia !== null && distancia > tolerancia) {
+      return res.status(409).json({
+        error: `Estás a ${Math.round(distancia)} m del punto del servicio. El máximo permitido es ${tolerancia} m.`,
+        distancia_metros: Math.round(distancia),
+        tolerancia_metros: tolerancia
+      });
+    }
 
     await pool.query(
       `UPDATE bookings SET estado = 'CHECKIN_REALIZADO',
-       notes = COALESCE(notes, '') || $3
+       checkin_lat = $3, checkin_lng = $4, checkin_at = NOW(),
+       notes = COALESCE(notes, '') || $5
        WHERE id = $1 AND provider_id = $2`,
-      [id, req.user.id, ` [CHECKIN: ${latitud},${longitud} @ ${new Date().toISOString()}]`]
+      [
+        id, req.user.id, Number(latitud), Number(longitud),
+        ` [CHECKIN: ${latitud},${longitud}${distancia !== null ? ` @ ${Math.round(distancia)}m` : ' (sin referencia)'} @ ${new Date().toISOString()}]`
+      ]
     );
 
     res.json({
       ok: true,
       mensaje: 'Check-in registrado. Puedes comenzar el servicio.',
-      tolerancia_metros: tolerancia
+      tolerancia_metros: tolerancia,
+      distancia_metros: distancia !== null ? Math.round(distancia) : null,
+      gps_validado: distancia !== null
     });
   } catch (err) {
     console.error('Error en check-in:', err);
@@ -347,36 +390,25 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, async (req, res) => {
       });
     }
 
-    const ventanaHoras = parseInt(await getConfig('wallet_ventana_pendiente_horas', '2'));
+    const ventanaHoras = parseInt(await getConfig('wallet_ventana_pendiente_horas', '48'));
     const maduraAt = new Date(Date.now() + ventanaHoras * 60 * 60 * 1000);
 
-    const retefuentePct = parseFloat(await getConfig('retefuente_pct', '4.0'));
-    const reteicaPct = parseFloat(await getConfig('reteica_pct', '0.414'));
-    const reteivaPct = parseFloat(await getConfig('reteiva_pct', '15.0'));
-
-    // P0 dinero (t_fix_pagos_06): las retenciones y el neto se calculan en CENTAVOS
-    // ENTEROS. Con punto flotante, un IVA de 22,5 centavos (15% de una comisión de
-    // 1.50) se redondeaba a 22 (0.22) en vez de 23 (0.23): la dispersión perdía un
-    // centavo de forma silenciosa. Ver src/utils/money.js.
+    // D-GL-023 — SIN RETENCIONES.
+    // El prestador recibe íntegro su pago neto (80% del valor del servicio).
+    // Retefuente, reteICA y reteIVA se eliminaron: la plataforma no retiene
+    // tributos de un tercero independiente, y la reteIVA se aplicaba sobre toda
+    // la comisión en vez de sobre el IVA contenido en ella (6,3× de más).
+    // El cálculo se conserva en centavos enteros para que la dispersión no derive.
     const basePagoNetoCentavos = aCentavos(otp.pago_neto_prestador);
     const comisionPlataformaCentavos = aCentavos(otp.comision_plataforma);
 
-    const retenciones = calcularRetenciones({
-      basePagoNetoCents: basePagoNetoCentavos,
-      comisionPlataformaCents: comisionPlataformaCentavos,
-      retefuentePct,
-      reteicaPct,
-      reteivaPct
-    });
-
     const basePagoNeto = aDecimal(basePagoNetoCentavos);
     const comisionPlataforma = aDecimal(comisionPlataformaCentavos);
-    const retencionFuente = aDecimal(retenciones.retencionFuenteCents);
-    const retencionIca = aDecimal(retenciones.retencionIcaCents);
-    const retencionIva = aDecimal(retenciones.retencionIvaCents);
-
-    const totalRetenciones = aDecimal(retenciones.totalRetencionesCents);
-    const montoNeto = aDecimal(retenciones.montoNetoCents);
+    const retencionFuente = 0;
+    const retencionIca = 0;
+    const retencionIva = 0;
+    const totalRetenciones = 0;
+    const montoNeto = basePagoNeto;
 
     await client.query(
       `UPDATE otp_validaciones SET estado = 'USADO', usado_at = NOW() WHERE booking_id = $1`,
@@ -384,7 +416,7 @@ router.post('/bookings/:id/confirm-otp', authMiddleware, async (req, res) => {
     );
 
     await client.query(
-      `UPDATE bookings SET estado = 'COMPLETADA', payment_status = 'paid' WHERE id = $1`,
+      `UPDATE bookings SET estado = 'COMPLETADA', payment_status = 'paid', completed_at = NOW() WHERE id = $1`,
       [id]
     );
 
@@ -565,22 +597,34 @@ router.get('/wallet', authMiddleware, async (req, res) => {
 
     const wallet = rows[0];
 
-    const minCop = parseInt(await getConfig('retiro_demanda_min_cop', '50000'));
-    const diasMin = parseInt(await getConfig('retiro_demanda_dias', '3'));
+    // D-GL-024 — el ciclo estándar es semanal y no tiene mínimo; el anticipado
+    // exige 100.000 y solo opera sobre saldo madurado. El mínimo ya no bloquea
+    // el retiro del ciclo: bloquea únicamente el adelanto.
+    const minCop = parseInt(await getConfig('retiro_demanda_min_cop', '100000'));
+    const diasMin = parseInt(await getConfig('retiro_demanda_dias', '7'));
+    const saldoDisponible = parseFloat(wallet.saldo_disponible || 0);
+    const saldoPendiente = parseFloat(wallet.saldo_pendiente || 0);
+
     let puede_retirar = false;
     let razon_bloqueo = null;
     let proxima_fecha_retiro = null;
 
+    // El anticipado depende solo del monto maduro disponible.
+    const puede_retirar_anticipado = saldoDisponible >= minCop;
+
     if (wallet.retiros_pausados) {
       razon_bloqueo = 'Tu cuenta tiene retiros pausados. Contacta soporte.';
-    } else if (parseFloat(wallet.saldo_disponible) < minCop) {
-      razon_bloqueo = `Saldo insuficiente. Mínimo: $${minCop.toLocaleString('es-CO')}`;
+    } else if (saldoDisponible <= 0) {
+      razon_bloqueo = saldoPendiente > 0
+        ? 'Tu saldo está en custodia. Se habilita 48 h después de cada servicio.'
+        : 'Aún no tienes saldo disponible.';
     } else if (wallet.ultimo_retiro_at) {
       const diasTranscurridos = (Date.now() - new Date(wallet.ultimo_retiro_at)) / (1000 * 60 * 60 * 24);
       if (diasTranscurridos < diasMin) {
         const diasRestantes = Math.ceil(diasMin - diasTranscurridos);
         proxima_fecha_retiro = new Date(new Date(wallet.ultimo_retiro_at).getTime() + diasMin * 24 * 60 * 60 * 1000);
-        razon_bloqueo = `Próximo retiro disponible en ${diasRestantes} día(s).`;
+        razon_bloqueo = `Tu próximo retiro del ciclo es en ${diasRestantes} día(s).`
+          + (puede_retirar_anticipado ? ` Puedes adelantarlo hoy desde $${minCop.toLocaleString('es-CO')}.` : '');
       } else {
         puede_retirar = true;
       }
@@ -591,9 +635,12 @@ router.get('/wallet', authMiddleware, async (req, res) => {
     res.json({
       ...wallet,
       puede_retirar,
+      puede_retirar_anticipado,
       razon_bloqueo,
       proxima_fecha_retiro,
-      minimo_retiro_cop: minCop
+      minimo_retiro_cop: minCop,
+      ciclo_dias: diasMin,
+      saldo_total: saldoDisponible + saldoPendiente
     });
   } catch (err) {
     console.error('Error al obtener wallet:', err);
@@ -636,6 +683,100 @@ router.get('/wallet/transactions', authMiddleware, async (req, res) => {
   } catch (err) {
     console.error('Error al obtener transacciones:', err);
     res.status(500).json({ error: 'Error al obtener historial.', details: err.message });
+  }
+});
+
+// ─── WALLET — ESTADO DE CUENTA DEL PRESTADOR (D-GL-023) ─────────────────────
+// El prestador reconstruye su 80% sin calculadora: valor de sus servicios,
+// comisión restada, propinas como línea aparte y retenciones en cero.
+// Query: ?desde=YYYY-MM-DD&hasta=YYYY-MM-DD (por defecto, últimos 30 días)
+
+router.get('/wallet/statement', authMiddleware, async (req, res) => {
+  if (!await requirePrestador(req, res)) return;
+
+  try {
+    const hasta = req.query.hasta ? new Date(`${req.query.hasta}T23:59:59`) : new Date();
+    const desde = req.query.desde
+      ? new Date(`${req.query.desde}T00:00:00`)
+      : new Date(hasta.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    if (isNaN(desde.getTime()) || isNaN(hasta.getTime())) {
+      return res.status(400).json({ error: 'Fechas inválidas. Usa YYYY-MM-DD.' });
+    }
+
+    const resumen = await pool.query(
+      `SELECT COUNT(*)::int                          AS servicios,
+              COALESCE(SUM(valor_bruto), 0)          AS valor_servicios,
+              COALESCE(SUM(comision_plataforma), 0)  AS comision,
+              COALESCE(SUM(propina), 0)              AS propinas,
+              COALESCE(SUM(pago_neto_prestador), 0)  AS neto_servicios
+         FROM bookings
+        WHERE provider_id = $1
+          AND estado = 'COMPLETADA'
+          AND COALESCE(completed_at, scheduled_at) >= $2
+          AND COALESCE(completed_at, scheduled_at) <= $3`,
+      [req.user.id, desde, hasta]
+    );
+
+    const detalle = await pool.query(
+      `SELECT b.id, b.scheduled_at, b.completed_at, b.valor_bruto,
+              b.comision_plataforma, b.pago_neto_prestador, b.propina,
+              s.name AS servicio
+         FROM bookings b
+         LEFT JOIN services s ON s.id = b.service_id
+        WHERE b.provider_id = $1
+          AND b.estado = 'COMPLETADA'
+          AND COALESCE(b.completed_at, b.scheduled_at) >= $2
+          AND COALESCE(b.completed_at, b.scheduled_at) <= $3
+        ORDER BY COALESCE(b.completed_at, b.scheduled_at) DESC
+        LIMIT 100`,
+      [req.user.id, desde, hasta]
+    );
+
+    const saldos = await pool.query(
+      `SELECT saldo_disponible, saldo_pendiente, saldo_en_disputa,
+              total_ganado, total_retirado, modelo_retiro, ultimo_retiro_at
+         FROM provider_wallet WHERE provider_id = $1`,
+      [req.user.id]
+    );
+
+    const r = resumen.rows[0] || {};
+    const s = saldos.rows[0] || {};
+
+    res.json({
+      periodo: { desde, hasta },
+      resumen: {
+        servicios: r.servicios || 0,
+        valor_servicios: Number(r.valor_servicios || 0),
+        comision: Number(r.comision || 0),
+        neto_servicios: Number(r.neto_servicios || 0),
+        propinas: Number(r.propinas || 0),
+        retenciones: 0,
+        total_ciclo: Number(r.neto_servicios || 0) + Number(r.propinas || 0)
+      },
+      saldos: {
+        disponible: Number(s.saldo_disponible || 0),
+        en_custodia: Number(s.saldo_pendiente || 0),
+        en_disputa: Number(s.saldo_en_disputa || 0),
+        total_ganado: Number(s.total_ganado || 0),
+        total_retirado: Number(s.total_retirado || 0),
+        modelo_retiro: s.modelo_retiro || 'SEMANAL',
+        ultimo_retiro_at: s.ultimo_retiro_at || null
+      },
+      servicios: detalle.rows.map((row) => ({
+        booking_id: row.id,
+        servicio: row.servicio,
+        fecha: row.completed_at || row.scheduled_at,
+        valor_servicio: Number(row.valor_bruto),
+        comision: Number(row.comision_plataforma),
+        retenciones: 0,
+        propina: Number(row.propina || 0),
+        recibes: Number(row.pago_neto_prestador) + Number(row.propina || 0)
+      }))
+    });
+  } catch (err) {
+    console.error('Error al generar estado de cuenta:', err);
+    res.status(500).json({ error: 'Error al generar el estado de cuenta.' });
   }
 });
 
@@ -817,8 +958,15 @@ router.post('/wallet/withdraw', authMiddleware, async (req, res) => {
     });
   }
 
-  const { monto } = req.body;
+  const { monto, tipo_origen } = req.body;
   const montoSolicitado = parseFloat(monto);
+
+  // D-GL-024: DEMANDA = retiro anticipado (mín. 100.000, con costo de
+  // dispersión a cargo del prestador). SEMANAL/QUINCENA/MENSUAL = ciclo.
+  const tipoOrigen = ['DEMANDA', 'SEMANAL', 'QUINCENA', 'MENSUAL']
+    .includes(String(tipo_origen || '').toUpperCase())
+    ? String(tipo_origen).toUpperCase()
+    : 'DEMANDA';
 
   if (!monto || isNaN(montoSolicitado) || montoSolicitado <= 0) {
     return res.status(400).json({ error: 'Monto inválido.' });
@@ -839,8 +987,16 @@ router.post('/wallet/withdraw', authMiddleware, async (req, res) => {
     }
 
     const wallet = rows[0];
-    const minCop = parseInt(await getConfig('retiro_demanda_min_cop', '50000'));
-    const diasMin = parseInt(await getConfig('retiro_demanda_dias', '3'));
+    const minCop = parseInt(await getConfig('retiro_demanda_min_cop', '100000'));
+    const diasMin = parseInt(await getConfig('retiro_demanda_dias', '7'));
+    const esAnticipado = tipoOrigen === 'DEMANDA';
+    const diasCiclo = tipoOrigen === 'QUINCENA' ? 15 : tipoOrigen === 'MENSUAL' ? 30 : diasMin;
+    const costoFijo = parseFloat(await getConfig('retiro_costo_fijo_cop', '1849'));
+    const costoPct = parseFloat(await getConfig('retiro_costo_pct', '0.4'));
+    // El costo de la dispersión anticipada lo asume el prestador (D-GL-024).
+    const costoRetiro = esAnticipado
+      ? Math.round(costoFijo + (montoSolicitado * costoPct) / 100)
+      : 0;
 
     if (wallet.retiros_pausados) {
       await client.query('ROLLBACK');
@@ -855,11 +1011,32 @@ router.post('/wallet/withdraw', authMiddleware, async (req, res) => {
       });
     }
 
-    if (montoSolicitado < minCop) {
+    // D-GL-023 / F8: no se paga a un prestador sin contrato de comisión aceptado
+    // ni sin aceptación de la cláusula de independencia. Antes se retenía el 20%
+    // a 11 prestadores que nunca habían aceptado nada.
+    const contratoRes = await client.query(
+      `SELECT contrato_version, contrato_aceptado_at, independencia_aceptada_at
+         FROM perfiles_prestador WHERE id = $1`,
+      [req.user.id]
+    );
+    const perfil = contratoRes.rows[0];
+    if (!perfil || !perfil.contrato_aceptado_at || !perfil.independencia_aceptada_at) {
+      await client.query('ROLLBACK');
+      return res.status(403).json({
+        error: 'Debes aceptar el contrato de comisión y la cláusula de independencia antes de retirar.',
+        accion: 'ACEPTAR_CONTRATO',
+        contrato_version_actual: perfil?.contrato_version || null
+      });
+    }
+
+    // El mínimo aplica SOLO al anticipado: el retiro del ciclo no tiene más
+    // mínimo que un monto positivo (D-GL-024).
+    if (esAnticipado && montoSolicitado < minCop) {
       await client.query('ROLLBACK');
       return res.status(400).json({
-        error: `El monto mínimo de retiro es $${minCop.toLocaleString('es-CO')} COP.`,
-        minimo: minCop
+        error: `El retiro anticipado exige un mínimo de $${minCop.toLocaleString('es-CO')} COP.`,
+        minimo: minCop,
+        accion: 'ESPERAR_CICLO'
       });
     }
 
@@ -871,36 +1048,34 @@ router.post('/wallet/withdraw', authMiddleware, async (req, res) => {
       });
     }
 
-    if (wallet.ultimo_retiro_at) {
+    // El espaciado es del ciclo, no del anticipado: adelantar es potestativo y
+    // se paga con la tarifa de dispersión.
+    if (!esAnticipado && wallet.ultimo_retiro_at) {
       const diasTranscurridos = (Date.now() - new Date(wallet.ultimo_retiro_at)) / (1000 * 60 * 60 * 24);
-      if (diasTranscurridos < diasMin) {
-        const proximaFecha = new Date(new Date(wallet.ultimo_retiro_at).getTime() + diasMin * 24 * 60 * 60 * 1000);
+      if (diasTranscurridos < diasCiclo) {
+        const proximaFecha = new Date(new Date(wallet.ultimo_retiro_at).getTime() + diasCiclo * 24 * 60 * 60 * 1000);
         await client.query('ROLLBACK');
         return res.status(429).json({
-          error: `Solo puedes retirar una vez cada ${diasMin} días.`,
-          proxima_fecha: proximaFecha
+          error: `Tu ciclo de retiro es cada ${diasCiclo} días. Puedes adelantarlo con la tarifa de dispersión.`,
+          proxima_fecha: proximaFecha,
+          accion: 'ADELANTAR_CON_COSTO'
         });
       }
     }
 
-    const { rows: disputasActivas } = await client.query(
-      `SELECT COUNT(*) FROM disputas d
-       JOIN bookings b ON d.booking_id = b.id
-       WHERE b.provider_id = $1 AND d.estado IN ('ABIERTA','EN_REVISION')`,
-      [req.user.id]
-    );
-    if (parseInt(disputasActivas[0].count) > 0) {
-      await client.query('ROLLBACK');
-      return res.status(409).json({
-        error: 'Tienes disputas activas. Los retiros se reanudan al resolver todas las disputas.'
-      });
-    }
+    // D-GL-023: una disputa congela el pago del servicio disputado, no todos los
+    // retiros del prestador. El dinero en disputa ya está separado en
+    // `saldo_en_disputa` al abrir el caso, así que no se bloquea el saldo maduro.
 
     const retiroResult = await client.query(
-      `INSERT INTO retiros (provider_id, wallet_id, monto, tipo_origen, numero_cuenta, banco)
-       VALUES ($1, $2, $3, 'DEMANDA', $4, $5)
+      `INSERT INTO retiros (provider_id, wallet_id, monto, tipo_origen, numero_cuenta, banco, metadata)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,
-      [req.user.id, wallet.id, montoSolicitado, wallet.numero_cuenta, wallet.banco]
+      [
+        req.user.id, wallet.id, montoSolicitado, tipoOrigen,
+        wallet.numero_cuenta, wallet.banco,
+        JSON.stringify({ anticipado: esAnticipado, costo_retiro: costoRetiro, costo_pct: costoPct })
+      ]
     );
     const retiro = retiroResult.rows[0];
 
@@ -925,8 +1100,14 @@ router.post('/wallet/withdraw', authMiddleware, async (req, res) => {
       [
         req.user.id, montoSolicitado,
         parseFloat(walletActualizado.rows[0].saldo_total),
-        `Retiro por demanda solicitado`,
-        JSON.stringify({ retiro_id: retiro.id, cuenta: wallet.numero_cuenta, banco: wallet.banco })
+        esAnticipado ? 'Retiro anticipado solicitado' : `Retiro del ciclo ${tipoOrigen} solicitado`,
+        JSON.stringify({
+          retiro_id: retiro.id,
+          cuenta: wallet.numero_cuenta,
+          banco: wallet.banco,
+          tipo_origen: tipoOrigen,
+          costo_retiro: costoRetiro
+        })
       ]
     );
 
@@ -935,16 +1116,20 @@ router.post('/wallet/withdraw', authMiddleware, async (req, res) => {
       accion: 'RETIRO_SOLICITADO',
       tabla: 'retiros',
       registroId: retiro.id,
-      datosDespues: { monto: montoSolicitado, tipo: 'DEMANDA' },
+      datosDespues: { monto: montoSolicitado, tipo: tipoOrigen, costo_retiro: costoRetiro },
       ip: req.ip
     });
 
     await client.query('COMMIT');
 
+    // En el retiro anticipado el costo de la dispersión lo asume el prestador:
+    // se debita el monto completo del saldo y se transfiere el neto.
+    const montoADispersar = Math.max(0, montoSolicitado - costoRetiro);
+
     wompiService.crearPayout({
       retiroId: retiro.id,
       providerId: req.user.id,
-      amount: montoSolicitado,
+      amount: montoADispersar,
       numeroCuenta: wallet.numero_cuenta,
       banco: wallet.banco,
       automatico: false
@@ -952,9 +1137,14 @@ router.post('/wallet/withdraw', authMiddleware, async (req, res) => {
 
     res.json({
       ok: true,
-      mensaje: 'Retiro solicitado exitosamente. El dinero llegará en 1-2 días hábiles.',
+      mensaje: esAnticipado
+        ? `Retiro anticipado solicitado. Recibirás $${montoADispersar.toLocaleString('es-CO')} (costo de dispersión $${costoRetiro.toLocaleString('es-CO')}).`
+        : 'Retiro del ciclo solicitado. Llega en 1-2 días hábiles, sin costo.',
       retiro_id: retiro.id,
       monto: montoSolicitado,
+      costo_retiro: costoRetiro,
+      monto_neto: montoADispersar,
+      tipo_origen: tipoOrigen,
       cuenta: `${wallet.banco} ****${wallet.numero_cuenta?.slice(-4)}`,
       estado: 'PROCESANDO'
     });
@@ -973,16 +1163,21 @@ router.put('/wallet/model', authMiddleware, async (req, res) => {
   if (!await requirePrestador(req, res)) return;
 
   const { modelo } = req.body;
-  const modelosValidos = ['DEMANDA', 'QUINCENA', 'MENSUAL'];
+  // SEMANAL es el ciclo estándar (D-GL-024); DEMANDA es el adelanto con costo.
+  const modelosValidos = ['SEMANAL', 'DEMANDA', 'QUINCENA', 'MENSUAL'];
 
   if (!modelosValidos.includes(modelo)) {
-    return res.status(400).json({ error: 'Modelo inválido. Use: DEMANDA, QUINCENA o MENSUAL.' });
+    return res.status(400).json({ error: 'Modelo inválido. Use: SEMANAL, DEMANDA, QUINCENA o MENSUAL.' });
   }
 
   try {
     let proximoRetiro = null;
     const ahora = new Date();
-    if (modelo === 'QUINCENA') {
+    if (modelo === 'SEMANAL') {
+      // Próximo lunes.
+      const delta = (1 - ahora.getDay() + 7) % 7 || 7;
+      proximoRetiro = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate() + delta);
+    } else if (modelo === 'QUINCENA') {
       const dia = ahora.getDate();
       if (dia < 15) {
         proximoRetiro = new Date(ahora.getFullYear(), ahora.getMonth(), 15);
@@ -1044,18 +1239,28 @@ router.post('/disputes', authMiddleware, async (req, res) => {
     const rolActor = userRow.rows[0].rol;
 
     if (rolActor === 'CLIENTE' && booking.estado === 'COMPLETADA') {
-      const ventanaHoras = parseInt(await getConfig('disputa_ventana_horas', '2'));
-      const otpResult = await client.query(
-        `SELECT usado_at FROM otp_validaciones WHERE booking_id = $1 AND estado = 'USADO'`,
-        [booking_id]
-      );
-      if (otpResult.rows.length && otpResult.rows[0].usado_at) {
-        const horasTranscurridas = (Date.now() - new Date(otpResult.rows[0].usado_at)) / (1000 * 60 * 60);
+      // D-GL-023: la ventana es de 48 h desde la finalización del servicio, no
+      // desde el uso del OTP (que podía ocurrir minutos después).
+      const ventanaHoras = parseInt(await getConfig('disputa_ventana_horas', '48'));
+
+      let finServicio = booking.completed_at ? new Date(booking.completed_at) : null;
+      if (!finServicio) {
+        const otpResult = await client.query(
+          `SELECT usado_at FROM otp_validaciones WHERE booking_id = $1 AND estado = 'USADO'`,
+          [booking_id]
+        );
+        if (otpResult.rows.length && otpResult.rows[0].usado_at) {
+          finServicio = new Date(otpResult.rows[0].usado_at);
+        }
+      }
+
+      if (finServicio) {
+        const horasTranscurridas = (Date.now() - finServicio.getTime()) / (1000 * 60 * 60);
         if (horasTranscurridas > ventanaHoras) {
           await client.query('ROLLBACK');
           return res.status(409).json({
-            error: `La ventana de disputa (${ventanaHoras}h post-confirmación) ha expirado.`,
-            usado_at: otpResult.rows[0].usado_at
+            error: `La ventana de disputa (${ventanaHoras} h desde la finalización) ha expirado.`,
+            finalizado_at: finServicio.toISOString()
           });
         }
       }
@@ -1070,12 +1275,14 @@ router.post('/disputes', authMiddleware, async (req, res) => {
       return res.status(409).json({ error: 'Ya existe una disputa abierta para esta reserva.' });
     }
 
+    const slaDias = parseInt(await getConfig('disputa_sla_dias', '5'));
+
     const disputaResult = await client.query(
       `INSERT INTO disputas
-         (booking_id, iniciado_por, tipo_actor, tipo, descripcion, evidencia_urls, monto_disputado)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+         (booking_id, iniciado_por, tipo_actor, tipo, descripcion, evidencia_urls, monto_disputado, sla_limite_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW() + ($8 || ' days')::interval)
        RETURNING *`,
-      [booking_id, req.user.id, rolActor, tipo, descripcion, evidencia_urls || [], booking.valor_bruto]
+      [booking_id, req.user.id, rolActor, tipo, descripcion, evidencia_urls || [], booking.valor_bruto, slaDias]
     );
 
     await client.query(
@@ -1116,7 +1323,7 @@ router.post('/disputes', authMiddleware, async (req, res) => {
 
     res.status(201).json({
       ok: true,
-      mensaje: 'Disputa registrada. Un agente la revisará en máximo 48 horas.',
+      mensaje: `Disputa registrada. El pago queda congelado y se resuelve en máximo ${slaDias} días.`,
       disputa: disputaResult.rows[0]
     });
   } catch (err) {

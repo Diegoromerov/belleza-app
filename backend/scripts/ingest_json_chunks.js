@@ -168,7 +168,7 @@ async function insertPart(chunk, embedding, schema) {
   }
 
   columns.push('embedding');
-  placeholders.push('$' + paramIndex + '::vector');
+  placeholders.push('$' + paramIndex + '::halfvec');
   values.push(embeddingStr);
 
   const insertSql =

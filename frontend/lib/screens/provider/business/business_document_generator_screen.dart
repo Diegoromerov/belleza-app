@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/theme/tokens.dart';
 import '../../../../services/business_api_service.dart';
@@ -14,8 +14,8 @@ class BusinessDocumentGeneratorScreen extends StatefulWidget {
 
 class _BusinessDocumentGeneratorScreenState extends State<BusinessDocumentGeneratorScreen> {
   String _selectedTemplate = 'TPL_LABOR_CONTRACT_BEAUTY';
-  final TextEditingController _employerController = TextEditingController(text: 'Peluquería Studio SAS');
-  final TextEditingController _employeeController = TextEditingController(text: 'María Rodríguez');
+  final TextEditingController _employerController = TextEditingController(text: 'PeluquerÃ­a Studio SAS');
+  final TextEditingController _employeeController = TextEditingController(text: 'MarÃ­a RodrÃ­guez');
   final TextEditingController _jobTitleController = TextEditingController(text: 'Estilista Colorista Senior');
   final TextEditingController _salaryController = TextEditingController(text: '\$ 1.800.000 COP');
 
@@ -87,6 +87,7 @@ class _BusinessDocumentGeneratorScreenState extends State<BusinessDocumentGenera
 
     try {
       final res = await _apiService.signDocument(_docId!, signerName: _employerController.text);
+      if (!mounted) return;
       setState(() {
         _isSigned = true;
         _signatureHash = res['signatureHash'] as String? ?? res['signature_hash'] as String? ?? 'sha256-demo-hash-ok';
@@ -95,7 +96,7 @@ class _BusinessDocumentGeneratorScreenState extends State<BusinessDocumentGenera
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Documento firmado electrónicamente con sello SHA-256.'),
+          content: Text('Documento firmado electrÃ³nicamente con sello SHA-256.'),
           backgroundColor: Color(0xFF10B981),
         ),
       );
@@ -107,7 +108,7 @@ class _BusinessDocumentGeneratorScreenState extends State<BusinessDocumentGenera
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Firma registrada electrónicamente.'),
+          content: Text('Firma registrada electrÃ³nicamente.'),
           backgroundColor: Color(0xFF10B981),
         ),
       );
@@ -158,7 +159,7 @@ class _BusinessDocumentGeneratorScreenState extends State<BusinessDocumentGenera
             TextField(
               controller: _employerController,
               decoration: InputDecoration(
-                labelText: 'Nombre / Razón Social Empleador',
+                labelText: 'Nombre / RazÃ³n Social Empleador',
                 fillColor: Colors.white,
                 filled: true,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
@@ -178,7 +179,7 @@ class _BusinessDocumentGeneratorScreenState extends State<BusinessDocumentGenera
             TextField(
               controller: _jobTitleController,
               decoration: InputDecoration(
-                labelText: 'Cargo / Función Principal',
+                labelText: 'Cargo / FunciÃ³n Principal',
                 fillColor: Colors.white,
                 filled: true,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
@@ -240,7 +241,7 @@ class _BusinessDocumentGeneratorScreenState extends State<BusinessDocumentGenera
                           style: TextStyle(fontWeight: FontWeight.bold, color: _isSigned ? const Color(0xFF10B981) : Colors.blue.shade700),
                         ),
                         Chip(
-                          label: Text(_isSigned ? 'Inmutable (v1)' : 'Revisión Legal', style: TextStyle(fontSize: 10, color: _isSigned ? Colors.white : obsidianBg)),
+                          label: Text(_isSigned ? 'Inmutable (v1)' : 'RevisiÃ³n Legal', style: TextStyle(fontSize: 10, color: _isSigned ? Colors.white : obsidianBg)),
                           backgroundColor: _isSigned ? const Color(0xFF10B981) : gold871,
                         ),
                       ],
@@ -252,9 +253,9 @@ class _BusinessDocumentGeneratorScreenState extends State<BusinessDocumentGenera
                       'Y: ${_employeeController.text}\n'
                       'Cargo: ${_jobTitleController.text}\n'
                       'Salario: ${_salaryController.text}\n\n'
-                      'CLÁUSULAS REGULATORIAS:\n'
-                      '1. El trabajador desempeñará las labores de estilismo cumpliendo los protocolos sanitarios y de bioseguridad.\n'
-                      '2. El empleador garantiza los elementos de protección personal (EPP) exigidos por la normativa colombiana.',
+                      'CLÃUSULAS REGULATORIAS:\n'
+                      '1. El trabajador desempeÃ±arÃ¡ las labores de estilismo cumpliendo los protocolos sanitarios y de bioseguridad.\n'
+                      '2. El empleador garantiza los elementos de protecciÃ³n personal (EPP) exigidos por la normativa colombiana.',
                       style: const TextStyle(height: 1.4, color: obsidianBg),
                     ),
                     const SizedBox(height: 16),
@@ -268,7 +269,7 @@ class _BusinessDocumentGeneratorScreenState extends State<BusinessDocumentGenera
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Sello de Firma Electrónica SHA-256:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Color(0xFF065F46))),
+                            const Text('Sello de Firma ElectrÃ³nica SHA-256:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Color(0xFF065F46))),
                             const SizedBox(height: 2),
                             Text(_signatureHash!, style: const TextStyle(fontSize: 10, fontFamily: 'monospace', color: Color(0xFF047857))),
                           ],
@@ -286,7 +287,7 @@ class _BusinessDocumentGeneratorScreenState extends State<BusinessDocumentGenera
                           ),
                           onPressed: _isLoading ? null : _handleSignDocument,
                           icon: const Icon(Icons.gesture),
-                          label: const Text('Firmar Electrónicamente', style: TextStyle(fontWeight: FontWeight.bold)),
+                          label: const Text('Firmar ElectrÃ³nicamente', style: TextStyle(fontWeight: FontWeight.bold)),
                         ),
                       ),
                   ],

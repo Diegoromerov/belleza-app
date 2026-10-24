@@ -137,7 +137,7 @@ async function main() {
     const vecStr = '[' + emb.join(',') + ']';
     let queryStr = `
       SELECT chunk_id, title, content, category, metadata,
-             1 - (embedding <=> $1::vector) AS similarity
+             1 - (embedding <=> $1::halfvec) AS similarity
       FROM beauty_knowledge_embeddings
     `;
     const params = [vecStr];
@@ -145,7 +145,7 @@ async function main() {
       queryStr += ' WHERE chunk_id = ANY($2::text[])';
       params.push(pool);
     }
-    queryStr += ' ORDER BY embedding <=> $1::vector LIMIT $' + (params.length + 1);
+    queryStr += ' ORDER BY embedding <=> $1::halfvec LIMIT $' + (params.length + 1);
     params.push(k);
     const res = await ragPool.query(queryStr, params);
     return res.rows.map((r, i) => ({
@@ -419,7 +419,7 @@ async function main() {
     const qEmbNVIDIA = await generateNVIDIAEmbedding(queryText);
     const nvidiaVecStr = '[' + qEmbNVIDIA.join(',') + ']';
     const aRes = await ragPool.query(
-      `SELECT chunk_id, 1-(embedding <=> $1::vector) AS sim
+      `SELECT chunk_id, 1-(embedding <=> $1::halfvec) AS sim
        FROM beauty_knowledge_embeddings WHERE chunk_id = ANY($2::text[])`, [nvidiaVecStr, poolIdsQ]);
     const aScores = new Map(aRes.rows.map(r => [r.chunk_id, +r.sim.toFixed(4)]));
 
