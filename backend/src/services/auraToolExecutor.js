@@ -191,7 +191,7 @@ const AURA_TOOLS_DEFINITIONS = [
     type: 'function',
     function: {
       name: 'get_provider_appointments',
-      description: 'Consulta citas y reservas del prestador o salón autenticado en la base de datos (pendientes, ejecutadas, canceladas o por rango temporal como hoy o este mes).',
+      description: 'Consulta citas y reservas del prestador o salón autenticado. Devuelve el total EXACTO en base, el desglose por estado y una muestra de las citas; para responder cuántas hay, usa totalAppointments (la lista es parcial).',
       parameters: {
         type: 'object',
         properties: {
@@ -413,7 +413,35 @@ async function executeAuraTool(toolName, args, userId, userRole = 'provider', te
           statusCondition = "AND estado IN ('CANCELADA', 'RECHAZADA')";
         }
 
-        const query = `
+        // Filtro compartido por el conteo y la muestra: si divergen, el total miente.
+        const scopeCondition = `(b.provider_id = $1 OR b.business_profile_id = (
+            SELECT id::text FROM business_profiles WHERE provider_id = $1 LIMIT 1
+          ))
+          ${dateCondition}
+          ${statusCondition}`;
+
+        // Conteo EXACTO en base. Antes se contaban las filas devueltas con LIMIT 50,
+        // así que un mes con más de 50 citas se reportaba como "50" sin avisar.
+        const countQuery = `
+          SELECT b.estado, count(*)::int AS total
+          FROM bookings b
+          WHERE ${scopeCondition}
+          GROUP BY b.estado;
+        `;
+        const countRes = await pool.query(countQuery, [parsedUserId]);
+
+        const countsByStatus = {};
+        let totalAppointments = 0;
+        for (const row of countRes.rows || []) {
+          const estado = row.estado || 'DESCONOCIDO';
+          const n = Number(row.total) || 0;
+          countsByStatus[estado] = n;
+          totalAppointments += n;
+        }
+
+        // Muestra acotada solo para dar contexto (cliente, servicio, fecha).
+        const PREVIEW_LIMIT = 20;
+        const previewQuery = `
           SELECT 
             b.id,
             b.scheduled_at,
@@ -426,29 +454,23 @@ async function executeAuraTool(toolName, args, userId, userRole = 'provider', te
           FROM bookings b
           LEFT JOIN usuarios u ON u.id = b.client_id
           LEFT JOIN services s ON s.id = b.service_id
-          WHERE (b.provider_id = $1 OR b.business_profile_id = (
-            SELECT id::text FROM business_profiles WHERE provider_id = $1 LIMIT 1
-          ))
-          ${dateCondition}
-          ${statusCondition}
+          WHERE ${scopeCondition}
           ORDER BY b.scheduled_at ASC
-          LIMIT 50;
+          LIMIT ${PREVIEW_LIMIT};
         `;
-
-        const res = await pool.query(query, [parsedUserId]);
-        const appointments = res.rows || [];
-
-        const countsByStatus = appointments.reduce((acc, curr) => {
-          acc[curr.estado] = (acc[curr.estado] || 0) + 1;
-          return acc;
-        }, {});
+        const previewRes = await pool.query(previewQuery, [parsedUserId]);
+        const appointments = previewRes.rows || [];
 
         return {
           status: 'success',
           timeRange,
           filterStatus: statusFilter,
-          totalAppointments: appointments.length,
+          totalAppointments,
           breakdownByStatus: countsByStatus,
+          previewLimit: PREVIEW_LIMIT,
+          previewReturned: appointments.length,
+          truncated: totalAppointments > appointments.length,
+          countingNote: 'totalAppointments y breakdownByStatus son el conteo exacto en base. La lista appointments es una muestra; NO la cuentes para responder cuántas citas hay.',
           appointments: appointments.map(apt => ({
             id: apt.id,
             fecha: apt.scheduled_at,
