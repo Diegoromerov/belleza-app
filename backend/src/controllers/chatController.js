@@ -170,7 +170,9 @@ exports.sendMessage = async (req, res) => {
     notifyUserChatMessage(targetReceiver, formatted);
 
     if (targetReceiver === 0) {
-      processAssistantMessage(senderId, message.trim(), image_path).catch(err => {
+      const senderRole = req.user?.rol || 'client';
+      const senderTenantId = req.user?.tenant_id || null;
+      processAssistantMessage(senderId, message.trim(), image_path, senderRole, senderTenantId).catch(err => {
         console.error('❌ Error en procesamiento asíncrono del Asistente de IA:', err);
       });
     }

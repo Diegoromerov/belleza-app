@@ -44,7 +44,9 @@ beforeEach(() => {
 
 describe('Pruebas unitarias de AURA Tool Executor (auraToolExecutor.js)', () => {
   test('Debería tener definidas las 8 herramientas principales para el ecosistema de AURA', () => {
-    expect(AURA_TOOLS_DEFINITIONS.length).toBe(11);
+    // La fuente única (AURA_TOOLS_DEFINITIONS) declara 14 herramientas tras añadir las
+    // operativas de proveedor y salón; la aserción seguía en 11.
+    expect(AURA_TOOLS_DEFINITIONS.length).toBe(14);
     const toolNames = AURA_TOOLS_DEFINITIONS.map(t => t.function.name);
     expect(toolNames).toContain('query_user_biometric_profile');
     expect(toolNames).toContain('search_nearby_services');
