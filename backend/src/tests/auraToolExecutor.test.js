@@ -201,3 +201,31 @@ describe('Pruebas unitarias de AURA Tool Executor (auraToolExecutor.js)', () => 
 
   // Additional tests for other tools can be added if needed, but the focus is on ownership.
 });
+
+describe('get_provider_appointments · contrato de columnas', () => {
+  // Regresión: la subconsulta a business_profiles filtraba por `user_id`, columna que
+  // NO existe (la tabla usa `provider_id`). En producción eso devolvía
+  // `column "user_id" does not exist` y el modelo respondía "error técnico" al pedir
+  // el conteo de citas del mes.
+  test('consulta business_profiles por provider_id y nunca por user_id', async () => {
+    dbPool.pool.query.mockResolvedValue({ rows: [] });
+
+    const result = await executeAuraTool('get_provider_appointments', { timeRange: 'this_month' }, 103);
+
+    expect(result.status).toBe('success');
+    expect(dbPool.pool.query).toHaveBeenCalled();
+    const [sql, params] = dbPool.pool.query.mock.calls[0];
+    expect(sql).toContain('business_profiles WHERE provider_id = $1');
+    expect(sql).not.toContain('user_id = $1');
+    expect(params).toEqual([103]);
+  });
+
+  test('aplica el rango this_month sobre scheduled_at', async () => {
+    dbPool.pool.query.mockResolvedValue({ rows: [] });
+
+    await executeAuraTool('get_provider_appointments', { timeRange: 'this_month' }, 7);
+
+    const [sql] = dbPool.pool.query.mock.calls[0];
+    expect(sql).toContain("DATE_TRUNC('month', CURRENT_DATE)");
+  });
+});

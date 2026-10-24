@@ -427,7 +427,7 @@ async function executeAuraTool(toolName, args, userId, userRole = 'provider', te
           LEFT JOIN usuarios u ON u.id = b.client_id
           LEFT JOIN services s ON s.id = b.service_id
           WHERE (b.provider_id = $1 OR b.business_profile_id = (
-            SELECT id::text FROM business_profiles WHERE user_id = $1 LIMIT 1
+            SELECT id::text FROM business_profiles WHERE provider_id = $1 LIMIT 1
           ))
           ${dateCondition}
           ${statusCondition}
@@ -490,7 +490,7 @@ async function executeAuraTool(toolName, args, userId, userRole = 'provider', te
             COUNT(CASE WHEN estado IN ('PENDIENTE_PAGO', 'CONFIRMADA') THEN 1 END) as citas_pendientes
           FROM bookings
           WHERE (provider_id = $1 OR business_profile_id = (
-            SELECT id::text FROM business_profiles WHERE user_id = $1 LIMIT 1
+            SELECT id::text FROM business_profiles WHERE provider_id = $1 LIMIT 1
           ))
           ${dateCondition};
         `;
