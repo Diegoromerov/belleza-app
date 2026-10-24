@@ -254,4 +254,37 @@ describe('get_provider_appointments · contrato de columnas', () => {
     expect(result.totalAppointments).toBe(3);
     expect(result.truncated).toBe(false);
   });
+
+describe('get_provider_financial_metrics · enum estado_cita', () => {
+  // Regresión: el SQL comparaba con 'FINALIZADA', 'PENDIENTE' y 'RECHAZADA', que NO son
+  // etiquetas del enum estado_cita. PostgreSQL aborta toda la consulta con
+  // `invalid input value for enum estado_cita: "FINALIZADA"`, incluso dentro de un CASE WHEN.
+  test('usa estado::text y solo etiquetas reales del enum', async () => {
+    dbPool.pool.query.mockResolvedValue({ rows: [{ total_citas: 17, facturacion_bruta: '420000', citas_ejecutadas: 2 }] });
+
+    const result = await executeAuraTool('get_provider_financial_metrics', { period: 'all_time' }, 103);
+
+    expect(result.status).toBe('success');
+    const [sql] = dbPool.pool.query.mock.calls[0];
+    expect(sql).toContain('estado::text IN');
+    expect(sql).not.toMatch(/estado IN \('COMPLETADA', 'FINALIZADA'/);
+    expect(sql).not.toContain("'FINALIZADA'");
+    expect(sql).not.toContain("'RECHAZADA'");
+    expect(sql).not.toContain("'PENDIENTE'");
+    expect(sql).toContain("'FINALIZADA_PRESTADOR'");
+  });
+
+  test('separa facturación ejecutada de la confirmada (no las suma)', async () => {
+    dbPool.pool.query.mockResolvedValue({ rows: [{
+      total_citas: 17, facturacion_bruta: '420000', facturacion_confirmada: '998000',
+      ingreso_neto_prestador: '336000', citas_ejecutadas: 2,
+    }] });
+
+    const result = await executeAuraTool('get_provider_financial_metrics', { period: 'all_time' }, 103);
+
+    expect(result.facturacion_bruta).toBe(420000);
+    expect(result.facturacion_confirmada).toBe(998000);
+    expect(result.ingreso_neto_prestador).toBe(336000);
+  });
+});
 });
