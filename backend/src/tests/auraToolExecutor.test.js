@@ -228,4 +228,30 @@ describe('get_provider_appointments · contrato de columnas', () => {
     const [sql] = dbPool.pool.query.mock.calls[0];
     expect(sql).toContain("DATE_TRUNC('month', CURRENT_DATE)");
   });
+
+  test('el total sale del COUNT en base, no del tamaño de la lista', async () => {
+    // 60 citas reales, pero la muestra solo trae 20
+    dbPool.pool.query
+      .mockResolvedValueOnce({ rows: [{ estado: 'PENDIENTE_PAGO', total: 40 }, { estado: 'COMPLETADA', total: 20 }] })
+      .mockResolvedValueOnce({ rows: Array.from({ length: 20 }, (_, i) => ({ id: `b-${i}`, estado: 'COMPLETADA' })) });
+
+    const result = await executeAuraTool('get_provider_appointments', { timeRange: 'this_month' }, 103);
+
+    expect(result.totalAppointments).toBe(60);
+    expect(result.breakdownByStatus).toEqual({ PENDIENTE_PAGO: 40, COMPLETADA: 20 });
+    expect(result.previewReturned).toBe(20);
+    expect(result.truncated).toBe(true);
+    expect(result.countingNote).toContain('muestra');
+  });
+
+  test('sin truncar cuando la muestra cubre el total', async () => {
+    dbPool.pool.query
+      .mockResolvedValueOnce({ rows: [{ estado: 'CONFIRMADA', total: 3 }] })
+      .mockResolvedValueOnce({ rows: [{ id: 'a' }, { id: 'b' }, { id: 'c' }] });
+
+    const result = await executeAuraTool('get_provider_appointments', { timeRange: 'this_month' }, 103);
+
+    expect(result.totalAppointments).toBe(3);
+    expect(result.truncated).toBe(false);
+  });
 });
