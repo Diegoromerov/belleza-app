@@ -39,9 +39,9 @@ describe('SHA-256 Token Security & Owner Member Management Tests', () => {
     let insertedTokenHash = null;
 
     pool.query = jest.fn().mockImplementation((text, params) => {
-      // Mock de verificación de permisos de administrador
-      if (text.includes('SELECT sub_rol FROM salon_miembros')) {
-        return Promise.resolve({ rows: [{ sub_rol: 'DUEÑO' }] });
+      // Mock de verificación de permisos: E-02b lee el rol de `memberships`.
+      if (text.includes('FROM memberships')) {
+        return Promise.resolve({ rows: [{ role: 'OWNER', sub_rol: 'DUEÑO' }] });
       }
       // Mock de inserción en salon_invitaciones
       if (text.includes('INSERT INTO salon_invitaciones')) {
