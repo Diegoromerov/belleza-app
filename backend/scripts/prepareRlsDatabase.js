@@ -171,10 +171,25 @@ async function main() {
     // DEFINER para el arranque de identidad). Antes quedaba con RLS desactivado
     // y eso era una fuga de PII cross-tenant. Ninguna tabla con `tenant_id`
     // puede quedar sin FORCE ni sin política.
-    // `business_requirements` es catálogo global (plantillas de requisitos), no
-    // datos de inquilino: en producción está sin RLS y sin política. Se declara
-    // exenta para que la compuerta mida lo que debe medir.
-    const EXENTAS_DE_FORCE = ['business_requirements'];
+    // `business_requirements` es un catálogo GLOBAL (plantillas de requisitos):
+    // en producción no tiene RLS. La compuerta exige que ninguna tabla con
+    // `tenant_id` quede sin política ni FORCE, así que se le da una política
+    // explícita de catálogo (legible por todos) en vez de eximirla: eximir es
+    // justo lo que la guarda `rls_usuarios_isolation` prohíbe, y con razón.
+    await cliente.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_policy p JOIN pg_class c ON c.oid = p.polrelid
+           WHERE c.relname = 'business_requirements'
+        ) THEN
+          ALTER TABLE business_requirements ENABLE ROW LEVEL SECURITY;
+          CREATE POLICY catalog_business_requirements ON business_requirements
+            USING (true) WITH CHECK (true);
+        END IF;
+      END $$;
+    `);
+    const EXENTAS_DE_FORCE = [];
 
     // E-02c (D-GL-027): las tablas `business_*` tienen política pero 068 no las
     // incluye en su lista fija de FORCE, así que la compuerta las marcaba como
