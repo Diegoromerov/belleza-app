@@ -252,7 +252,10 @@ describe('Fase 3: Multi-Sede OWNER Dashboard & Endpoints Integration Tests', () 
 
     let queryCaptured = '';
     pool.query = jest.fn().mockImplementation((text) => {
-      if (/FROM salon_miembros/i.test(text)) {
+      if (/FROM memberships/i.test(text) && /DISTINCT/i.test(text)) {
+        return Promise.resolve({ rows: [{ provider_id: 50 }] });
+      }
+      if (/FROM memberships/i.test(text) && /nombre_prestador/i.test(text)) {
         return Promise.resolve({
           rows: [{ provider_id: 50, salon_id: 1, nombre_prestador: 'Carlos Mendoza' }],
         });
@@ -405,8 +408,12 @@ describeE2EReal('E2E REAL contra PostgreSQL: OWNER multi-sede (sin mocks de pool
     for (const tenant of [TENANT_A, TENANT_B]) {
       await client.query(`SELECT set_config('app.tenant_id', $1, true)`, [String(tenant)]);
       await client.query(
-        `DELETE FROM bookings WHERE id = ANY($1::uuid[]) OR provider_id = ANY($2::int[]) OR client_id = ANY($2::int[])`,
-        [f.bookings, f.usuarios]
+        `DELETE FROM bookings
+          WHERE id = ANY($1::uuid[])
+             OR provider_id = ANY($2::int[])
+             OR client_id = ANY($2::int[])
+             OR service_id = $3`,
+        [f.bookings, f.usuarios, SERVICIO]
       );
       // E-02c: la identidad canónica no cuelga por FK de `salones`, así que hay
       // que limpiarla explícitamente o sobrevive entre corridas y contamina el
