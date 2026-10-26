@@ -2,6 +2,12 @@ const { pool } = require('../config/db');
 const crypto = require('crypto');
 const { hasEntitlement, PLAN_ENTITLEMENTS, SAAS_CAPABILITIES } = require('../config/saasEntitlements');
 const { ensureSalonOwnerIdentity } = require('../services/salonIdentity');
+const {
+  listSalonMembers,
+  getMemberRole,
+  canAdminSalon,
+  ensureMembership,
+} = require('../services/salonMembership');
 
 // ==========================================
 // 🏢 OBTENER MI SALÓN DE BELLEZA (SaaS Owner Profile)
@@ -39,13 +45,10 @@ exports.getMySalon = async (req, res) => {
     const plan = salon.plan_saas || 'FREE_TRIAL';
     const activeEntitlements = PLAN_ENTITLEMENTS[plan.toUpperCase()] || [];
 
-    const membersRes = await pool.query(
-      `SELECT sm.id, sm.user_id, u.nombre, u.email, u.phone, sm.sub_rol, sm.estatus, sm.creado_at
-       FROM salon_miembros sm
-       JOIN usuarios u ON sm.user_id = u.id
-       WHERE sm.salon_id = $1`,
-      [salon.id]
-    );
+    // E-02b (D-GL-027): el equipo se lee de `memberships`, no de la tabla
+    // heredada. Si el salón aún no tiene identidad provisionada (migración 113),
+    // la lista sale vacía en vez de reventar el endpoint.
+    const membersRes = { rows: await listSalonMembers(pool, salon.id) };
 
     res.json({
       success: true,
@@ -177,12 +180,11 @@ exports.inviteMember = async (req, res) => {
     const cleanSubRol = sub_rol.toUpperCase();
 
     // Verificar si el que invita es Dueño o Administrador del salón
-    const memberCheck = await pool.query(
-      `SELECT sub_rol FROM salon_miembros WHERE salon_id = $1 AND user_id = $2 AND estatus = 'ACTIVO'`,
-      [salon_id, inviterId]
-    );
+    // E-02b: se evalúa sobre `memberships` (rol canónico), no sobre el texto
+    // libre de `salon_miembros`.
+    const puedeInvitar = await canAdminSalon(pool, salon_id, inviterId);
 
-    if (memberCheck.rows.length === 0 || !['DUEÑO', 'ADMINISTRADOR'].includes(memberCheck.rows[0].sub_rol)) {
+    if (!puedeInvitar) {
       return res.status(403).json({ error: 'No tienes permisos de administración en este salón para invitar personal.' });
     }
 
@@ -274,6 +276,37 @@ exports.acceptInvitation = async (req, res) => {
          ON CONFLICT (salon_id, user_id) DO UPDATE
            SET sub_rol = EXCLUDED.sub_rol, estatus = 'ACTIVO'
          RETURNING 1
+       ), perfil AS (
+         SELECT id FROM business_profiles WHERE id = left('salon-' || $1::text, 36)
+       ), membresia AS (
+         -- E-02b (D-GL-027): la membership canónica se escribe en la MISMA
+         -- sentencia. Si el salón no está provisionado, el perfil viene vacío y
+         -- esta rama no inserta: la aceptación no se rompe por eso.
+         INSERT INTO memberships
+           (id, user_id, business_profile_id, role, sub_rol, status, accepted_at)
+         SELECT
+           md5(random()::text || clock_timestamp()::text || $2::text),
+           $2,
+           perfil.id,
+           CASE upper(trim($3))
+             WHEN 'DUEÑO' THEN 'OWNER'
+             WHEN 'DUENO' THEN 'OWNER'
+             WHEN 'ADMINISTRADOR' THEN 'ADMIN'
+             WHEN 'ADMIN' THEN 'ADMIN'
+             WHEN 'RECEPCIONISTA' THEN 'MANAGER'
+             ELSE 'MEMBER'
+           END,
+           upper(trim($3)),
+           'ACTIVE',
+           CURRENT_TIMESTAMP
+         FROM perfil
+         ON CONFLICT (user_id, business_profile_id) DO UPDATE SET
+           role = EXCLUDED.role,
+           sub_rol = EXCLUDED.sub_rol,
+           status = 'ACTIVE',
+           accepted_at = COALESCE(memberships.accepted_at, CURRENT_TIMESTAMP),
+           updated_at = CURRENT_TIMESTAMP
+         RETURNING 1
        )
        UPDATE salon_invitaciones SET usado = true WHERE id = $4;`,
       [invitation.salon_id, userId, invitation.sub_rol, invitation.id]
@@ -301,28 +334,16 @@ exports.getSalonMembers = async (req, res) => {
     const userId = req.user.id;
     const { salonId } = req.params;
 
-    // Verificar que el usuario pertenece al salón
-    const memberCheck = await pool.query(
-      `SELECT sub_rol FROM salon_miembros WHERE salon_id = $1 AND user_id = $2 AND estatus = 'ACTIVO'`,
-      [salonId, userId]
-    );
+    // E-02b: pertenencia y listado sobre `memberships`.
+    const pertenencia = await getMemberRole(pool, salonId, userId);
 
-    if (memberCheck.rows.length === 0) {
+    if (!pertenencia) {
       return res.status(403).json({ error: 'No perteneces a este salón.' });
     }
 
-    const membersRes = await pool.query(
-      `SELECT sm.id, sm.user_id, u.nombre, u.email, u.phone, sm.sub_rol, sm.estatus, sm.creado_at
-       FROM salon_miembros sm
-       JOIN usuarios u ON sm.user_id = u.id
-       WHERE sm.salon_id = $1
-       ORDER BY sm.creado_at ASC`,
-      [salonId]
-    );
-
     res.json({
       success: true,
-      members: membersRes.rows
+      members: await listSalonMembers(pool, salonId)
     });
   } catch (error) {
     console.error('❌ ERROR GET SALON MEMBERS:', error.message);
@@ -346,13 +367,11 @@ exports.updateMemberRole = async (req, res) => {
       return res.status(400).json({ error: `El sub-rol '${sub_rol}' no es válido.` });
     }
 
-    // Verificar pertenencia del miembro
-    const memberRes = await pool.query(
-      `SELECT id, sub_rol FROM salon_miembros WHERE salon_id = $1 AND user_id = $2`,
-      [salonId, targetUserId]
-    );
+    // E-02b: pertenencia sobre `memberships`; la tabla heredada se mantiene en
+    // sincronía para los caminos que aún la leen (ownerGuard).
+    const actual = await getMemberRole(pool, salonId, targetUserId);
 
-    if (memberRes.rows.length === 0) {
+    if (!actual) {
       return res.status(404).json({ error: 'El colaborador no pertenece a este salón.' });
     }
 
@@ -360,6 +379,13 @@ exports.updateMemberRole = async (req, res) => {
       `UPDATE salon_miembros SET sub_rol = $1 WHERE salon_id = $2 AND user_id = $3`,
       [cleanSubRol, salonId, targetUserId]
     );
+
+    await ensureMembership(pool, {
+      salonId,
+      userId: targetUserId,
+      subRol: cleanSubRol,
+      createdBy: req.user.id,
+    });
 
     res.json({
       success: true,
@@ -382,12 +408,9 @@ exports.removeMember = async (req, res) => {
     const salonId = req.salonId || req.params.salonId;
     const targetUserId = req.targetUserId || req.params.userId || req.params.memberId || req.body.user_id || req.body.userId;
 
-    const memberRes = await pool.query(
-      `SELECT id, sub_rol FROM salon_miembros WHERE salon_id = $1 AND user_id = $2 AND estatus = 'ACTIVO'`,
-      [salonId, targetUserId]
-    );
+    const actual = await getMemberRole(pool, salonId, targetUserId);
 
-    if (memberRes.rows.length === 0) {
+    if (!actual) {
       return res.status(404).json({ error: 'El colaborador no existe o ya está inactivo en este salón.' });
     }
 
@@ -395,6 +418,15 @@ exports.removeMember = async (req, res) => {
       `UPDATE salon_miembros SET estatus = 'INACTIVO' WHERE salon_id = $1 AND user_id = $2`,
       [salonId, targetUserId]
     );
+
+    // E-02b: la baja se refleja en la fuente canónica.
+    await ensureMembership(pool, {
+      salonId,
+      userId: targetUserId,
+      subRol: actual.sub_rol,
+      status: 'SUSPENDED',
+      createdBy: req.user.id,
+    });
 
     res.json({
       success: true,
