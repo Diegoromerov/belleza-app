@@ -13,6 +13,16 @@ const {
 const { authMiddleware } = require('../middleware/auth');
 const { requireSalonEntitlement } = require('../middleware/salonEntitlement');
 const {
+  listarInventario: getInventarioSalon,
+  crearItem: postInventarioItem,
+  registrarMovimiento: postInventarioMovimiento,
+  historialItem: getInventarioHistorial,
+  listarRecursos: getRecursos,
+  crearRecurso: postRecurso,
+  crearAlquiler: postAlquiler,
+  listarAlquileres: getAlquileres,
+} = require('../controllers/salonOpsController');
+const {
   resumen: getCajaResumen,
   movimientos: getCajaMovimientos,
   registrar: postCajaMovimiento,
@@ -116,4 +126,63 @@ router.get(
   authMiddleware,
   requireSalonRole(...ROLES_CAJA_LECTURA),
   getCajaConstancia
+);
+
+// ── Inventario y alquileres (E-06, D-GL-027) ─────────────────────────────────
+// Leer: cualquier miembro activo (el controlador recorta los alquileres a «lo
+// mío» cuando el rol no administra). Escribir: lo valida el controlador.
+router.get(
+  '/:salonId/inventario',
+  authMiddleware,
+  requireSalonRole(...ROLES_CAJA_LECTURA),
+  getInventarioSalon
+);
+
+router.post(
+  '/:salonId/inventario',
+  authMiddleware,
+  requireSalonRole(...ROLES_CAJA_LECTURA),
+  postInventarioItem
+);
+
+router.post(
+  '/:salonId/inventario/:itemId/movimientos',
+  authMiddleware,
+  requireSalonRole(...ROLES_CAJA_LECTURA),
+  postInventarioMovimiento
+);
+
+router.get(
+  '/:salonId/inventario/:itemId/movimientos',
+  authMiddleware,
+  requireSalonRole(...ROLES_CAJA_LECTURA),
+  getInventarioHistorial
+);
+
+router.get(
+  '/:salonId/recursos',
+  authMiddleware,
+  requireSalonRole(...ROLES_CAJA_LECTURA),
+  getRecursos
+);
+
+router.post(
+  '/:salonId/recursos',
+  authMiddleware,
+  requireSalonRole(...ROLES_CAJA_LECTURA),
+  postRecurso
+);
+
+router.get(
+  '/:salonId/alquileres',
+  authMiddleware,
+  requireSalonRole(...ROLES_CAJA_LECTURA),
+  getAlquileres
+);
+
+router.post(
+  '/:salonId/alquileres',
+  authMiddleware,
+  requireSalonRole(...ROLES_CAJA_LECTURA),
+  postAlquiler
 );

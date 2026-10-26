@@ -74,6 +74,7 @@ import 'glowguide/glowguide.dart';
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'core/deep_links.dart';
 
 /// Maneja navegación profunda (deep-link) desde payload FCM
 Future<void> _handleFcmPayload(FcmPayload payload) async {
@@ -318,7 +319,13 @@ class BeautyApp extends StatelessWidget {
                 '/provider': (_) => const ProviderDashboardScreen(), // Rol PRESTADOR (Tablero Pro Independiente)
                 // E-03 (D-GL-027): `/salon` es el shell de 5 pestañas; el tablero
                 // anterior (Resumen/Equipo/Servicios/Ajustes) sigue en /salon/resumen.
-                '/salon': (_) => const SalonShell(),
+                // E-06: `Navigator.pushNamed('/salon', arguments: 'beautyapp://salon/caja')`
+                // abre la pestaña pedida. El parseo vive en core/deep_links.dart.
+                '/salon': (context) {
+                  final args = ModalRoute.of(context)?.settings.arguments;
+                  final indice = args is String ? indiceDeEnlace(args) : null;
+                  return SalonShell(initialIndex: indice ?? 0);
+                },
                 '/salon/resumen': (_) => const SalonDashboardScreen(),
                 '/salon-hub': (_) => const SalonHubScreen(),         // Hub Selector de Momento Empresarial (Dueño)
 
