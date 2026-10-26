@@ -11,6 +11,7 @@ const {
   removeMember,
 } = require('../controllers/salonController');
 const { authMiddleware } = require('../middleware/auth');
+const { requireSalonEntitlement } = require('../middleware/salonEntitlement');
 const {
   requireOwnerRole,
   requireSalonAdmin,
@@ -25,7 +26,7 @@ router.post('/create', authMiddleware, createSalon);
 // requireSalonAdmin resuelve y valida salon_id del body antes del controlador
 // y deja req.salonId / req.salonMembership disponibles (defensa en profundidad:
 // salonController.inviteMember conserva su propio chequeo interno).
-router.post('/invite', authMiddleware, requireSalonAdmin, inviteMember);
+router.post('/invite', authMiddleware, requireSalonAdmin, requireSalonEntitlement('TEAM_MANAGEMENT'), inviteMember);
 
 router.post('/accept-invitation', authMiddleware, acceptInvitation);
 

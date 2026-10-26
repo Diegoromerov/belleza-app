@@ -23,6 +23,7 @@ import '../../design/icons/glow_icon.dart';
 import '../../services/api_service.dart';
 import '../../services/auth_service.dart';
 import '../provider_services_screen.dart';
+import '../../widgets/locked_feature_card.dart';
 
 class SalonShell extends StatefulWidget {
   /// Pestaña inicial (0 = Agenda). Útil para deep-links internos.
@@ -32,7 +33,20 @@ class SalonShell extends StatefulWidget {
   /// los widget tests: sin esto, montar el shell dispara HTTP real.
   final bool cargarDatos;
 
-  const SalonShell({super.key, this.initialIndex = 0, this.cargarDatos = true});
+  /// Capacidades del plan. Si es null se leen de `/api/salon/my-salon`
+  /// (E-04). Se puede inyectar para probar el bloqueo por plan sin red.
+  final List<String>? entitlements;
+
+  /// Plan vigente, sólo para el texto de la tarjeta de bloqueo.
+  final String plan;
+
+  const SalonShell({
+    super.key,
+    this.initialIndex = 0,
+    this.cargarDatos = true,
+    this.entitlements,
+    this.plan = 'FREE_TRIAL',
+  });
 
   @override
   State<SalonShell> createState() => _SalonShellState();
@@ -41,6 +55,8 @@ class SalonShell extends StatefulWidget {
 class _SalonShellState extends State<SalonShell> {
   late int _index;
   late bool _cargarDatos;
+  late List<String> _entitlements;
+  late String _plan;
 
   /// Construcción perezosa y recordada: no se instancia una pestaña hasta que
   /// se visita, y una vez construida conserva su estado (no hay `IndexedStack`
@@ -60,7 +76,36 @@ class _SalonShellState extends State<SalonShell> {
     super.initState();
     _index = widget.initialIndex.clamp(0, _destinos.length - 1);
     _cargarDatos = widget.cargarDatos;
+    _entitlements = widget.entitlements ?? const <String>[];
+    _plan = widget.plan;
+    if (widget.entitlements == null && widget.cargarDatos) {
+      _cargarPlan();
+    }
   }
+
+  /// E-04 (D-GL-027): las capacidades del plan viajan con el salón. Se leen una
+  /// sola vez para todo el shell; si la lectura falla, el módulo queda bloqueado
+  /// y el backend sigue siendo la compuerta real.
+  Future<void> _cargarPlan() async {
+    try {
+      final res = await AuthService.getMySalon();
+      final salon = res?['salon'];
+      if (salon is Map) {
+        final caps = (salon['entitlements'] as List<dynamic>?) ?? const <dynamic>[];
+        if (!mounted) return;
+        setState(() {
+          _entitlements = caps.map((c) => c.toString()).toList();
+          _plan = (salon['plan_saas'] ?? 'FREE_TRIAL').toString();
+          // Una pestaña ya construida con el plan anterior no debe quedar cacheada.
+          _construidas[2] = null;
+        });
+      }
+    } catch (_) {
+      // Sin plan conocido no se desbloquea nada.
+    }
+  }
+
+  bool _tiene(String capacidad) => _entitlements.contains(capacidad);
 
   Token get _t => Token.of(context);
 
@@ -110,6 +155,16 @@ class _SalonShellState extends State<SalonShell> {
       case 1:
         return const _CajaTab();
       case 2:
+        if (!_tiene('TEAM_MANAGEMENT')) {
+          return LockedFeatureCard(
+            titulo: 'Equipo',
+            descripcion: 'Tu plan no incluye la gestión de colaboradores de este salón.',
+            capacidadRequerida: 'TEAM_MANAGEMENT',
+            planActual: _plan,
+            beneficio: 'Invita, cambia roles y da de baja a tu equipo.',
+            onMejorarPlan: () => Navigator.pushNamed(context, '/saas/billing'),
+          );
+        }
         return _EquipoTab(cargar: _cargarDatos);
       case 3:
         return _cargarDatos ? const ProviderServicesScreen() : const _ServiciosPlaceholder();
