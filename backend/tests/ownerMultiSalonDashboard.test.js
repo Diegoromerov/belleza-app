@@ -114,7 +114,7 @@ describe('Fase 3: Multi-Sede OWNER Dashboard & Endpoints Integration Tests', () 
         if (/app_usuario_identidad/i.test(text)) {
           return Promise.resolve({ rows: [{ rol: 'SALON', tenant_id: 1 }] });
         }
-        if (/SELECT sub_rol[\s\S]*FROM salon_miembros/i.test(text)) {
+        if (/AS sub_rol[\s\S]*FROM memberships/i.test(text)) {
           return Promise.resolve({ rows: [{ sub_rol: 'DUEÑO' }] });
         }
         return Promise.resolve({ rows: [] });
