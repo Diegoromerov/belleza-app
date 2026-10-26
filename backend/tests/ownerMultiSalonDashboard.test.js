@@ -424,7 +424,6 @@ describeE2EReal('E2E REAL contra PostgreSQL: OWNER multi-sede (sin mocks de pool
         [f.salones.map((s) => `salon-${s}`)]);
       await client.query(`DELETE FROM business_profiles WHERE id = ANY($1::text[])`,
         [f.salones.map((s) => `salon-${s}`)]);
-      await client.query(`DELETE FROM salon_miembros WHERE salon_id = ANY($1::int[])`, [f.salones]);
       await client.query(`DELETE FROM services WHERE id = $1`, [SERVICIO]);
       await client.query(`DELETE FROM salones WHERE id = ANY($1::int[])`, [f.salones]);
       await client.query(`DELETE FROM perfiles_prestador WHERE id = ANY($1::int[])`, [f.usuarios]);
@@ -474,15 +473,8 @@ describeE2EReal('E2E REAL contra PostgreSQL: OWNER multi-sede (sin mocks de pool
          ($2, 'Sede Sur E2E',   $3, 'Medellin', 'PRO', $4)`,
       [SEDE_NORTE, SEDE_SUR, OWNER, TENANT_A]
     );
-    await client.query(
-      `INSERT INTO salon_miembros (salon_id, user_id, sub_rol, estatus, tenant_id) VALUES
-         ($1, $3, 'DUEÑO', 'ACTIVO', $7), ($2, $3, 'DUEÑO', 'ACTIVO', $7),
-         ($1, $4, 'PRESTADOR_INDEPENDIENTE', 'ACTIVO', $7),
-         ($2, $4, 'PRESTADOR_INDEPENDIENTE', 'ACTIVO', $7),
-         ($1, $5, 'PRESTADOR_INDEPENDIENTE', 'ACTIVO', $7),
-         ($1, $6, 'PRESTADOR_INDEPENDIENTE', 'INACTIVO', $7)`,
-      [SEDE_NORTE, SEDE_SUR, OWNER, PRESTADOR_COMPARTIDO, PRESTADOR_LOCAL, PRESTADOR_INACTIVO, TENANT_A]
-    );
+    // T-127: la pertenencia se siembra directamente en `memberships`; la tabla
+    // heredada `salon_miembros` ya no existe (migración 118).
     // E-02c: el arnés no trae verticales y `business_profiles.vertical_id` es NOT
     // NULL; se siembra el vertical de belleza una sola vez.
     await client.query(
@@ -502,18 +494,16 @@ describeE2EReal('E2E REAL contra PostgreSQL: OWNER multi-sede (sin mocks de pool
       [SEDE_NORTE, SEDE_SUR]
     );
     await client.query(
-      `INSERT INTO memberships (id, user_id, business_profile_id, role, sub_rol, status, accepted_at)
-       SELECT md5(random()::text || m.user_id::text || m.salon_id::text), m.user_id,
-              'salon-' || m.salon_id,
-              CASE upper(m.sub_rol) WHEN 'DUEÑO' THEN 'OWNER' WHEN 'ADMINISTRADOR' THEN 'ADMIN'
-                                    WHEN 'RECEPCIONISTA' THEN 'MANAGER' ELSE 'MEMBER' END,
-              upper(m.sub_rol),
-              CASE WHEN m.estatus = 'ACTIVO' THEN 'ACTIVE' ELSE 'SUSPENDED' END,
-              CURRENT_TIMESTAMP
-         FROM salon_miembros m WHERE m.salon_id IN ($1, $2)
+      `INSERT INTO memberships (id, user_id, business_profile_id, role, sub_rol, status, accepted_at) VALUES
+         (md5('e2e-a1'), $3, 'salon-' || $1::text, 'OWNER',  'DUEÑO',                   'ACTIVE',    CURRENT_TIMESTAMP),
+         (md5('e2e-a2'), $3, 'salon-' || $2::text, 'OWNER',  'DUEÑO',                   'ACTIVE',    CURRENT_TIMESTAMP),
+         (md5('e2e-a3'), $4, 'salon-' || $1::text, 'MEMBER', 'PRESTADOR_INDEPENDIENTE', 'ACTIVE',    CURRENT_TIMESTAMP),
+         (md5('e2e-a4'), $4, 'salon-' || $2::text, 'MEMBER', 'PRESTADOR_INDEPENDIENTE', 'ACTIVE',    CURRENT_TIMESTAMP),
+         (md5('e2e-a5'), $5, 'salon-' || $1::text, 'MEMBER', 'PRESTADOR_INDEPENDIENTE', 'ACTIVE',    CURRENT_TIMESTAMP),
+         (md5('e2e-a6'), $6, 'salon-' || $1::text, 'MEMBER', 'PRESTADOR_INDEPENDIENTE', 'SUSPENDED', CURRENT_TIMESTAMP)
        ON CONFLICT (user_id, business_profile_id) DO UPDATE SET
          role = EXCLUDED.role, sub_rol = EXCLUDED.sub_rol, status = EXCLUDED.status`,
-      [SEDE_NORTE, SEDE_SUR]
+      [SEDE_NORTE, SEDE_SUR, OWNER, PRESTADOR_COMPARTIDO, PRESTADOR_LOCAL, PRESTADOR_INACTIVO]
     );
     await client.query(
       `INSERT INTO bookings (id, client_id, provider_id, service_id, scheduled_at, valor_bruto,
@@ -544,12 +534,6 @@ describeE2EReal('E2E REAL contra PostgreSQL: OWNER multi-sede (sin mocks de pool
          VALUES ($1, 'Sede Ajena E2E', $2, 'Cali', 'PRO', $3)`,
       [SEDE_AJENA, OTRO_DUENO, TENANT_B]
     );
-    await client.query(
-      `INSERT INTO salon_miembros (salon_id, user_id, sub_rol, estatus, tenant_id) VALUES
-         ($1, $3, 'PRESTADOR_INDEPENDIENTE', 'ACTIVO', $4),
-         ($1, $2, 'PRESTADOR_INDEPENDIENTE', 'ACTIVO', $4)`,
-      [SEDE_AJENA, PRESTADOR_AJENO, PRESTADOR_COMPARTIDO, TENANT_B]
-    );
     // E-02c: identidad canónica para el tenant ajeno del fixture.
     await client.query(
       `INSERT INTO business_profiles (id, provider_id, vertical_id, name, tenant_id)
@@ -561,18 +545,12 @@ describeE2EReal('E2E REAL contra PostgreSQL: OWNER multi-sede (sin mocks de pool
       [SEDE_AJENA]
     );
     await client.query(
-      `INSERT INTO memberships (id, user_id, business_profile_id, role, sub_rol, status, accepted_at)
-       SELECT md5(random()::text || m.user_id::text || m.salon_id::text), m.user_id,
-              'salon-' || m.salon_id,
-              CASE upper(m.sub_rol) WHEN 'DUEÑO' THEN 'OWNER' WHEN 'ADMINISTRADOR' THEN 'ADMIN'
-                                    WHEN 'RECEPCIONISTA' THEN 'MANAGER' ELSE 'MEMBER' END,
-              upper(m.sub_rol),
-              CASE WHEN m.estatus = 'ACTIVO' THEN 'ACTIVE' ELSE 'SUSPENDED' END,
-              CURRENT_TIMESTAMP
-         FROM salon_miembros m WHERE m.salon_id = $1
+      `INSERT INTO memberships (id, user_id, business_profile_id, role, sub_rol, status, accepted_at) VALUES
+         (md5('e2e-b1'), $2, 'salon-' || $1::text, 'MEMBER', 'PRESTADOR_INDEPENDIENTE', 'ACTIVE', CURRENT_TIMESTAMP),
+         (md5('e2e-b2'), $3, 'salon-' || $1::text, 'MEMBER', 'PRESTADOR_INDEPENDIENTE', 'ACTIVE', CURRENT_TIMESTAMP)
        ON CONFLICT (user_id, business_profile_id) DO UPDATE SET
          role = EXCLUDED.role, sub_rol = EXCLUDED.sub_rol, status = EXCLUDED.status`,
-      [SEDE_AJENA]
+      [SEDE_AJENA, PRESTADOR_AJENO, PRESTADOR_COMPARTIDO]
     );
     await client.query(
       `INSERT INTO bookings (id, client_id, provider_id, service_id, scheduled_at, valor_bruto,
@@ -691,7 +669,7 @@ describeE2EReal('E2E REAL contra PostgreSQL: OWNER multi-sede (sin mocks de pool
     expect(m.advertencia).toBeUndefined();
   });
 
-  test('POST /api/v1/owner/switch-salon autoriza contra salon_miembros real y rechaza sedes ajenas', async () => {
+  test('POST /api/v1/owner/switch-salon autoriza contra memberships reales y rechaza sedes ajenas', async () => {
     const propio = await request(app)
       .post('/api/v1/owner/switch-salon')
       .set('Authorization', `Bearer ${ownerToken}`)
