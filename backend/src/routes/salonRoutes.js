@@ -13,6 +13,12 @@ const {
 const { authMiddleware } = require('../middleware/auth');
 const { requireSalonEntitlement } = require('../middleware/salonEntitlement');
 const {
+  resumen: getCajaResumen,
+  movimientos: getCajaMovimientos,
+  registrar: postCajaMovimiento,
+  constancia: getCajaConstancia,
+} = require('../controllers/cajaController');
+const {
   requireOwnerRole,
   requireSalonAdmin,
   requireSalonRole,
@@ -64,3 +70,50 @@ router.delete(
 
 wrapRouterAsync(router);
 module.exports = router;
+
+// ── Caja (E-05, D-GL-027) ────────────────────────────────────────────────────
+// Leer la caja: cualquier miembro activo. El controlador recorta a «lo mío»
+// cuando el rol no es de administración, así que un colaborador no puede ver la
+// caja del salón ni pidiéndola por URL.
+const ROLES_CAJA_LECTURA = [
+  SUB_ROLES.DUENO,
+  SUB_ROLES.ADMINISTRADOR,
+  SUB_ROLES.RECEPCIONISTA,
+  SUB_ROLES.PRESTADOR_INDEPENDIENTE,
+  SUB_ROLES.EMPLEADO,
+];
+
+// Registrar dinero: administración y recepción. No el colaborador.
+const ROLES_CAJA_REGISTRO = [
+  SUB_ROLES.DUENO,
+  SUB_ROLES.ADMINISTRADOR,
+  SUB_ROLES.RECEPCIONISTA,
+];
+
+router.get(
+  '/:salonId/caja/resumen',
+  authMiddleware,
+  requireSalonRole(...ROLES_CAJA_LECTURA),
+  getCajaResumen
+);
+
+router.get(
+  '/:salonId/caja/movimientos',
+  authMiddleware,
+  requireSalonRole(...ROLES_CAJA_LECTURA),
+  getCajaMovimientos
+);
+
+router.post(
+  '/:salonId/caja/movimientos',
+  authMiddleware,
+  requireSalonRole(...ROLES_CAJA_REGISTRO),
+  postCajaMovimiento
+);
+
+router.get(
+  '/:salonId/caja/movimientos/:movimientoId/constancia',
+  authMiddleware,
+  requireSalonRole(...ROLES_CAJA_LECTURA),
+  getCajaConstancia
+);

@@ -37,14 +37,14 @@ void main() {
     expect(find.text('Sin citas por ahora'), findsOneWidget);
   });
 
-  testWidgets('Caja admite que no está construida, no inventa cifras', (tester) async {
+  testWidgets('Caja no inventa cifras cuando no hay salón identificado', (tester) async {
     await montar(tester);
 
     await tester.tap(find.text('Caja'));
     await tester.pump();
 
-    expect(find.text('Caja todavía no está disponible'), findsOneWidget);
-    // Cualquier importe formateado sería señal de datos inventados.
+    // Sin salón activo la caja no pinta importes, y lo dice.
+    expect(find.textContaining('Caja sin salón activo'), findsOneWidget);
     expect(find.textContaining(r'$'), findsNothing);
   });
 

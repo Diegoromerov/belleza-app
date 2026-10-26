@@ -24,6 +24,7 @@ import '../../services/api_service.dart';
 import '../../services/auth_service.dart';
 import '../provider_services_screen.dart';
 import '../../widgets/locked_feature_card.dart';
+import 'caja_screen.dart';
 
 class SalonShell extends StatefulWidget {
   /// Pestaña inicial (0 = Agenda). Útil para deep-links internos.
@@ -57,6 +58,7 @@ class _SalonShellState extends State<SalonShell> {
   late bool _cargarDatos;
   late List<String> _entitlements;
   late String _plan;
+  int? _salonId;
 
   /// Construcción perezosa y recordada: no se instancia una pestaña hasta que
   /// se visita, y una vez construida conserva su estado (no hay `IndexedStack`
@@ -96,6 +98,7 @@ class _SalonShellState extends State<SalonShell> {
         setState(() {
           _entitlements = caps.map((c) => c.toString()).toList();
           _plan = (salon['plan_saas'] ?? 'FREE_TRIAL').toString();
+          _salonId = (salon['id'] as num?)?.toInt() ?? _salonId;
           // Una pestaña ya construida con el plan anterior no debe quedar cacheada.
           _construidas[2] = null;
         });
@@ -153,7 +156,8 @@ class _SalonShellState extends State<SalonShell> {
       case 0:
         return _AgendaTab(cargar: _cargarDatos);
       case 1:
-        return const _CajaTab();
+        if (_salonId == null) return const _CajaTab();
+        return CajaScreen(salonId: _salonId!, cargarDatos: _cargarDatos);
       case 2:
         if (!_tiene('TEAM_MANAGEMENT')) {
           return LockedFeatureCard(
@@ -342,9 +346,9 @@ class _CajaTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return const _Estado(
       icono: Icons.point_of_sale_outlined,
-      titulo: 'Caja todavía no está disponible',
-      detalle: 'Ingresos, gastos y pagos por persona llegan en la etapa E-05. '
-          'No se muestran cifras hasta que exista el registro real.',
+      titulo: 'Caja sin salón activo',
+      detalle: 'Abre el resumen del salón para entrar a la caja. '
+          'Sin salón identificado no se muestran cifras.',
     );
   }
 }

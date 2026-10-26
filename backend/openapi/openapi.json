@@ -5790,6 +5790,112 @@
         "x-glowapp-documented": false
       }
     },
+    "/api/salon/{salonId}/caja/movimientos": {
+      "get": {
+        "operationId": "getapi_salon_salonId_caja_movimientos",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "salonId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "GET /api/salon/{salonId}/caja/movimientos (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "salon"
+        ],
+        "x-glowapp-documented": false
+      },
+      "post": {
+        "operationId": "postapi_salon_salonId_caja_movimientos",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "salonId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "POST /api/salon/{salonId}/caja/movimientos (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "salon"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/salon/{salonId}/caja/movimientos/{movimientoId}/constancia": {
+      "get": {
+        "operationId": "getapi_salon_salonId_caja_movimientos_movimientoId_constancia",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "salonId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "movimientoId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "GET /api/salon/{salonId}/caja/movimientos/{movimientoId}/constancia (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "salon"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/salon/{salonId}/caja/resumen": {
+      "get": {
+        "operationId": "getapi_salon_salonId_caja_resumen",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "salonId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "GET /api/salon/{salonId}/caja/resumen (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "salon"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
     "/api/salon/{salonId}/members": {
       "get": {
         "operationId": "getapi_salon_salonId_members",
@@ -7459,8 +7565,8 @@
   ],
   "x-glowapp-contract": {
     "generator": "backend/src/openapi/buildOpenApi.js",
-    "operationsDiscovered": 336,
+    "operationsDiscovered": 340,
     "operationsDocumented": 18,
-    "routesMounted": 354
+    "routesMounted": 358
   }
 }
