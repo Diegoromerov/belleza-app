@@ -39,6 +39,7 @@ import 'screens/auth/context_selection_screen.dart';
 import 'screens/provider_detail_screen.dart';
 import 'screens/provider_dashboard_screen.dart';
 import 'screens/salon_dashboard_screen.dart';
+import 'screens/salon/salon_shell.dart';
 import 'screens/salon/salon_hub_screen.dart';
 import 'screens/saas/team_management_screen.dart';
 import 'screens/saas/billing_screen.dart';
@@ -315,7 +316,10 @@ class BeautyApp extends StatelessWidget {
                 '/home': (_) => const ProvidersScreen(),             // Rol CLIENTE (Catálogo / Búsqueda)
                 '/my-glow': (_) => const MyGlowDashboardScreen(),   // Rol CLIENTE (Tablero VIP Ritual)
                 '/provider': (_) => const ProviderDashboardScreen(), // Rol PRESTADOR (Tablero Pro Independiente)
-                '/salon': (_) => const SalonDashboardScreen(),       // Rol SALON (Tablero SaaS Salón)
+                // E-03 (D-GL-027): `/salon` es el shell de 5 pestañas; el tablero
+                // anterior (Resumen/Equipo/Servicios/Ajustes) sigue en /salon/resumen.
+                '/salon': (_) => const SalonShell(),
+                '/salon/resumen': (_) => const SalonDashboardScreen(),
                 '/salon-hub': (_) => const SalonHubScreen(),         // Hub Selector de Momento Empresarial (Dueño)
 
                 // 3. Sub-Módulos del Prestador / Salón
