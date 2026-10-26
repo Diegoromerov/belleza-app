@@ -66,6 +66,9 @@ const MIGRACIONES = [
   'migrations/062_optimize_business_saas_postgres.sql',
   'migrations/082_memberships.sql',
   'migrations/114_memberships_sub_rol.sql',
+  // T-127 (D-GL-027): retira la tabla heredada `salon_miembros`. Se aplica al
+  // final para que el arnés tenga exactamente el mismo esquema que producción.
+  'migrations/118_drop_salon_miembros.sql',
 ];
 
 async function main() {
