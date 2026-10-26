@@ -34,7 +34,7 @@ if (!process.env.TEST_DATABASE_URL && !process.env.DATABASE_URL) {
 const TABLAS_ESPERADAS = [
   'services', 'bookings', 'transactions', 'messages', 'reviews',
   'portfolio_items', 'nail_tryon_jobs', 'perfiles_prestador', 'productos',
-  'salones', 'salon_miembros', 'salon_invitaciones',
+  'salones', 'salon_invitaciones',
   // `usuarios` dejó de ser una excepción (P0 t_fix_tenant_07): con RLS apagado
   // cualquier inquilino leía la PII de todos. Ahora exige RLS + FORCE + 1 política.
   'usuarios'

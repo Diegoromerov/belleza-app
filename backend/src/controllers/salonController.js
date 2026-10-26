@@ -115,13 +115,9 @@ exports.createSalon = async (req, res) => {
 
     const salon = salonRes.rows[0];
 
-    // Asignar al usuario como DUEÑO en salon_miembros
-    await pool.query(
-      `INSERT INTO salon_miembros (salon_id, user_id, sub_rol, estatus)
-       VALUES ($1, $2, 'DUEÑO', 'ACTIVO')
-       ON CONFLICT (salon_id, user_id) DO UPDATE SET sub_rol = 'DUEÑO', estatus = 'ACTIVO'`,
-      [salon.id, ownerId]
-    );
+    // T-127 (D-GL-027): la tabla heredada `salon_miembros` ya no se escribe.
+    // El dueño queda en `memberships` con el rol canónico mediante
+    // `ensureSalonOwnerIdentity`, que es la única fuente de identidad.
 
     // E-02a (D-GL-027): el salón nace con su identidad canónica
     // (business_profiles + memberships). Sin esto, `req.saas` queda vacío y toda
@@ -270,13 +266,7 @@ exports.acceptInvitation = async (req, res) => {
     // depende de él (ver middleware/tenantContext.js) y no comparte transacción
     // entre consultas.
     await pool.query(
-      `WITH miembro AS (
-         INSERT INTO salon_miembros (salon_id, user_id, sub_rol, estatus)
-         VALUES ($1, $2, $3, 'ACTIVO')
-         ON CONFLICT (salon_id, user_id) DO UPDATE
-           SET sub_rol = EXCLUDED.sub_rol, estatus = 'ACTIVO'
-         RETURNING 1
-       ), perfil AS (
+      `WITH perfil AS (
          SELECT id FROM business_profiles WHERE id = left('salon-' || $1::text, 36)
        ), membresia AS (
          -- E-02b (D-GL-027): la membership canónica se escribe en la MISMA
@@ -367,18 +357,13 @@ exports.updateMemberRole = async (req, res) => {
       return res.status(400).json({ error: `El sub-rol '${sub_rol}' no es válido.` });
     }
 
-    // E-02b: pertenencia sobre `memberships`; la tabla heredada se mantiene en
-    // sincronía para los caminos que aún la leen (ownerGuard).
+    // E-02b: pertenencia sobre `memberships`, que es la única fuente.
+    // T-127: ya no se escribe el espejo en `salon_miembros`.
     const actual = await getMemberRole(pool, salonId, targetUserId);
 
     if (!actual) {
       return res.status(404).json({ error: 'El colaborador no pertenece a este salón.' });
     }
-
-    await pool.query(
-      `UPDATE salon_miembros SET sub_rol = $1 WHERE salon_id = $2 AND user_id = $3`,
-      [cleanSubRol, salonId, targetUserId]
-    );
 
     await ensureMembership(pool, {
       salonId,
@@ -413,11 +398,6 @@ exports.removeMember = async (req, res) => {
     if (!actual) {
       return res.status(404).json({ error: 'El colaborador no existe o ya está inactivo en este salón.' });
     }
-
-    await pool.query(
-      `UPDATE salon_miembros SET estatus = 'INACTIVO' WHERE salon_id = $1 AND user_id = $2`,
-      [salonId, targetUserId]
-    );
 
     // E-02b: la baja se refleja en la fuente canónica.
     await ensureMembership(pool, {

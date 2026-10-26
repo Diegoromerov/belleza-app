@@ -72,7 +72,9 @@ const FIXTURES = [
   {
     que: 'membresías de los salones de prueba',
     donde: "salon_id IN (SELECT id FROM salones WHERE nombre_salon LIKE 'Salón de Prueba%' OR nombre_salon LIKE 'verificacion-%')",
+    // T-127: la tabla heredada puede no existir; el limpiador la salta.
     tabla: 'salon_miembros',
+    opcional: true,
   },
   {
     que: 'salones de prueba',
