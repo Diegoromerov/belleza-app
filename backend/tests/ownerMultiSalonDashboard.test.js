@@ -163,11 +163,13 @@ describe('Fase 3: Multi-Sede OWNER Dashboard & Endpoints Integration Tests', () 
           ],
         });
       }
-      if (/SELECT DISTINCT sm\.user_id AS provider_id/i.test(text)) {
+      // E-02c: el identificador pasó de `sm.user_id` (salon_miembros) a
+      // `m.user_id` (memberships); el prefijo ya no es fijo.
+      if (/SELECT DISTINCT \w+\.user_id AS provider_id/i.test(text)) {
         return Promise.resolve({ rows: [{ provider_id: 50 }, { provider_id: 60 }] });
       }
       // Detección cross-tenant
-      if (/NOT\s*\(\s*sm\.salon_id\s*=\s*ANY/i.test(text)) {
+      if (/NOT\s*\(\s*(sm\.salon_id|substring\(bp\.id from 7\)::int)\s*=\s*ANY/i.test(text)) {
         return Promise.resolve({
           rows: [{ provider_id: 50, salon_id: 99 }], // Prestador 50 tiene sede 99 en otro dueño
         });
