@@ -404,7 +404,10 @@ router.get('/courses/:id/quiz', authMiddleware, requireAcademyRole, ah(async (re
 
   const used = await attemptsUsed(req.user.id, courseId);
   if (used >= academy.maxAttempts()) {
-    return res.status(429).json({
+    // Retry-After: sin esto el cliente reintenta de inmediato y consume el
+    // rate limit del gateway. 3600 s = lo que tarda un reinicio de intentos.
+    return res.set('Retry-After', '3600').status(429).json({
+      retry_after_segundos: 3600,
       error: `Alcanzaste el máximo de ${academy.maxAttempts()} intentos para este curso. Contacta a soporte para reiniciarlos.`,
       attemptsLeft: 0,
     });
@@ -455,7 +458,8 @@ router.post('/courses/:id/submit-quiz', authMiddleware, requireAcademyRole, ah(a
   const maxAttempts = academy.maxAttempts();
   const used = await attemptsUsed(req.user.id, courseId);
   if (used >= maxAttempts) {
-    return res.status(429).json({
+    return res.set('Retry-After', '3600').status(429).json({
+      retry_after_segundos: 3600,
       error: `Alcanzaste el máximo de ${maxAttempts} intentos para este curso.`,
       attemptsLeft: 0,
     });
