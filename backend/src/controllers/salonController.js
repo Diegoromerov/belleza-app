@@ -1,6 +1,7 @@
 const { pool } = require('../config/db');
 const crypto = require('crypto');
 const { hasEntitlement, PLAN_ENTITLEMENTS, SAAS_CAPABILITIES } = require('../config/saasEntitlements');
+const { ensureSalonOwnerIdentity } = require('../services/salonIdentity');
 
 // ==========================================
 // 🏢 OBTENER MI SALÓN DE BELLEZA (SaaS Owner Profile)
@@ -118,6 +119,25 @@ exports.createSalon = async (req, res) => {
        ON CONFLICT (salon_id, user_id) DO UPDATE SET sub_rol = 'DUEÑO', estatus = 'ACTIVO'`,
       [salon.id, ownerId]
     );
+
+    // E-02a (D-GL-027): el salón nace con su identidad canónica
+    // (business_profiles + memberships). Sin esto, `req.saas` queda vacío y toda
+    // la capa SaaS responde 401 hasta que alguien llame a /api/saas/bootstrap a
+    // mano. No se aborta la creación del salón si falla: la migración 113 hace
+    // el backfill y el error queda en el log con el id del salón.
+    try {
+      const identity = await ensureSalonOwnerIdentity(pool, {
+        salonId: salon.id,
+        ownerUserId: ownerId,
+        name: salon.nombre_salon,
+        plan: salon.plan_saas || 'FREE_TRIAL',
+      });
+      if (!identity.provisioned) {
+        console.warn(`⚠️ [createSalon] identidad no provisionada para salón ${salon.id}: ${identity.reason}`);
+      }
+    } catch (identityError) {
+      console.error(`⚠️ [createSalon] identidad del salón ${salon.id} falló:`, identityError.message);
+    }
 
     // Marcar rol del usuario como SALON y onboarding_completo = true
     await pool.query(
