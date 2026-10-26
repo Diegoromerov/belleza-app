@@ -39,13 +39,20 @@
 // passthrough: no abre conexión ni transacción, y el comportamiento de la app
 // es idéntico al anterior.
 //
-// LIMITACIÓN CONOCIDA
-// -------------------
-// El COMMIT ocurre cuando la respuesta ya se envió (evento 'finish'), que es lo
-// que permite mantener la transacción abierta durante toda la petición sin
-// envolver res.send/res.json. Contrapartida: si el COMMIT falla, el cliente ya
-// recibió 200 y la escritura se revierte. Conviene mover el COMMIT antes de
-// enviar la respuesta interceptando res.json.
+// ORDEN DEL COMMIT
+// -----------------
+// El COMMIT se hace ANTES de enviar la respuesta JSON. Antes se hacía en el
+// evento 'finish' —con la respuesta ya en el socket— y eso producía un fallo
+// real, no teórico: un cliente que escribe y vuelve a leer de inmediato (la app
+// al aceptar el contrato, cualquier flujo de dinero) veía su propia escritura
+// como ausente, porque el COMMIT aún no había ocurrido. Lo detectó el arnés E2E
+// de reglas del dinero como fallo intermitente (B3, 1 de cada N corridas).
+// Además, si el COMMIT falla, el cliente recibía 200 sobre una escritura
+// revertida: eso es lo que ahora se convierte en error.
+//
+// El cuerpo JSON se difiere hasta que la transacción termina. 'finish' y
+// 'close' siguen como respaldo para las respuestas que no pasan por res.json
+// (streaming, res.end, cliente que corta).
 
 const { pool } = require('../config/db');
 const tenantRouting = require('../config/tenantRouting');
@@ -85,6 +92,39 @@ async function tenantContextMiddleware(req, res, next) {
   // genérico.
   let cadenaIniciada = false;
 
+  // Se guardan las implementaciones reales de Express: la respuesta diferida
+  // las necesita para escribir cuando la transacción ya terminó, y los caminos
+  // de error las restauran para no dejar la respuesta secuestrada.
+  // Los dobles de pruebas no siempre implementan res.send; sin esta guarda el
+  // middleware reventaría midiendo el doble, no el código.
+  // Se guarda la función ORIGINAL (sin bind) para poder restaurar exactamente el
+  // mismo objeto: si se restaurara una copia ligada, un espía de jest dejaría de
+  // serlo y las aserciones sobre res.json se romperían.
+  const jsonOriginal = typeof res.json === 'function' ? res.json : null;
+  const sendOriginal = typeof res.send === 'function' ? res.send : null;
+  const restaurarRespuesta = () => {
+    if (jsonOriginal) res.json = jsonOriginal;
+    if (sendOriginal) res.send = sendOriginal;
+  };
+
+  let respuestaDiferida = null;
+  let terminarTransaccion = null;
+
+  // Difiere el cuerpo hasta después del COMMIT. Sin esto la respuesta sale por
+  // el socket con la transacción todavía abierta y el cliente puede leer su
+  // propia escritura como ausente.
+  const diferir = (tipo, cuerpo, escribirOriginal) => {
+    if (respuestaDiferida) return res;
+    // Respuesta ya iniciada (streaming, sendFile): no se puede diferir.
+    if (res.headersSent) return escribirOriginal(cuerpo);
+    respuestaDiferida = { tipo, cuerpo, status: res.statusCode, escribirOriginal };
+    if (terminarTransaccion) terminarTransaccion();
+    return res;
+  };
+
+  if (jsonOriginal) res.json = (cuerpo) => diferir('json', cuerpo, () => jsonOriginal.call(res, cuerpo));
+  if (sendOriginal) res.send = (cuerpo) => diferir('send', cuerpo, () => sendOriginal.call(res, cuerpo));
+
   try {
     await tenantRouting.runInTenantTransaction({ pool }, req.user.tenant_id, () =>
       new Promise((resolve, reject) => {
@@ -95,9 +135,12 @@ async function tenantContextMiddleware(req, res, next) {
           if (error) reject(error);
           else resolve();
         };
+        // Se expone para que res.json/res.send puedan cerrar la transacción
+        // antes de escribir.
+        terminarTransaccion = () => finalizar();
 
-        // 'finish': la respuesta se envió correctamente.
-        // 'close': el cliente se desconectó antes de terminar.
+        // Respaldo para las respuestas que no pasan por res.json/res.send:
+        // 'finish' (respuesta enviada por otra vía) y 'close' (el cliente cortó).
         res.on('finish', () => finalizar());
         res.on('close', () => finalizar());
 
@@ -111,7 +154,24 @@ async function tenantContextMiddleware(req, res, next) {
         }
       })
     );
+
+    // La transacción ya hizo COMMIT. Recién ahora se envía el cuerpo diferido.
+    if (respuestaDiferida) {
+      const { cuerpo, status, escribirOriginal } = respuestaDiferida;
+      respuestaDiferida = null;
+      restaurarRespuesta();
+      // Si otro middleware ya respondió (o el cliente cortó), no se escribe:
+      // hacerlo reventaría con «headers already sent» sobre un error ajeno.
+      if (!res.headersSent && !res.writableEnded && !res.destroyed) {
+        res.statusCode = status;
+        escribirOriginal(cuerpo);
+      }
+    }
   } catch (error) {
+    // Si la transacción no terminó bien, no se envía el cuerpo del controlador:
+    // era una escritura que quedó revertida.
+    restaurarRespuesta();
+    respuestaDiferida = null;
     if (cadenaIniciada) {
       // El fallo pertenece a la cadena de la aplicación.
       return next(error);

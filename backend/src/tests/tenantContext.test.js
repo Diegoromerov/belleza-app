@@ -16,9 +16,13 @@ const EventEmitter = require('events');
 
 const mockLlamadas = [];
 let mockFalloAlConectar = false;
+let mockFalloCommit = false;
 
 const mockCliente = {
   query: async (text, params) => {
+    if (text === 'COMMIT' && mockFalloCommit) {
+      throw new Error('fallo al confirmar la transacción');
+    }
     mockLlamadas.push(params === undefined ? text : `${text} :: ${JSON.stringify(params)}`);
     return { rows: [] };
   },
@@ -39,8 +43,21 @@ const tenantContext = require('../middleware/tenantContext');
 function fakeRes() {
   const res = new EventEmitter();
   res.headersSent = false;
-  res.status = jest.fn().mockReturnValue(res);
-  res.json = jest.fn().mockReturnValue(res);
+  res.statusCode = 200;
+  res.status = jest.fn((codigo) => {
+    res.statusCode = codigo;
+    return res;
+  });
+  // El envío real deja rastro en la misma secuencia que las sentencias SQL: así
+  // se puede afirmar el ORDEN entre el COMMIT y la respuesta.
+  res.json = jest.fn((cuerpo) => {
+    mockLlamadas.push(`RESPUESTA_ENVIADA ${res.statusCode} ${JSON.stringify(cuerpo)}`);
+    return res;
+  });
+  res.send = jest.fn((cuerpo) => {
+    mockLlamadas.push(`RESPUESTA_ENVIADA ${res.statusCode} ${JSON.stringify(cuerpo)}`);
+    return res;
+  });
   return res;
 }
 
@@ -191,5 +208,49 @@ describe('tenantContext — ciclo de vida de la transacción por petición', () 
     expect(mockLlamadas[0]).toBe('BEGIN');
     expect(mockLlamadas).toContain('COMMIT');
     expect(mockLlamadas[mockLlamadas.length - 1]).toBe('RELEASE');
+  });
+
+  // ── Orden del COMMIT respecto de la respuesta ──────────────────────────────
+  // Regresión del fallo intermitente que detectó el arnés E2E de reglas del
+  // dinero (B3): la aceptación del contrato respondía 200 y la fila seguía en
+  // NULL al leerla, porque el COMMIT se hacía con la respuesta ya enviada.
+
+  test('el COMMIT ocurre ANTES de enviar la respuesta', async () => {
+    activarFlag('true');
+    const res = fakeRes();
+    const next = jest.fn(() => res.status(201).json({ ok: true }));
+
+    await tenantContext({ user: { id: 1, tenant_id: 7 } }, res, next);
+
+    const iCommit = mockLlamadas.indexOf('COMMIT');
+    const iRespuesta = mockLlamadas.findIndex((l) => l.startsWith('RESPUESTA_ENVIADA'));
+
+    expect(iCommit).toBeGreaterThan(-1);
+    expect(iRespuesta).toBeGreaterThan(-1);
+    expect(iCommit).toBeLessThan(iRespuesta);
+    // Se conserva el status que fijó el controlador.
+    expect(mockLlamadas[iRespuesta]).toContain('201');
+  });
+
+  test('si el COMMIT falla no se envía el cuerpo del controlador', async () => {
+    activarFlag('true');
+    mockFalloCommit = true;
+    const res = fakeRes();
+    // Express fiel: la PRIMERA llamada a next() entra en el controlador; la
+    // segunda (next(error)) va al manejador de errores y no repite la ruta.
+    let invocaciones = 0;
+    const next = jest.fn(() => {
+      invocaciones += 1;
+      if (invocaciones === 1) res.status(200).json({ ok: true });
+    });
+
+    await tenantContext({ user: { id: 1, tenant_id: 7 } }, res, next);
+
+    // La escritura se revirtió: el cliente no puede recibir el 200 optimista.
+    expect(mockLlamadas).toContain('ROLLBACK');
+    expect(mockLlamadas.some((l) => l.startsWith('RESPUESTA_ENVIADA'))).toBe(false);
+    // Y el fallo se reenvía a Express en vez de tragárselo.
+    expect(next).toHaveBeenLastCalledWith(expect.any(Error));
+    mockFalloCommit = false;
   });
 });
