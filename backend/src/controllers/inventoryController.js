@@ -1,7 +1,7 @@
 // backend/src/controllers/inventoryController.js
 const { pool } = require('../config/db');
 
-// GET /api/inventory/consignacion → Obtener inventario en consignación del salón/prestador
+// GET /api/provider/inventory/consignment → Obtener inventario en consignación del salón/prestador
 exports.getProviderConsignmentInventory = async (req, res) => {
   try {
     const providerId = req.user.id;
@@ -34,15 +34,17 @@ exports.getProviderConsignmentInventory = async (req, res) => {
     res.json({
       success: true,
       count: result.rows.length,
-      data: result.rows
+      // El cliente (api_service.dart:2005) lee `items`. Con la clave `data`
+      // la pantalla recibía 200 pero la lista salía siempre vacía.
+      items: result.rows
     });
   } catch (error) {
-    console.error('❌ ERROR EN GET /api/inventory/consignacion:', error);
+    console.error('❌ ERROR EN GET /api/provider/inventory/consignment:', error);
     res.status(500).json({ error: 'Error al obtener inventario en consignación' });
   }
 };
 
-// POST /api/inventory/consume → Registrar consumo de insumo en cita o venta presencial (Transacción Atómica ACID)
+// POST /api/provider/inventory/consume → Registrar consumo de insumo en cita o venta presencial (Transacción Atómica ACID)
 exports.consumeInventoryItem = async (req, res) => {
   const client = await pool.connect();
   try {

@@ -123,7 +123,7 @@ jobs:
         run: |
           cd backend
           set -o pipefail
-          npx jest src/tests/contract/openapi.contract.test.js src/tests/contract/critical-endpoints.contract.test.js --runInBand --forceExit 2>&1 | tee /tmp/contract-tests.log
+          npx jest src/tests/contract/openapi.contract.test.js src/tests/contract/critical-endpoints.contract.test.js src/tests/contract/routersMontados.contract.test.js --runInBand --forceExit 2>&1 | tee /tmp/contract-tests.log
           rc=$?
           if [ $rc -ne 0 ]; then
             echo "::error::Tests de contrato en rojo (exit $rc)"

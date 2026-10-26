@@ -20,7 +20,7 @@
     "openapi:generate": "node scripts/generateOpenApiSpec.js",
     "rag:migrate": "node scripts/runRagMigrations.js",
     "openapi:check": "node scripts/checkOpenApiSpec.js",
-    "test:contract": "jest src/tests/contract/openapi.contract.test.js src/tests/contract/critical-endpoints.contract.test.js --runInBand --forceExit",
+    "test:contract": "jest src/tests/contract/openapi.contract.test.js src/tests/contract/critical-endpoints.contract.test.js src/tests/contract/routersMontados.contract.test.js --runInBand --forceExit",
     "e2e": "node scripts/e2e/reglas.js"
   },
   "dependencies": {

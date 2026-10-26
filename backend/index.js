@@ -48,6 +48,9 @@ const eventRoutes = require('./src/routes/eventRoutes');
 const eventRegistrationRoutes = require('./src/routes/eventRegistrationRoutes');
 const businessRoutes = require('./src/routes/businessRoutes');
 const membershipRoutes = require('./src/routes/membershipRoutes');
+// E-01 (D-GL-027): routers con controladores y tests que nunca se montaron.
+const ownerRoutes = require('./src/routes/ownerRoutes');
+const inventoryRoutes = require('./src/routes/inventoryRoutes');
 const { buildProjections } = require('./src/services/adminMetricsService');
 // FIX-FLUTTER-06: política de versión mínima publicada en GET /api/health.
 const { resolveAppVersionPolicy } = require('./src/services/appVersionPolicy');
@@ -420,6 +423,13 @@ app.use('/api', serviceRoutes);
 app.use('/api', chatRoutes);
 app.use('/api', productRoutes);
 app.use('/api', providerRoutes);
+// E-01 (D-GL-027): estas dos superficies existían con controlador y tests pero
+// nunca se montaron, así que respondían 404 en producción mientras el cliente
+// ya las llamaba (frontend/lib/services/api_service.dart).
+//   /api/owner/salones, /api/owner/switch-salon, /api/owner/dashboard-metrics
+//   /api/provider/inventory/consignment, /api/provider/inventory/consume
+app.use('/api/owner', ownerRoutes);
+app.use('/api/provider', inventoryRoutes);
 app.use('/api', ticketRoutes);
 app.use('/api', disputeRoutes);
 app.use('/api', eventRegistrationRoutes);

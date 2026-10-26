@@ -4621,6 +4621,54 @@
         "x-glowapp-documented": false
       }
     },
+    "/api/owner/dashboard-metrics": {
+      "get": {
+        "operationId": "getapi_owner_dashboard_metrics",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "GET /api/owner/dashboard-metrics (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "owner"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/owner/salones": {
+      "get": {
+        "operationId": "getapi_owner_salones",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "GET /api/owner/salones (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "owner"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/owner/switch-salon": {
+      "post": {
+        "operationId": "postapi_owner_switch_salon",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "POST /api/owner/switch-salon (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "owner"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
     "/api/payments/store-webhook": {
       "post": {
         "operationId": "postapi_payments_store_webhook",
@@ -4886,6 +4934,38 @@
           }
         },
         "summary": "PATCH /api/provider/fiscal (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "provider"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/provider/inventory/consignment": {
+      "get": {
+        "operationId": "getapi_provider_inventory_consignment",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "GET /api/provider/inventory/consignment (autodescubierto, sin contrato declarado)",
+        "tags": [
+          "provider"
+        ],
+        "x-glowapp-documented": false
+      }
+    },
+    "/api/provider/inventory/consume": {
+      "post": {
+        "operationId": "postapi_provider_inventory_consume",
+        "parameters": [],
+        "responses": {
+          "default": {
+            "description": "Sin contrato declarado. Operación descubierta en el router; añadir contrato explícito en criticalContract.js o con anotación @swagger."
+          }
+        },
+        "summary": "POST /api/provider/inventory/consume (autodescubierto, sin contrato declarado)",
         "tags": [
           "provider"
         ],
@@ -7379,8 +7459,8 @@
   ],
   "x-glowapp-contract": {
     "generator": "backend/src/openapi/buildOpenApi.js",
-    "operationsDiscovered": 331,
+    "operationsDiscovered": 336,
     "operationsDocumented": 18,
-    "routesMounted": 349
+    "routesMounted": 354
   }
 }
