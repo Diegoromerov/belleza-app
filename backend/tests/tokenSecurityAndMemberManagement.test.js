@@ -161,7 +161,7 @@ describe('SHA-256 Token Security & Owner Member Management Tests', () => {
 
   test('protectOwnerMember bloquea la modificación o eliminación si es el único propietario del salón', async () => {
     pool.query = jest.fn().mockImplementation((text, params) => {
-      if (/SELECT m\.user_id[\s\S]*FROM memberships/i.test(text)) {
+      if (/SELECT user_id[\s\S]*FROM salon_miembros/i.test(text)) {
         // ID 100 es el único DUEÑO del salón
         return Promise.resolve({ rows: [{ user_id: 100 }] });
       }
@@ -197,14 +197,14 @@ describe('SHA-256 Token Security & Owner Member Management Tests', () => {
         return Promise.resolve({ rows: [{ rol: 'SALON', tenant_id: 1 }] });
       }
       // 1. Verificación de membresía en ownerGuard
-      if (/AS sub_rol[\s\S]*FROM memberships/i.test(text)) {
+      if (/SELECT sub_rol[\s\S]*FROM salon_miembros/i.test(text)) {
         const userId = params[1];
         if (userId === 10) return Promise.resolve({ rows: [{ sub_rol: 'DUEÑO' }] });
         if (userId === 20) return Promise.resolve({ rows: [{ sub_rol: 'ADMINISTRADOR' }] });
         return Promise.resolve({ rows: [] });
       }
       // Verificación de lista de DUEÑOS en protectOwnerMember
-      if (/SELECT m\.user_id[\s\S]*FROM memberships/i.test(text)) {
+      if (/SELECT user_id[\s\S]*FROM salon_miembros/i.test(text)) {
         return Promise.resolve({ rows: [{ user_id: 10 }] }); // 10 es el único propietario
       }
       // UPDATE en controlador
