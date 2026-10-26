@@ -59,6 +59,13 @@ const MIGRACIONES = [
   // esta línea la base de pruebas reproduce el defecto que el test
   // `rlsPoliticasSinContexto` debe detectar.
   'migrations/107_rls_politicas_sin_contexto.sql',
+  // E-02c (D-GL-027): el guard resuelve la sede en `memberships`, que necesita
+  // `business_profiles` (FK de 082). 012 crea las tablas de negocio y 062 les da
+  // política y RLS; el FORCE lo aplica el bloque de más abajo, después de migrar.
+  'migrations/012_business_engine.sql',
+  'migrations/062_optimize_business_saas_postgres.sql',
+  'migrations/082_memberships.sql',
+  'migrations/114_memberships_sub_rol.sql',
 ];
 
 async function main() {
@@ -164,7 +171,34 @@ async function main() {
     // DEFINER para el arranque de identidad). Antes quedaba con RLS desactivado
     // y eso era una fuga de PII cross-tenant. Ninguna tabla con `tenant_id`
     // puede quedar sin FORCE ni sin política.
-    const EXENTAS_DE_FORCE = [];
+    // `business_requirements` es catálogo global (plantillas de requisitos), no
+    // datos de inquilino: en producción está sin RLS y sin política. Se declara
+    // exenta para que la compuerta mida lo que debe medir.
+    const EXENTAS_DE_FORCE = ['business_requirements'];
+
+    // E-02c (D-GL-027): las tablas `business_*` tienen política pero 068 no las
+    // incluye en su lista fija de FORCE, así que la compuerta las marcaba como
+    // incompletas al añadirlas al arnés. Se fuerza cualquier tabla con
+    // `tenant_id` que YA tenga política: el arnés queda igual o más estricto que
+    // producción, nunca más laxo.
+    await cliente.query(`
+      DO $$
+      DECLARE t record;
+      BEGIN
+        FOR t IN
+          SELECT c.relname
+            FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+           WHERE n.nspname = 'public' AND c.relkind = 'r'
+             AND NOT c.relforcerowsecurity
+             AND EXISTS (SELECT 1 FROM information_schema.columns i
+                          WHERE i.table_schema = 'public' AND i.table_name = c.relname
+                            AND i.column_name = 'tenant_id')
+             AND EXISTS (SELECT 1 FROM pg_policy p WHERE p.polrelid = c.oid)
+        LOOP
+          EXECUTE format('ALTER TABLE public.%I FORCE ROW LEVEL SECURITY', t.relname);
+        END LOOP;
+      END $$;
+    `);
 
     const { rows: [resumen] } = await cliente.query(
       `SELECT count(*)::int AS total,

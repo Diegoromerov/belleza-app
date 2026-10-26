@@ -405,9 +405,16 @@ describeE2EReal('E2E REAL contra PostgreSQL: OWNER multi-sede (sin mocks de pool
     for (const tenant of [TENANT_A, TENANT_B]) {
       await client.query(`SELECT set_config('app.tenant_id', $1, true)`, [String(tenant)]);
       await client.query(
-        `DELETE FROM bookings WHERE id = ANY($1::uuid[]) OR provider_id = ANY($2::int[])`,
+        `DELETE FROM bookings WHERE id = ANY($1::uuid[]) OR provider_id = ANY($2::int[]) OR client_id = ANY($2::int[])`,
         [f.bookings, f.usuarios]
       );
+      // E-02c: la identidad canónica no cuelga por FK de `salones`, así que hay
+      // que limpiarla explícitamente o sobrevive entre corridas y contamina el
+      // caso «usuario sin sedes».
+      await client.query(`DELETE FROM memberships WHERE business_profile_id = ANY($1::text[])`,
+        [f.salones.map((s) => `salon-${s}`)]);
+      await client.query(`DELETE FROM business_profiles WHERE id = ANY($1::text[])`,
+        [f.salones.map((s) => `salon-${s}`)]);
       await client.query(`DELETE FROM salon_miembros WHERE salon_id = ANY($1::int[])`, [f.salones]);
       await client.query(`DELETE FROM services WHERE id = $1`, [SERVICIO]);
       await client.query(`DELETE FROM salones WHERE id = ANY($1::int[])`, [f.salones]);
@@ -467,6 +474,38 @@ describeE2EReal('E2E REAL contra PostgreSQL: OWNER multi-sede (sin mocks de pool
          ($1, $6, 'PRESTADOR_INDEPENDIENTE', 'INACTIVO', $7)`,
       [SEDE_NORTE, SEDE_SUR, OWNER, PRESTADOR_COMPARTIDO, PRESTADOR_LOCAL, PRESTADOR_INACTIVO, TENANT_A]
     );
+    // E-02c: el arnés no trae verticales y `business_profiles.vertical_id` es NOT
+    // NULL; se siembra el vertical de belleza una sola vez.
+    await client.query(
+      `INSERT INTO business_verticals (id, code, name) VALUES ('e02c-belleza', 'BELLEZA', 'Belleza')
+       ON CONFLICT (code) DO NOTHING`
+    );
+    // E-02c: el guard resuelve la sede en `memberships`; el fixture materializa
+    // la identidad canónica con el tenant REAL (el 'tenant-<id>' del backfill no
+    // lo vería la política de business_profiles).
+    await client.query(
+      `INSERT INTO business_profiles (id, provider_id, vertical_id, name, tenant_id)
+       SELECT 'salon-' || s.id, s.id_dueno,
+              (SELECT id FROM business_verticals ORDER BY name LIMIT 1),
+              s.nombre_salon, s.tenant_id::text
+         FROM salones s WHERE s.id IN ($1, $2)
+       ON CONFLICT (id) DO NOTHING`,
+      [SEDE_NORTE, SEDE_SUR]
+    );
+    await client.query(
+      `INSERT INTO memberships (id, user_id, business_profile_id, role, sub_rol, status, accepted_at)
+       SELECT md5(random()::text || m.user_id::text || m.salon_id::text), m.user_id,
+              'salon-' || m.salon_id,
+              CASE upper(m.sub_rol) WHEN 'DUEÑO' THEN 'OWNER' WHEN 'ADMINISTRADOR' THEN 'ADMIN'
+                                    WHEN 'RECEPCIONISTA' THEN 'MANAGER' ELSE 'MEMBER' END,
+              upper(m.sub_rol),
+              CASE WHEN m.estatus = 'ACTIVO' THEN 'ACTIVE' ELSE 'SUSPENDED' END,
+              CURRENT_TIMESTAMP
+         FROM salon_miembros m WHERE m.salon_id IN ($1, $2)
+       ON CONFLICT (user_id, business_profile_id) DO UPDATE SET
+         role = EXCLUDED.role, sub_rol = EXCLUDED.sub_rol, status = EXCLUDED.status`,
+      [SEDE_NORTE, SEDE_SUR]
+    );
     await client.query(
       `INSERT INTO bookings (id, client_id, provider_id, service_id, scheduled_at, valor_bruto,
                              comision_plataforma, impuestos_estado, pago_neto_prestador, estado, tenant_id) VALUES
@@ -501,6 +540,30 @@ describeE2EReal('E2E REAL contra PostgreSQL: OWNER multi-sede (sin mocks de pool
          ($1, $3, 'PRESTADOR_INDEPENDIENTE', 'ACTIVO', $4),
          ($1, $2, 'PRESTADOR_INDEPENDIENTE', 'ACTIVO', $4)`,
       [SEDE_AJENA, PRESTADOR_AJENO, PRESTADOR_COMPARTIDO, TENANT_B]
+    );
+    // E-02c: identidad canónica para el tenant ajeno del fixture.
+    await client.query(
+      `INSERT INTO business_profiles (id, provider_id, vertical_id, name, tenant_id)
+       SELECT 'salon-' || s.id, s.id_dueno,
+              (SELECT id FROM business_verticals ORDER BY name LIMIT 1),
+              s.nombre_salon, s.tenant_id::text
+         FROM salones s WHERE s.id = $1
+       ON CONFLICT (id) DO NOTHING`,
+      [SEDE_AJENA]
+    );
+    await client.query(
+      `INSERT INTO memberships (id, user_id, business_profile_id, role, sub_rol, status, accepted_at)
+       SELECT md5(random()::text || m.user_id::text || m.salon_id::text), m.user_id,
+              'salon-' || m.salon_id,
+              CASE upper(m.sub_rol) WHEN 'DUEÑO' THEN 'OWNER' WHEN 'ADMINISTRADOR' THEN 'ADMIN'
+                                    WHEN 'RECEPCIONISTA' THEN 'MANAGER' ELSE 'MEMBER' END,
+              upper(m.sub_rol),
+              CASE WHEN m.estatus = 'ACTIVO' THEN 'ACTIVE' ELSE 'SUSPENDED' END,
+              CURRENT_TIMESTAMP
+         FROM salon_miembros m WHERE m.salon_id = $1
+       ON CONFLICT (user_id, business_profile_id) DO UPDATE SET
+         role = EXCLUDED.role, sub_rol = EXCLUDED.sub_rol, status = EXCLUDED.status`,
+      [SEDE_AJENA]
     );
     await client.query(
       `INSERT INTO bookings (id, client_id, provider_id, service_id, scheduled_at, valor_bruto,
