@@ -1,0 +1,5 @@
+﻿STATUS=BLOCKED
+STEP=11 Deploy a producción
+REASON=No hay firebase CLI, firebase.json/.firebaserc, PROJECT_ID ni credenciales. Además staging no fue desplegado ni validado.
+DETAIL=No se ejecutó ningún deploy. Producción no fue modificada.
+SAFETY=Un release a producción sin validación de staging y sin credenciales explícitas no se ejecuta.

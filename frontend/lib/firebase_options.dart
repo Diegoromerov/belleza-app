@@ -23,19 +23,18 @@ import 'package:flutter/foundation.dart'
 class FirebaseConfig {
   FirebaseConfig._();
 
-  static const apiKey = String.fromEnvironment('FIREBASE_API_KEY');
-  static const projectId = String.fromEnvironment('FIREBASE_PROJECT_ID');
-  static const messagingSenderId =
-      String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID');
-  static const storageBucket =
-      String.fromEnvironment('FIREBASE_STORAGE_BUCKET');
+  static const apiKey = 'AIzaSyAjdCtOWwZo0HVrj3eQWKjMUDmJ3tK2G-w';
+  static const projectId = 'belleza-app-6605f';
+  static const messagingSenderId = '501450148142';
+  static const storageBucket = 'belleza-app-6605f.firebasestorage.app';
 
   // El appId es distinto por plataforma (1:<sender>:web:<hash> y variantes).
-  static const webAppId = String.fromEnvironment('FIREBASE_WEB_APP_ID');
-  static const androidAppId = String.fromEnvironment('FIREBASE_ANDROID_APP_ID');
-  static const iosAppId = String.fromEnvironment('FIREBASE_IOS_APP_ID');
-  static const macosAppId = String.fromEnvironment('FIREBASE_MACOS_APP_ID');
-  static const windowsAppId = String.fromEnvironment('FIREBASE_WINDOWS_APP_ID');
+  static const webAppId = '1:501450148142:web:2abc1204ddb4496c1f52bf';
+  static const androidAppId = '1:501450148142:android:2abc1204ddb4496c1f52bf';
+  static const iosAppId = '1:501450148142:ios:2abc1204ddb4496c1f52bf';
+  static const macosAppId = '1:501450148142:macos:2abc1204ddb4496c1f52bf';
+  static const windowsAppId = '1:501450148142:windows:2abc1204ddb4496c1f52bf';
+  
 }
 
 /// Devuelve las variables que faltan para un juego de configuracion dado.

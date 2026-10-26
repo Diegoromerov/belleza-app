@@ -1,0 +1,155 @@
+Analyzing lib...                                                
+
+   info - Don't invoke 'print' in production code. Try using a logging framework - lib\glowguide\engine\glowguide_engine.dart:332:7 - avoid_print
+   info - Don't invoke 'print' in production code. Try using a logging framework - lib\glowguide\persistence\persistence_engine.dart:45:7 - avoid_print
+   info - 'background' is deprecated and shouldn't be used. Use surface instead. This feature was deprecated after v3.18.0-0.1.pre. Try replacing the use of the deprecated member with the replacement - lib\main.dart:267:31 - deprecated_member_use
+warning - The method doesn't override an inherited method. Try updating this class to match the superclass, or removing the override annotation - lib\main.dart:532:8 - override_on_non_overriding_member
+warning - The declaration '_checkTutorial' isn't referenced. Try removing the declaration of '_checkTutorial' - lib\main.dart:602:16 - unused_element
+warning - The declaration '_showManualLocationPicker' isn't referenced. Try removing the declaration of '_showManualLocationPicker' - lib\main.dart:689:8 - unused_element
+   info - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check - lib\main.dart:767:39 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check - lib\main.dart:780:44 - use_build_context_synchronously
+warning - The value of the local variable 'name' isn't used. Try removing the variable or using it - lib\main.dart:890:15 - unused_local_variable
+warning - The declaration '_showQuickViewSheet' isn't referenced. Try removing the declaration of '_showQuickViewSheet' - lib\main.dart:1279:8 - unused_element
+   info - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check - lib\main.dart:1547:43 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check - lib\main.dart:1548:49 - use_build_context_synchronously
+warning - The declaration '_buildCategorySelector' isn't referenced. Try removing the declaration of '_buildCategorySelector' - lib\main.dart:1647:10 - unused_element
+warning - The declaration '_buildNavItem' isn't referenced. Try removing the declaration of '_buildNavItem' - lib\main.dart:1730:10 - unused_element
+warning - The declaration '_buildProminentCenterNavItem' isn't referenced. Try removing the declaration of '_buildProminentCenterNavItem' - lib\main.dart:1778:10 - unused_element
+warning - The value of the field '_svgCalendarLuxury' isn't used. Try removing the field, or using it - lib\main.dart:1855:23 - unused_field
+warning - The value of the field '_svgBagLuxury' isn't used. Try removing the field, or using it - lib\main.dart:1867:23 - unused_field
+warning - The value of the field '_svgAuraLuxury' isn't used. Try removing the field, or using it - lib\main.dart:1877:23 - unused_field
+warning - The value of the field '_svgProfileLuxury' isn't used. Try removing the field, or using it - lib\main.dart:1887:23 - unused_field
+   info - Unnecessary braces in a string interpolation. Try removing the braces - lib\models\saas\saas_models.dart:792:119 - unnecessary_brace_in_string_interps
+  error - Target of URI doesn't exist: 'package:beauty_app/screens/login_screen.dart'. Try creating the file referenced by the URI, or try using a URI for a file that does exist - lib\router\app_router.dart:8:8 - uri_does_not_exist
+  error - Target of URI doesn't exist: 'package:beauty_app/screens/salon/perfil_screen.dart'. Try creating the file referenced by the URI, or try using a URI for a file that does exist - lib\router\app_router.dart:13:8 - uri_does_not_exist
+  error - The name 'LoginScreen' isn't a class. Try correcting the name to match an existing class - lib\router\app_router.dart:23:42 - creation_with_non_type
+  error - Invalid constant value - lib\router\app_router.dart:27:69 - invalid_constant
+  error - The argument type 'String Function(BuildContext)' can't be assigned to the parameter type 'GoRouterRedirect?'.  - lib\router\app_router.dart:32:21 - argument_type_not_assignable
+  error - The name 'PerfilScreen' isn't a class. Try correcting the name to match an existing class - lib\router\app_router.dart:53:46 - creation_with_non_type
+  error - The argument type 'String Function(BuildContext)' can't be assigned to the parameter type 'GoRouterRedirect?'.  - lib\router\app_router.dart:58:21 - argument_type_not_assignable
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check. Guard a 'State.context' use with a 'mounted' check on the State, and other BuildContext use with a 'mounted' check on the BuildContext - lib\screens\academy\course_detail_screen.dart:237:50 - use_build_context_synchronously
+   info - Don't invoke 'print' in production code. Try using a logging framework - lib\screens\academy\course_detail_screen.dart:281:25 - avoid_print
+   info - 'groupValue' is deprecated and shouldn't be used. Use a RadioGroup ancestor to manage group value instead. This feature was deprecated after v3.32.0-0.0.pre. Try replacing the use of the deprecated member with the replacement - lib\screens\academy\quiz_screen.dart:351:39 - deprecated_member_use
+   info - 'onChanged' is deprecated and shouldn't be used. Use RadioGroup to handle value change instead. This feature was deprecated after v3.32.0-0.0.pre. Try replacing the use of the deprecated member with the replacement - lib\screens\academy\quiz_screen.dart:353:39 - deprecated_member_use
+   info - Statements in an if should be enclosed in a block. Try wrapping the statement in a block - lib\screens\auth\onboarding_screen.dart:284:20 - curly_braces_in_flow_control_structures
+warning - The value of the local variable 'primaryColor' isn't used. Try removing the variable or using it - lib\screens\client_bookings_screen.dart:701:11 - unused_local_variable
+warning - The value of the local variable 'textColor' isn't used. Try removing the variable or using it - lib\screens\client_bookings_screen.dart:702:11 - unused_local_variable
+   info - Parameter 'key' could be a super parameter. Trying converting 'key' to a super parameter - lib\screens\client_bookings_screen.dart:1351:9 - use_super_parameters
+warning - The value of the local variable 'id' isn't used. Try removing the variable or using it - lib\screens\disputes\disputes_list_screen.dart:141:33 - unused_local_variable
+   info - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check - lib\screens\disputes\open_dispute_screen.dart:71:28 - use_build_context_synchronously
+   info - Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation - lib\screens\profile\glowstore_orders_screen.dart:113:13 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation - lib\screens\profile\glowstore_orders_screen.dart:115:22 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation - lib\screens\profile\glowstore_orders_screen.dart:125:22 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation - lib\screens\profile\glowstore_orders_screen.dart:179:13 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation - lib\screens\profile\glowstore_orders_screen.dart:183:22 - prefer_const_constructors
+warning - The value of the local variable 'qrFactura' isn't used. Try removing the variable or using it - lib\screens\profile\glowstore_orders_screen.dart:213:11 - unused_local_variable
+   info - Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation - lib\screens\profile\glowstore_orders_screen.dart:360:17 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation - lib\screens\profile\glowstore_orders_screen.dart:362:26 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation - lib\screens\profile\glowstore_orders_screen.dart:369:17 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation - lib\screens\profile\glowstore_orders_screen.dart:371:26 - prefer_const_constructors
+   info - 'activeColor' is deprecated and shouldn't be used. Use activeThumbColor or activeTrackColor instead. This feature was deprecated after v3.31.0-2.0.pre. Try replacing the use of the deprecated member with the replacement - lib\screens\profile\habeas_data_screen.dart:206:23 - deprecated_member_use
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check. Guard a 'State.context' use with a 'mounted' check on the State, and other BuildContext use with a 'mounted' check on the BuildContext - lib\screens\profile\settings_screen.dart:281:37 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check. Guard a 'State.context' use with a 'mounted' check on the State, and other BuildContext use with a 'mounted' check on the BuildContext - lib\screens\profile\settings_screen.dart:282:44 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check. Guard a 'State.context' use with a 'mounted' check on the State, and other BuildContext use with a 'mounted' check on the BuildContext - lib\screens\profile\settings_screen.dart:290:44 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check. Guard a 'State.context' use with a 'mounted' check on the State, and other BuildContext use with a 'mounted' check on the BuildContext - lib\screens\profile\settings_screen.dart:301:42 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check. Guard a 'State.context' use with a 'mounted' check on the State, and other BuildContext use with a 'mounted' check on the BuildContext - lib\screens\profile\settings_screen.dart:372:28 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check. Guard a 'State.context' use with a 'mounted' check on the State, and other BuildContext use with a 'mounted' check on the BuildContext - lib\screens\profile\settings_screen.dart:401:32 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check. Guard a 'State.context' use with a 'mounted' check on the State, and other BuildContext use with a 'mounted' check on the BuildContext - lib\screens\profile\settings_screen.dart:410:32 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check. Guard a 'State.context' use with a 'mounted' check on the State, and other BuildContext use with a 'mounted' check on the BuildContext - lib\screens\profile\settings_screen.dart:420:30 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check. Guard a 'State.context' use with a 'mounted' check on the State, and other BuildContext use with a 'mounted' check on the BuildContext - lib\screens\provider_dashboard_screen.dart:1580:40 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check. Guard a 'State.context' use with a 'mounted' check on the State, and other BuildContext use with a 'mounted' check on the BuildContext - lib\screens\provider_dashboard_screen.dart:3789:52 - use_build_context_synchronously
+   info - Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation - lib\screens\saas\api_keys_screen.dart:110:14 - prefer_const_constructors
+   info - Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation - lib\screens\saas\team_management_screen.dart:130:13 - prefer_const_constructors
+  error - The name 'MainScaffold' isn't a class. Try correcting the name to match an existing class - lib\screens\salon\salon_hub_screen.dart:11:18 - creation_with_non_type
+   info - Unnecessary 'const' keyword. Try removing the keyword - lib\screens\salon\salon_hub_screen.dart:16:24 - unnecessary_const
+  error - The constructor being called isn't a const constructor. Try removing 'const' from the constructor invocation - lib\screens\salon\salon_hub_screen.dart:26:27 - const_with_non_const
+   info - Unnecessary 'const' keyword. Try removing the keyword - lib\screens\salon\salon_hub_screen.dart:27:38 - unnecessary_const
+  error - The constructor being called isn't a const constructor. Try removing 'const' from the constructor invocation - lib\screens\salon\salon_hub_screen.dart:30:45 - const_with_non_const
+  error - The constructor being called isn't a const constructor. Try removing 'const' from the constructor invocation - lib\screens\salon\salon_hub_screen.dart:31:39 - const_with_non_const
+   info - Unnecessary 'const' keyword. Try removing the keyword - lib\screens\salon\salon_hub_screen.dart:33:36 - unnecessary_const
+   info - Unnecessary 'const' keyword. Try removing the keyword - lib\screens\salon\salon_hub_screen.dart:35:27 - unnecessary_const
+   info - Unnecessary 'const' keyword. Try removing the keyword - lib\screens\salon\salon_hub_screen.dart:36:27 - unnecessary_const
+  error - The constructor being called isn't a const constructor. Try removing 'const' from the constructor invocation - lib\screens\salon\salon_hub_screen.dart:48:23 - const_with_non_const
+   info - Unnecessary 'const' keyword. Try removing the keyword - lib\screens\salon\salon_hub_screen.dart:53:31 - unnecessary_const
+   info - Unnecessary 'const' keyword. Try removing the keyword - lib\screens\salon\salon_hub_screen.dart:54:32 - unnecessary_const
+   info - Unnecessary 'const' keyword. Try removing the keyword - lib\screens\salon\salon_hub_screen.dart:61:19 - unnecessary_const
+   info - Unnecessary 'const' keyword. Try removing the keyword - lib\screens\salon\salon_hub_screen.dart:64:19 - unnecessary_const
+   info - Unnecessary 'const' keyword. Try removing the keyword - lib\screens\salon\salon_hub_screen.dart:74:19 - unnecessary_const
+   info - Unnecessary 'const' keyword. Try removing the keyword - lib\screens\salon\salon_hub_screen.dart:75:19 - unnecessary_const
+   info - Unnecessary 'const' keyword. Try removing the keyword - lib\screens\salon\salon_hub_screen.dart:83:19 - unnecessary_const
+   info - Unnecessary 'const' keyword. Try removing the keyword - lib\screens\salon\salon_hub_screen.dart:89:33 - unnecessary_const
+   info - Unnecessary 'const' keyword. Try removing the keyword - lib\screens\salon\salon_hub_screen.dart:105:19 - unnecessary_const
+   info - Unnecessary 'const' keyword. Try removing the keyword - lib\screens\salon\salon_hub_screen.dart:111:33 - unnecessary_const
+   info - Unnecessary 'const' keyword. Try removing the keyword - lib\screens\salon\salon_hub_screen.dart:127:19 - unnecessary_const
+   info - Unnecessary 'const' keyword. Try removing the keyword - lib\screens\salon\salon_hub_screen.dart:133:33 - unnecessary_const
+   info - Unnecessary 'const' keyword. Try removing the keyword - lib\screens\salon\salon_hub_screen.dart:145:19 - unnecessary_const
+  error - The constructor being called isn't a const constructor. Try removing 'const' from the constructor invocation - lib\screens\salon\salon_hub_screen.dart:148:19 - const_with_non_const
+   info - Unnecessary 'const' keyword. Try removing the keyword - lib\screens\salon\salon_hub_screen.dart:149:30 - unnecessary_const
+  error - The constructor being called isn't a const constructor. Try removing 'const' from the constructor invocation - lib\screens\salon\salon_hub_screen.dart:152:37 - const_with_non_const
+  error - The constructor being called isn't a const constructor. Try removing 'const' from the constructor invocation - lib\screens\salon\salon_hub_screen.dart:153:31 - const_with_non_const
+   info - Unnecessary 'const' keyword. Try removing the keyword - lib\screens\salon\salon_hub_screen.dart:155:28 - unnecessary_const
+warning - Dead code. Try removing the code, or fixing the code before it so that it can be reached - lib\screens\salon\salon_hub_screen.dart:178:7 - dead_code
+warning - The label 'backgroundColor' isn't used. Try removing the label, or using it in either a 'break' or 'continue' statement - lib\screens\salon\salon_hub_screen.dart:178:7 - unused_label
+  error - Expected to find ';' - lib\screens\salon\salon_hub_screen.dart:178:24 - expected_token
+  error - Expected an identifier - lib\screens\salon\salon_hub_screen.dart:178:34 - missing_identifier
+  error - Unexpected text ';'. Try removing the text - lib\screens\salon\salon_hub_screen.dart:178:34 - unexpected_token
+warning - The label 'body' isn't used. Try removing the label, or using it in either a 'break' or 'continue' statement - lib\screens\salon\salon_hub_screen.dart:179:7 - unused_label
+  error - Expected to find ';' - lib\screens\salon\salon_hub_screen.dart:340:7 - expected_token
+  error - Expected an identifier - lib\screens\salon\salon_hub_screen.dart:340:8 - missing_identifier
+  error - Expected to find ';' - lib\screens\salon\salon_hub_screen.dart:340:8 - expected_token
+  error - Unexpected text ';'. Try removing the text - lib\screens\salon\salon_hub_screen.dart:340:8 - unexpected_token
+  error - Expected an identifier - lib\screens\salon\salon_hub_screen.dart:341:5 - missing_identifier
+  error - Unexpected text ';'. Try removing the text - lib\screens\salon\salon_hub_screen.dart:341:5 - unexpected_token
+   info - Unnecessary empty statement. Try removing the empty statement or restructuring the code - lib\screens\salon\salon_hub_screen.dart:341:6 - empty_statements
+   info - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check - lib\screens\store_screen.dart:292:13 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check - lib\screens\store_screen.dart:307:15 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check - lib\screens\store_screen.dart:319:11 - use_build_context_synchronously
+   info - 'groupValue' is deprecated and shouldn't be used. Use a RadioGroup ancestor to manage group value instead. This feature was deprecated after v3.32.0-0.0.pre. Try replacing the use of the deprecated member with the replacement - lib\screens\store_screen.dart:398:29 - deprecated_member_use
+   info - 'onChanged' is deprecated and shouldn't be used. Use RadioGroup to handle value change instead. This feature was deprecated after v3.32.0-0.0.pre. Try replacing the use of the deprecated member with the replacement - lib\screens\store_screen.dart:399:29 - deprecated_member_use
+   info - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check - lib\screens\store_screen.dart:694:56 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check - lib\screens\store_screen.dart:703:56 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check - lib\screens\store_screen.dart:728:37 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check - lib\screens\store_screen.dart:754:49 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check - lib\screens\store_screen.dart:764:56 - use_build_context_synchronously
+  error - The getter 'isForbidden' isn't defined for the type 'SuperAdminState<SuperAdminDashboard>'. Try importing the library that defines 'isForbidden', correcting the name to the name of an existing getter, or defining a getter or field named 'isForbidden' - lib\screens\superadmin\plans_screen.dart:35:15 - undefined_getter
+  error - The getter 'isForbidden' isn't defined for the type 'SuperAdminState<SuperAdminDashboard>'. Try importing the library that defines 'isForbidden', correcting the name to the name of an existing getter, or defining a getter or field named 'isForbidden' - lib\screens\superadmin\plans_screen.dart:57:43 - undefined_getter
+  error - The getter 'isForbidden' isn't defined for the type 'SuperAdminState<RevenueSnapshot>'. Try importing the library that defines 'isForbidden', correcting the name to the name of an existing getter, or defining a getter or field named 'isForbidden' - lib\screens\superadmin\revenue_screen.dart:18:15 - undefined_getter
+  error - The getter 'isForbidden' isn't defined for the type 'SuperAdminState<RevenueSnapshot>'. Try importing the library that defines 'isForbidden', correcting the name to the name of an existing getter, or defining a getter or field named 'isForbidden' - lib\screens\superadmin\revenue_screen.dart:40:43 - undefined_getter
+  error - The getter 'isForbidden' isn't defined for the type 'SuperAdminState<SuperAdminDashboard>'. Try importing the library that defines 'isForbidden', correcting the name to the name of an existing getter, or defining a getter or field named 'isForbidden' - lib\screens\superadmin\superadmin_screen.dart:47:15 - undefined_getter
+  error - The getter 'isForbidden' isn't defined for the type 'SuperAdminState<TenantPage>'. Try importing the library that defines 'isForbidden', correcting the name to the name of an existing getter, or defining a getter or field named 'isForbidden' - lib\screens\superadmin\tenants_screen.dart:117:15 - undefined_getter
+  error - The getter 'isForbidden' isn't defined for the type 'SuperAdminState<TenantPage>'. Try importing the library that defines 'isForbidden', correcting the name to the name of an existing getter, or defining a getter or field named 'isForbidden' - lib\screens\superadmin\tenants_screen.dart:170:43 - undefined_getter
+  error - The getter 'isForbidden' isn't defined for the type 'SuperAdminState<UsageSnapshot>'. Try importing the library that defines 'isForbidden', correcting the name to the name of an existing getter, or defining a getter or field named 'isForbidden' - lib\screens\superadmin\usage_screen.dart:18:15 - undefined_getter
+  error - The getter 'isForbidden' isn't defined for the type 'SuperAdminState<UsageSnapshot>'. Try importing the library that defines 'isForbidden', correcting the name to the name of an existing getter, or defining a getter or field named 'isForbidden' - lib\screens\superadmin\usage_screen.dart:40:43 - undefined_getter
+   info - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check - lib\screens\support\create_ticket_screen.dart:72:28 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check - lib\screens\support\ticket_chat_screen.dart:126:30 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check - lib\screens\support\ticket_chat_screen.dart:131:28 - use_build_context_synchronously
+   info - 'groupValue' is deprecated and shouldn't be used. Use a RadioGroup ancestor to manage group value instead. This feature was deprecated after v3.32.0-0.0.pre. Try replacing the use of the deprecated member with the replacement - lib\screens\wallet_screen.dart:1478:21 - deprecated_member_use
+   info - 'onChanged' is deprecated and shouldn't be used. Use RadioGroup to handle value change instead. This feature was deprecated after v3.32.0-0.0.pre. Try replacing the use of the deprecated member with the replacement - lib\screens\wallet_screen.dart:1485:21 - deprecated_member_use
+warning - This default clause is covered by the previous cases. Try removing the default clause, or restructuring the preceding patterns - lib\services\audience_service.dart:58:7 - unreachable_switch_default
+   info - Don't invoke 'print' in production code. Try using a logging framework - lib\services\audio_player_stub.dart:5:3 - avoid_print
+   info - 'dart:html' is deprecated and shouldn't be used. Use package:web and dart:js_interop instead. Try replacing the use of the deprecated member with the replacement - lib\services\biometric_export_web.dart:1:1 - deprecated_member_use
+   info - Don't use web-only libraries outside Flutter web plugins. Try finding a different library for your needs - lib\services\biometric_export_web.dart:1:1 - avoid_web_libraries_in_flutter
+   info - 'dart:html' is deprecated and shouldn't be used. Use package:web and dart:js_interop instead. Try replacing the use of the deprecated member with the replacement - lib\services\web_audio_player.dart:2:1 - deprecated_member_use
+   info - Don't use web-only libraries outside Flutter web plugins. Try finding a different library for your needs - lib\services\web_audio_player.dart:2:1 - avoid_web_libraries_in_flutter
+   info - Don't invoke 'print' in production code. Try using a logging framework - lib\services\web_audio_player.dart:9:5 - avoid_print
+   info - Don't invoke 'print' in production code. Try using a logging framework - lib\services\web_audio_player.dart:11:5 - avoid_print
+   info - 'dart:js' is deprecated and shouldn't be used. Use dart:js_interop instead. Try replacing the use of the deprecated member with the replacement - lib\services\web_geolocation_web.dart:3:1 - deprecated_member_use
+   info - Don't use web-only libraries outside Flutter web plugins. Try finding a different library for your needs - lib\services\web_geolocation_web.dart:3:1 - avoid_web_libraries_in_flutter
+   info - 'background' is deprecated and shouldn't be used. Use surface instead. This feature was deprecated after v3.18.0-0.1.pre. Try replacing the use of the deprecated member with the replacement - lib\theme\theme_salon.dart:28:9 - deprecated_member_use
+   info - 'onBackground' is deprecated and shouldn't be used. Use onSurface instead. This feature was deprecated after v3.18.0-0.1.pre. Try replacing the use of the deprecated member with the replacement - lib\theme\theme_salon.dart:32:9 - deprecated_member_use
+  error - The argument type 'CardTheme' can't be assigned to the parameter type 'CardThemeData?'.  - lib\theme\theme_salon.dart:60:18 - argument_type_not_assignable
+   info - 'scale' is deprecated and shouldn't be used. Use scaleByVector3, scaleByVector4, or scaleByDouble instead. Try replacing the use of the deprecated member with the replacement - lib\widgets\aura_3d_emblem.dart:87:17 - deprecated_member_use
+   info - Invalid use of a private type in a public API. Try making the private type public, or making the API that uses the private type also be private - lib\widgets\voice_input.dart:20:3 - library_private_types_in_public_api
+warning - The value of the field '_errorMessage' isn't used. Try removing the field, or using it - lib\widgets\voice_input.dart:27:10 - unused_field
+   info - 'localeId' is deprecated and shouldn't be used. Use SpeechListenOptions.localeId instead. Try replacing the use of the deprecated member with the replacement - lib\widgets\voice_input.dart:70:9 - deprecated_member_use
+   info - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check - lib\widgets\wompi_payment_sheet.dart:208:48 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps. Try rewriting the code to not use the 'BuildContext', or guard the use with a 'mounted' check - lib\widgets\wompi_payment_sheet.dart:246:48 - use_build_context_synchronously
+
+flutter : 144 issues found. (ran in 6.7s)
+En línea: 1 Carácter: 136
++ ... t.UTF8Encoding]::new($false); $out = flutter analyze lib 2>&1 | Out-S ...
++                                          ~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (144 issues found. (ran in 6.7s):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+

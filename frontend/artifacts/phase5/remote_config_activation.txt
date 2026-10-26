@@ -1,0 +1,5 @@
+﻿STATUS=BLOCKED
+STEP=3 Activar feature-flag newSalonNavigation en Firebase Remote Config
+REASON=No se proporcionaron PROJECT_ID ni TOKEN, y no existen variables de entorno FIREBASE_*, GOOGLE_*, PROJECT_ID ni TOKEN en esta máquina.
+DETAIL=No se ejecutó ninguna llamada HTTP. No se inventa una respuesta 200.
+REQUIRED_INPUTS=FIREBASE_PROJECT_ID + OAuth access token con permiso cloudconfig.remoteconfig.update

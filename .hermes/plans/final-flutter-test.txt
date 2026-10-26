@@ -1,0 +1,445 @@
+00:00 +0: loading C:/beauty-app/frontend/test/android_permissions_manifest_test.dart
+00:00 +0: C:/beauty-app/frontend/test/android_permissions_manifest_test.dart: el manifiesto principal declara los permisos peligrosos
+00:00 +1: C:/beauty-app/frontend/test/android_permissions_manifest_test.dart: FIX-FLUTTER-02: cada permiso peligroso tiene android:description
+00:00 +2: C:/beauty-app/frontend/test/android_permissions_manifest_test.dart: FIX-FLUTTER-02: strings.xml define cada android:description referenciado
+00:29 +3: C:/beauty-app/frontend/test/aura_welcome_screen_test.dart: AuraWelcomeScreen initializes without MissingPluginException
+00:34 +4: C:/beauty-app/frontend/test/calculations_test.dart: Calculations Unit Tests calculateTotalWithTip calculates correct total
+00:34 +5: C:/beauty-app/frontend/test/calculations_test.dart: Calculations Unit Tests calculateTipAmount calculates correct tip
+00:34 +6: C:/beauty-app/frontend/test/calculations_test.dart: Calculations Unit Tests calculatePlatformFee calculates correct platform fee
+00:34 +7: C:/beauty-app/frontend/test/calculations_test.dart: Calculations Unit Tests calculateProviderEarnings calculates correct net earnings
+00:53 +8: C:/beauty-app/frontend/test/chat_reply_delivery_test.dart: ReplyReconciler — Guardián unitario de entrega de respuestas de AURA (a) consulta de inmediato al arrancar y luego cada 4 s
+00:53 +9: C:/beauty-app/frontend/test/chat_reply_delivery_test.dart: ReplyReconciler — Guardián unitario de entrega de respuestas de AURA (b) se detiene cuando el último mensaje es de AURA (sender_id == "0")
+00:54 +10: C:/beauty-app/frontend/test/chat_reply_delivery_test.dart: ReplyReconciler — Guardián unitario de entrega de respuestas de AURA (c) se detiene al recibir un push chat_message
+00:54 +11: C:/beauty-app/frontend/test/chat_reply_delivery_test.dart: ReplyReconciler — Guardián unitario de entrega de respuestas de AURA (d) se detiene automáticamente al vencer el límite de 90 s
+01:24 +12: C:/beauty-app/frontend/test/fcm_service_no_firebase_test.dart: el entorno de test no trae configuracion de Firebase
+01:25 +13: C:/beauty-app/frontend/test/fcm_service_no_firebase_test.dart: pedir FcmService.instance NO toca Firebase y no lanza
+01:25 +14: C:/beauty-app/frontend/test/fcm_service_no_firebase_test.dart: initialize() completa sin app de Firebase en vez de propagar [core/no-app]
+❌ FCM deshabilitado: Firebase no esta configurado en este build. Faltan: FIREBASE_API_KEY, FIREBASE_PROJECT_ID, FIREBASE_MESSAGING_SENDER_ID, appId de la plataforma.
+01:27 +15: C:/beauty-app/frontend/test/firebase_options_test.dart: faltantesDeConfiguracion una configuracion completa no reporta faltantes
+01:27 +16: C:/beauty-app/frontend/test/firebase_options_test.dart: faltantesDeConfiguracion reporta cada variable ausente por su nombre
+01:27 +17: C:/beauty-app/frontend/test/firebase_options_test.dart: faltantesDeConfiguracion detecta un unico faltante
+01:27 +18: C:/beauty-app/frontend/test/firebase_options_test.dart: build sin configuracion inyectada estaConfigurado es false y faltan variables
+01:27 +19: C:/beauty-app/frontend/test/firebase_options_test.dart: build sin configuracion inyectada pedir la configuracion lanza en vez de devolver valores falsos
+02:00 +20: C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart: (setUpAll)
+02:01 +20: C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart: Phase 5 Golden Tests (390x844) ProviderDetailScreen - Collapsed State
+🔌 ApiService: Fallback automático a staging en https://belleza-app-production.up.railway.app
+📊 AnalyticsService: Evento encolado [VIEW_PROVIDER_PROFILE] en screen [/provider-detail]. Cola: 1
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following assertion was thrown while running async test code:
+Golden "after/provider_detail_collapsed.png": Pixel test failed, 0.27%, 900px diff detected.
+Failure feedback can be found at /C:/beauty-app/frontend/test/golden/failures
+
+When the exception was thrown, this was the stack:
+#0      LocalFileComparator.compare (package:flutter_test/src/_goldens_io.dart:108:5)
+<asynchronous suspension>
+#1      MatchesGoldenFile.matchAsync.<anonymous closure> (package:flutter_test/src/_matchers_io.dart:124:32)
+<asynchronous suspension>
+<asynchronous suspension>
+#3      _expect.<anonymous closure> (package:matcher/src/expect/expect.dart:153:17)
+<asynchronous suspension>
+<asynchronous suspension>
+#5      expectLater.<anonymous closure> (package:flutter_test/src/widget_tester.dart:508:19)
+<asynchronous suspension>
+#6      main.<anonymous closure>.<anonymous closure> (file:///C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart:301:7)
+<asynchronous suspension>
+#7      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#8      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1952:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided 3 frames from dart:async and package:stack_trace)
+
+The exception was caught asynchronously.
+════════════════════════════════════════════════════════════════════════════════════════════════════
+02:05 +20 -1: C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart: Phase 5 Golden Tests (390x844) ProviderDetailScreen - Collapsed State [E]
+  Test failed. See exception logs above.
+  The test description was: ProviderDetailScreen - Collapsed State
+  
+02:05 +20 -1: C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart: Phase 5 Golden Tests (390x844) ProviderDetailScreen - Expanded State
+📊 AnalyticsService: Evento encolado [VIEW_PROVIDER_PROFILE] en screen [/provider-detail]. Cola: 2
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following assertion was thrown while running async test code:
+Golden "after/provider_detail_expanded.png": Pixel test failed, 0.27%, 900px diff detected.
+Failure feedback can be found at /C:/beauty-app/frontend/test/golden/failures
+
+When the exception was thrown, this was the stack:
+#0      LocalFileComparator.compare (package:flutter_test/src/_goldens_io.dart:108:5)
+<asynchronous suspension>
+#1      MatchesGoldenFile.matchAsync.<anonymous closure> (package:flutter_test/src/_matchers_io.dart:124:32)
+<asynchronous suspension>
+<asynchronous suspension>
+#3      _expect.<anonymous closure> (package:matcher/src/expect/expect.dart:153:17)
+<asynchronous suspension>
+<asynchronous suspension>
+#5      expectLater.<anonymous closure> (package:flutter_test/src/widget_tester.dart:508:19)
+<asynchronous suspension>
+#6      main.<anonymous closure>.<anonymous closure> (file:///C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart:322:7)
+<asynchronous suspension>
+#7      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#8      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1952:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided 3 frames from dart:async and package:stack_trace)
+
+The exception was caught asynchronously.
+════════════════════════════════════════════════════════════════════════════════════════════════════
+02:08 +20 -2: C:/beauty-app/frontend/test/my_glow_dashboard_test.dart: MyGlowDashboardScreen initial render smoke test
+02:09 +21 -2: C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart: Phase 5 Golden Tests (390x844) ProviderDetailScreen - Expanded State [E]
+  Test failed. See exception logs above.
+  The test description was: ProviderDetailScreen - Expanded State
+  
+02:09 +21 -2: C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart: Phase 5 Golden Tests (390x844) BookingScreen - Step 1 (Cuándo y Dónde)
+⚠️  No hay token disponible para Authorization
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following assertion was thrown while running async test code:
+Golden "after/booking_step1_when_where.png": Pixel test failed, 1.43%, 4721px diff detected.
+Failure feedback can be found at /C:/beauty-app/frontend/test/golden/failures
+
+When the exception was thrown, this was the stack:
+#0      LocalFileComparator.compare (package:flutter_test/src/_goldens_io.dart:108:5)
+<asynchronous suspension>
+#1      MatchesGoldenFile.matchAsync.<anonymous closure> (package:flutter_test/src/_matchers_io.dart:124:32)
+<asynchronous suspension>
+<asynchronous suspension>
+#3      _expect.<anonymous closure> (package:matcher/src/expect/expect.dart:153:17)
+<asynchronous suspension>
+<asynchronous suspension>
+#5      expectLater.<anonymous closure> (package:flutter_test/src/widget_tester.dart:508:19)
+<asynchronous suspension>
+#6      main.<anonymous closure>.<anonymous closure> (file:///C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart:377:7)
+<asynchronous suspension>
+#7      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#8      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1952:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided 3 frames from dart:async and package:stack_trace)
+
+The exception was caught asynchronously.
+════════════════════════════════════════════════════════════════════════════════════════════════════
+02:10 +21 -3: C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart: Phase 5 Golden Tests (390x844) BookingScreen - Step 1 (Cuándo y Dónde) [E]
+  Test failed. See exception logs above.
+  The test description was: BookingScreen - Step 1 (Cuándo y Dónde)
+  
+02:10 +21 -3: C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart: Phase 5 Golden Tests (390x844) BookingScreen - Step 2 (Productos)
+⚠️  No hay token disponible para Authorization
+
+Warning: A call to tap() with finder "Found 1 widget with text "09:00": [
+  Text("09:00", inherit: true, color: Color(alpha: 0.8667, red: 0.0000, green: 0.0000, blue: 0.0000, colorSpace: ColorSpace.sRGB), size: 13.0, weight: 700, decoration: TextDecoration.none, dependencies: [DefaultSelectionStyle, DefaultTextStyle, MediaQuery, _ScrollableScope]),
+]" derived an Offset (Offset(74.7, 694.2)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+The finder corresponds to this RenderBox: RenderParagraph#f3099 relayoutBoundary=up12
+The hit test result at that offset is: HitTestResult(_RenderInkFeatures#fdd3d@Offset(74.7, 694.2), RenderPhysicalModel#c40da@Offset(74.7, 694.2), RenderCustomMultiChildLayoutBox#9d03c@Offset(74.7, 694.2), _RenderInkFeatures#a8144@Offset(74.7, 694.2), RenderPhysicalModel#87c86@Offset(74.7, 694.2), RenderSemanticsAnnotations#b82bf@Offset(74.7, 694.2), RenderRepaintBoundary#896a1@Offset(74.7, 694.2), RenderIgnorePointer#f41d7@Offset(74.7, 694.2), RenderAnimatedOpacity#1f74a@Offset(74.7, 694.2), RenderAnimatedOpacity#b0b87@Offset(74.7, 694.2), _RenderColoredBox#f0778@Offset(74.7, 694.2), RenderAnimatedOpacity#5c032@Offset(74.7, 694.2), RenderIgnorePointer#deef4@Offset(74.7, 694.2), RenderAnimatedOpacity#846cc@Offset(74.7, 694.2), RenderRepaintBoundary#6cfd2@Offset(74.7, 694.2), RenderSemanticsAnnotations#869d8@Offset(74.7, 694.2), RenderOffstage#70988@Offset(74.7, 694.2), RenderSemanticsAnnotations#8a13a@Offset(74.7, 694.2), _RenderTheater#26da5@Offset(74.7, 694.2), RenderAbsorbPointer#cc7ef@Offset(74.7, 694.2), RenderPointerListener#845d6@Offset(74.7, 694.2), RenderSemanticsAnnotations#0e62f@Offset(74.7, 694.2), RenderCustomPaint#7ea18@Offset(74.7, 694.2), RenderSemanticsAnnotations#9d894@Offset(74.7, 694.2), RenderSemanticsAnnotations#aec46@Offset(74.7, 694.2), RenderSemanticsAnnotations#4f0df@Offset(74.7, 694.2), RenderTapRegionSurface#2bcb9@Offset(74.7, 694.2), RenderSemanticsAnnotations#52ac7@Offset(74.7, 694.2), RenderSemanticsAnnotations#2d44b@Offset(74.7, 694.2), HitTestEntry<HitTestTarget>#c3ea9(_ReusableRenderView#e2a9a), HitTestEntry<HitTestTarget>#36b76(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:2165:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1947:12)
+#2      WidgetController.tap (package:flutter_test/src/controller.dart:1080:7)
+#3      main.<anonymous closure>.completeStep1 (file:///C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart:333:22)
+<asynchronous suspension>
+#4      main.<anonymous closure>.<anonymous closure> (file:///C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart:405:7)
+<asynchronous suspension>
+#5      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#6      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1952:5)
+<asynchronous suspension>
+#7      StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "tap()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following assertion was thrown while running async test code:
+Golden "after/booking_step2_products.png": Pixel test failed, 0.29%, 949px diff detected.
+Failure feedback can be found at /C:/beauty-app/frontend/test/golden/failures
+
+When the exception was thrown, this was the stack:
+#0      LocalFileComparator.compare (package:flutter_test/src/_goldens_io.dart:108:5)
+<asynchronous suspension>
+#1      MatchesGoldenFile.matchAsync.<anonymous closure> (package:flutter_test/src/_matchers_io.dart:124:32)
+<asynchronous suspension>
+<asynchronous suspension>
+#3      _expect.<anonymous closure> (package:matcher/src/expect/expect.dart:153:17)
+<asynchronous suspension>
+<asynchronous suspension>
+#5      expectLater.<anonymous closure> (package:flutter_test/src/widget_tester.dart:508:19)
+<asynchronous suspension>
+#6      main.<anonymous closure>.<anonymous closure> (file:///C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart:422:7)
+<asynchronous suspension>
+#7      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#8      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1952:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided 3 frames from dart:async and package:stack_trace)
+
+The exception was caught asynchronously.
+════════════════════════════════════════════════════════════════════════════════════════════════════
+02:15 +21 -4: C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart: Phase 5 Golden Tests (390x844) BookingScreen - Step 2 (Productos) [E]
+  Test failed. See exception logs above.
+  The test description was: BookingScreen - Step 2 (Productos)
+  
+02:15 +21 -4: C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart: Phase 5 Golden Tests (390x844) BookingScreen - Step 3 (Confirmación / Pago)
+⚠️  No hay token disponible para Authorization
+
+Warning: A call to tap() with finder "Found 1 widget with text "09:00": [
+  Text("09:00", inherit: true, color: Color(alpha: 0.8667, red: 0.0000, green: 0.0000, blue: 0.0000, colorSpace: ColorSpace.sRGB), size: 13.0, weight: 700, decoration: TextDecoration.none, dependencies: [DefaultSelectionStyle, DefaultTextStyle, MediaQuery, _ScrollableScope]),
+]" derived an Offset (Offset(74.7, 694.2)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+The finder corresponds to this RenderBox: RenderParagraph#f9c7f relayoutBoundary=up12
+The hit test result at that offset is: HitTestResult(_RenderInkFeatures#293f5@Offset(74.7, 694.2), RenderPhysicalModel#30f90@Offset(74.7, 694.2), RenderCustomMultiChildLayoutBox#9ba1c@Offset(74.7, 694.2), _RenderInkFeatures#07f61@Offset(74.7, 694.2), RenderPhysicalModel#84fa4@Offset(74.7, 694.2), RenderSemanticsAnnotations#58667@Offset(74.7, 694.2), RenderRepaintBoundary#44f6f@Offset(74.7, 694.2), RenderIgnorePointer#b1bee@Offset(74.7, 694.2), RenderAnimatedOpacity#bb9f4@Offset(74.7, 694.2), RenderAnimatedOpacity#942f7@Offset(74.7, 694.2), _RenderColoredBox#2b007@Offset(74.7, 694.2), RenderAnimatedOpacity#b9847@Offset(74.7, 694.2), RenderIgnorePointer#4ec92@Offset(74.7, 694.2), RenderAnimatedOpacity#29cc3@Offset(74.7, 694.2), RenderRepaintBoundary#c7bea@Offset(74.7, 694.2), RenderSemanticsAnnotations#1e248@Offset(74.7, 694.2), RenderOffstage#0ed65@Offset(74.7, 694.2), RenderSemanticsAnnotations#61b62@Offset(74.7, 694.2), _RenderTheater#ea140@Offset(74.7, 694.2), RenderAbsorbPointer#3cf31@Offset(74.7, 694.2), RenderPointerListener#da1d6@Offset(74.7, 694.2), RenderSemanticsAnnotations#54415@Offset(74.7, 694.2), RenderCustomPaint#1cc46@Offset(74.7, 694.2), RenderSemanticsAnnotations#c2fdf@Offset(74.7, 694.2), RenderSemanticsAnnotations#744dd@Offset(74.7, 694.2), RenderSemanticsAnnotations#e1dcc@Offset(74.7, 694.2), RenderTapRegionSurface#d99fd@Offset(74.7, 694.2), RenderSemanticsAnnotations#8cfc3@Offset(74.7, 694.2), RenderSemanticsAnnotations#a19cf@Offset(74.7, 694.2), HitTestEntry<HitTestTarget>#bb084(_ReusableRenderView#e2a9a), HitTestEntry<HitTestTarget>#c3692(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:2165:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1947:12)
+#2      WidgetController.tap (package:flutter_test/src/controller.dart:1080:7)
+#3      main.<anonymous closure>.completeStep1 (file:///C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart:333:22)
+<asynchronous suspension>
+#4      main.<anonymous closure>.<anonymous closure> (file:///C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart:450:7)
+<asynchronous suspension>
+#5      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#6      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1952:5)
+<asynchronous suspension>
+#7      StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "tap()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following assertion was thrown while running async test code:
+Golden "after/booking_step3_checkout.png": Pixel test failed, 0.29%, 949px diff detected.
+Failure feedback can be found at /C:/beauty-app/frontend/test/golden/failures
+
+When the exception was thrown, this was the stack:
+#0      LocalFileComparator.compare (package:flutter_test/src/_goldens_io.dart:108:5)
+<asynchronous suspension>
+#1      MatchesGoldenFile.matchAsync.<anonymous closure> (package:flutter_test/src/_matchers_io.dart:124:32)
+<asynchronous suspension>
+<asynchronous suspension>
+#3      _expect.<anonymous closure> (package:matcher/src/expect/expect.dart:153:17)
+<asynchronous suspension>
+<asynchronous suspension>
+#5      expectLater.<anonymous closure> (package:flutter_test/src/widget_tester.dart:508:19)
+<asynchronous suspension>
+#6      main.<anonymous closure>.<anonymous closure> (file:///C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart:467:7)
+<asynchronous suspension>
+#7      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#8      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1952:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided 3 frames from dart:async and package:stack_trace)
+
+The exception was caught asynchronously.
+════════════════════════════════════════════════════════════════════════════════════════════════════
+02:17 +21 -5: C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart: Phase 5 Golden Tests (390x844) BookingScreen - Step 3 (Confirmación / Pago) [E]
+  Test failed. See exception logs above.
+  The test description was: BookingScreen - Step 3 (Confirmación / Pago)
+  
+02:18 +21 -5: C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart: Phase 5 Golden Tests (390x844) Sticky Summary - Empty State Golden
+⚠️  No hay token disponible para Authorization
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following assertion was thrown while running async test code:
+Golden "after/sticky_summary_empty.png": Pixel test failed, 1.43%, 4721px diff detected.
+Failure feedback can be found at /C:/beauty-app/frontend/test/golden/failures
+
+When the exception was thrown, this was the stack:
+#0      LocalFileComparator.compare (package:flutter_test/src/_goldens_io.dart:108:5)
+<asynchronous suspension>
+#1      MatchesGoldenFile.matchAsync.<anonymous closure> (package:flutter_test/src/_matchers_io.dart:124:32)
+<asynchronous suspension>
+<asynchronous suspension>
+#3      _expect.<anonymous closure> (package:matcher/src/expect/expect.dart:153:17)
+<asynchronous suspension>
+<asynchronous suspension>
+#5      expectLater.<anonymous closure> (package:flutter_test/src/widget_tester.dart:508:19)
+<asynchronous suspension>
+#6      main.<anonymous closure>.<anonymous closure> (file:///C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart:498:7)
+<asynchronous suspension>
+#7      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#8      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1952:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided 3 frames from dart:async and package:stack_trace)
+
+The exception was caught asynchronously.
+════════════════════════════════════════════════════════════════════════════════════════════════════
+02:20 +21 -6: C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart: Phase 5 Golden Tests (390x844) Sticky Summary - Empty State Golden [E]
+  Test failed. See exception logs above.
+  The test description was: Sticky Summary - Empty State Golden
+  
+02:20 +21 -6: C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart: Phase 5 Golden Tests (390x844) Sticky Summary - With Product Added Golden
+⚠️  No hay token disponible para Authorization
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following assertion was thrown while running async test code:
+Golden "after/sticky_summary_with_product.png": Pixel test failed, 1.43%, 4721px diff detected.
+Failure feedback can be found at /C:/beauty-app/frontend/test/golden/failures
+
+When the exception was thrown, this was the stack:
+#0      LocalFileComparator.compare (package:flutter_test/src/_goldens_io.dart:108:5)
+<asynchronous suspension>
+#1      MatchesGoldenFile.matchAsync.<anonymous closure> (package:flutter_test/src/_matchers_io.dart:124:32)
+<asynchronous suspension>
+<asynchronous suspension>
+#3      _expect.<anonymous closure> (package:matcher/src/expect/expect.dart:153:17)
+<asynchronous suspension>
+<asynchronous suspension>
+#5      expectLater.<anonymous closure> (package:flutter_test/src/widget_tester.dart:508:19)
+<asynchronous suspension>
+#6      main.<anonymous closure>.<anonymous closure> (file:///C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart:530:7)
+<asynchronous suspension>
+#7      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#8      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1952:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided 3 frames from dart:async and package:stack_trace)
+
+The exception was caught asynchronously.
+════════════════════════════════════════════════════════════════════════════════════════════════════
+02:21 +21 -7: C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart: Phase 5 Golden Tests (390x844) Sticky Summary - With Product Added Golden [E]
+  Test failed. See exception logs above.
+  The test description was: Sticky Summary - With Product Added Golden
+  
+02:21 +21 -7: C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart: (tearDownAll)
+02:52 +21 -7: C:/beauty-app/frontend/test/permission_rationale_service_test.dart: PermissionRationaleService (FIX-FLUTTER-02) reasonFor explica por qué se necesita cada permiso
+02:54 +22 -7: C:/beauty-app/frontend/test/permission_rationale_service_test.dart: PermissionRationaleService (FIX-FLUTTER-02) showRationaleDialog presenta el texto y acepta continuar
+02:57 +23 -7: C:/beauty-app/frontend/test/permission_rationale_service_test.dart: PermissionRationaleService (FIX-FLUTTER-02) showRationaleDialog presenta el texto y acepta continuar
+02:57 +24 -7: C:/beauty-app/frontend/test/permission_rationale_service_test.dart: PermissionRationaleService (FIX-FLUTTER-02) showRationaleDialog respeta la cancelación del usuario
+03:11 +25 -7: C:/beauty-app/frontend/test/screens/booking_screen_overflow_test.dart: (setUpAll)
+03:11 +25 -7: C:/beauty-app/frontend/test/screens/booking_screen_overflow_test.dart: la cabecera del calendario no desborda a 390 dp (RenderFlex overflow check)
+🔌 ApiService: Fallback automático a staging en https://belleza-app-production.up.railway.app
+🔌 ApiService: Fallback automático a staging en https://belleza-app-production.up.railway.app
+⚠️  No hay token disponible para Authorization
+Error loading slots (usando fallback): FormatException: Unexpected end of input (at character 1)
+
+^
+
+Error loading products (usando fallback): Exception: Error al obtener productos
+03:16 +26 -7: C:/beauty-app/frontend/test/screens/booking_screen_test.dart: Flujo de pasos con sticky summary y verificación de selección de producto
+🔌 ApiService: Fallback automático a staging en https://belleza-app-production.up.railway.app
+🔌 ApiService: Fallback automático a staging en https://belleza-app-production.up.railway.app
+⚠️  No hay token disponible para Authorization
+03:22 +27 -7: C:/beauty-app/frontend/test/screens/booking_screen_test.dart: Sticky summary color token matches AppTokens.stickySummaryBg
+⚠️  No hay token disponible para Authorization
+03:23 +28 -7: C:/beauty-app/frontend/test/screens/booking_screen_test.dart: (tearDownAll)
+03:44 +28 -7: C:/beauty-app/frontend/test/screens/gate3_business_no_fabricado_test.dart: Gate 3 — Business Center sin datos inventados backend caído: informa el fallo y no pinta ningún negocio
+03:45 +29 -7: C:/beauty-app/frontend/test/screens/gate3_business_no_fabricado_test.dart: Gate 3 — Business Center sin datos inventados sin expediente (404): lo dice y ofrece el diagnóstico
+03:45 +30 -7: C:/beauty-app/frontend/test/screens/gate3_business_no_fabricado_test.dart: Gate 3 — Business Center sin datos inventados con datos del servidor: pinta LOS del servidor, no otros
+03:46 +31 -7: C:/beauty-app/frontend/test/screens/gate3_business_no_fabricado_test.dart: Gate 3 — Business Center sin datos inventados detalle de tarea sin tarea recibida: no inventa un trámite
+03:46 +32 -7: C:/beauty-app/frontend/test/screens/gate3_business_no_fabricado_test.dart: Gate 3 — Business Center sin datos inventados detalle de tarea con tarea real: pinta SUS datos
+03:53 +33 -7: C:/beauty-app/frontend/test/screens/owner_dashboard_screen_test.dart: Owner Dashboard Metrics & Widget Tests OwnerDashboardMetrics.fromJson valida contrato estricto del backend
+03:53 +34 -7: C:/beauty-app/frontend/test/screens/owner_dashboard_screen_test.dart: Owner Dashboard Metrics & Widget Tests Renderiza adecuadamente las tarjetas y el banner cross-tenant en OwnerDashboardScreen
+04:00 +35 -7: C:/beauty-app/frontend/test/screens/owner_dashboard_screen_test.dart: Owner Dashboard Metrics & Widget Tests Oculta el banner cross-tenant cuando prestadores_cross_tenant es false
+04:04 +36 -7: C:/beauty-app/frontend/test/security/token_storage_xss_guard_test.dart: FIX-FLUTTER-03 · El JWT nunca se persiste en SharedPreferences/localStorage Ningún archivo de lib/ escribe o lee el token vía SharedPreferences
+04:05 +37 -7: C:/beauty-app/frontend/test/security/token_storage_xss_guard_test.dart: FIX-FLUTTER-03 · El JWT nunca se persiste en SharedPreferences/localStorage auth_service.dart lee el token únicamente desde SecureStorageService
+04:05 +38 -7: C:/beauty-app/frontend/test/security/token_storage_xss_guard_test.dart: FIX-FLUTTER-03 · El JWT nunca se persiste en SharedPreferences/localStorage api_service.dart lee el token desde SecureStorageService (sin fallback)
+04:05 +39 -7: C:/beauty-app/frontend/test/security/token_storage_xss_guard_test.dart: FIX-FLUTTER-03 · El JWT nunca se persiste en SharedPreferences/localStorage No sobrevive ningún fallback explícito a SharedPreferences para el token
+04:23 +40 -7: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: ApiService.isRetryableError marca como reintentables los errores 5xx del servidor
+04:24 +41 -7: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: ApiService.isRetryableError marca como reintentables los fallos de red y de timeout
+04:24 +42 -7: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: ApiService.isRetryableError NO marca como reintentables los errores de cliente 4xx
+04:24 +43 -7: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: ApiService.runWithRetry — backoff exponencial reintenta un fallo transitorio y devuelve el resultado
+🔁 ApiService: reintento 1/3 en 400ms
+🔁 ApiService: reintento 2/3 en 800ms
+04:24 +44 -7: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: ApiService.runWithRetry — backoff exponencial NO reintenta errores no reintentables (4xx) y los propaga
+04:24 +45 -7: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: ApiService.runWithRetry — backoff exponencial agota el presupuesto de reintentos y propaga el último error
+🔁 ApiService: reintento 1/3 en 400ms
+🔁 ApiService: reintento 2/3 en 800ms
+🔁 ApiService: reintento 3/3 en 1600ms
+04:24 +46 -7: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: ApiService.runWithRetry — backoff exponencial no ejecuta la petición cuando no hay conectividad
+🔁 ApiService: reintento 1/3 en 400ms
+🔁 ApiService: reintento 2/3 en 800ms
+🔁 ApiService: reintento 3/3 en 1600ms
+04:24 +47 -7: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: ApiService.runWithRetry — backoff exponencial reanuda la petición cuando vuelve la conectividad
+🔁 ApiService: reintento 1/3 en 400ms
+🔁 ApiService: reintento 2/3 en 800ms
+04:24 +48 -7: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: ConnectivityService reporta conectado cuando el sondeo tiene éxito
+04:24 +49 -7: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: ConnectivityService reporta desconectado cuando el sondeo falla
+📴 ConnectivityService: sin conexión detectada
+04:24 +50 -7: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: ConnectivityService reporta desconectado ante errores inesperados del sondeo
+📴 ConnectivityService: sin conexión detectada
+04:24 +51 -7: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: Configuración de resiliencia centraliza timeout y política de reintentos
+04:24 +52 -7: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: Configuración de resiliencia POST falla rápido con OfflineException cuando no hay red
+📴 ConnectivityService: sin conexión detectada
+04:24 +53 -7: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: Configuración de resiliencia GET falla rápido con OfflineException cuando no hay red
+📴 ConnectivityService: sin conexión detectada
+🔁 ApiService: reintento 1/3 en 400ms
+🔁 ApiService: reintento 2/3 en 800ms
+04:25 +54 -7: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: Configuración de resiliencia GET falla rápido con OfflineException cuando no hay red
+🔁 ApiService: reintento 3/3 en 1600ms
+04:26 +55 -7: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: Configuración de resiliencia GET falla rápido con OfflineException cuando no hay red
+04:42 +56 -7: C:/beauty-app/frontend/test/services/api_service_header_test.dart: ApiService Header Injection & SwitchSalon Tests Inyecta la cabecera x-active-salon-id si hay sede activa válida
+🔌 ApiService: Fallback automático a staging en https://belleza-app-production.up.railway.app
+⚠️  No hay token disponible para Authorization
+04:43 +57 -7: C:/beauty-app/frontend/test/services/api_service_header_test.dart: ApiService Header Injection & SwitchSalon Tests Omite la cabecera x-active-salon-id si activeSalonId es nulo o normalizado a nulo
+⚠️  No hay token disponible para Authorization
+⚠️  No hay token disponible para Authorization
+04:43 +58 -7: C:/beauty-app/frontend/test/services/api_service_header_test.dart: ApiService Header Injection & SwitchSalon Tests switchSalon Store Protection Tests (4 Casos sobre applySwitchSalonResponse) Caso 1: Respuesta sin active_salon_id NO altera el store
+04:43 +59 -7: C:/beauty-app/frontend/test/services/api_service_header_test.dart: ApiService Header Injection & SwitchSalon Tests switchSalon Store Protection Tests (4 Casos sobre applySwitchSalonResponse) Caso 2: Respuesta con success: false NO altera el store aun con active_salon_id válido
+04:43 +60 -7: C:/beauty-app/frontend/test/services/api_service_header_test.dart: ApiService Header Injection & SwitchSalon Tests switchSalon Store Protection Tests (4 Casos sobre applySwitchSalonResponse) Caso 3: active_salon_id inválido (0, null, '', -1, 'invalid') NO altera el store
+04:43 +61 -7: C:/beauty-app/frontend/test/services/api_service_header_test.dart: ApiService Header Injection & SwitchSalon Tests switchSalon Store Protection Tests (4 Casos sobre applySwitchSalonResponse) Caso 4: active_salon_id válido (42) con success: true actualiza el store y notifica listeners
+04:50 +62 -7: C:/beauty-app/frontend/test/services/app_update_service_test.dart: AppVersion — parseo y comparación semántica parsea "1.0.0+1" en major/minor/patch y conserva el build number
+04:50 +63 -7: C:/beauty-app/frontend/test/services/app_update_service_test.dart: AppVersion — parseo y comparación semántica parsea versiones cortas y basura sin lanzar
+04:50 +64 -7: C:/beauty-app/frontend/test/services/app_update_service_test.dart: AppVersion — parseo y comparación semántica compara numéricamente (1.10.0 > 1.9.9) y no por texto
+04:50 +65 -7: C:/beauty-app/frontend/test/services/app_update_service_test.dart: AppVersion — parseo y comparación semántica una prerelease es menor que su release
+04:50 +66 -7: C:/beauty-app/frontend/test/services/app_update_service_test.dart: AppUpdateService.evaluate — política de actualización FUERZA la actualización cuando la versión instalada < mínima
+04:51 +67 -7: C:/beauty-app/frontend/test/services/app_update_service_test.dart: AppUpdateService.evaluate — política de actualización NO fuerza cuando la instalada es exactamente la mínima
+04:51 +68 -7: C:/beauty-app/frontend/test/services/app_update_service_test.dart: AppUpdateService.evaluate — política de actualización marca actualización OPCIONAL cuando supera la mínima pero no es la última
+04:51 +69 -7: C:/beauty-app/frontend/test/services/app_update_service_test.dart: AppUpdateService.evaluate — política de actualización no fuerza con una versión instalada MÁS NUEVA que la mínima
+04:51 +70 -7: C:/beauty-app/frontend/test/services/app_update_service_test.dart: AppUpdateService.evaluate — política de actualización fail-open: sin minimum_version declarada NUNCA bloquea
+04:51 +71 -7: C:/beauty-app/frontend/test/services/app_update_service_test.dart: AppUpdateService.evaluate — política de actualización fail-open: política ilegible (no semántica) NUNCA bloquea
+04:51 +72 -7: C:/beauty-app/frontend/test/services/app_update_service_test.dart: AppUpdateService.evaluate — política de actualización fail-open: versión instalada ilegible NUNCA bloquea
+04:51 +73 -7: C:/beauty-app/frontend/test/services/app_update_service_test.dart: AppUpdateService.evaluate — política de actualización expone una URL de tienda https válida para el CTA del bloqueo
+04:51 +74 -7: C:/beauty-app/frontend/test/services/app_update_service_test.dart: AppUpdateService — la versión declarada coincide con pubspec.yaml currentVersion == version de pubspec.yaml (sin build number)
+04:51 +75 -7: C:/beauty-app/frontend/test/services/app_update_service_test.dart: AppUpdateService.check — contra GET /api/health fuerza el update leyendo minimum_app_version de /api/health
+04:51 +76 -7: C:/beauty-app/frontend/test/services/app_update_service_test.dart: AppUpdateService.check — contra GET /api/health pasa sin bloqueo cuando la app instalada es la actual
+04:51 +77 -7: C:/beauty-app/frontend/test/services/app_update_service_test.dart: AppUpdateService.check — contra GET /api/health fail-open si /api/health no trae política de versión
+04:51 +78 -7: C:/beauty-app/frontend/test/services/app_update_service_test.dart: AppUpdateService.check — contra GET /api/health fail-open si el endpoint no responde (error de red)
+04:51 +79 -7: C:/beauty-app/frontend/test/services/app_update_service_test.dart: AppUpdateService.check — contra GET /api/health fail-open si el endpoint responde 500 o cuerpo no-JSON
+05:02 +80 -7: C:/beauty-app/frontend/test/services/crash_reporting_service_test.dart: CrashReportingService entrega el crash inmediatamente: un único evento, sin umbral de 10 ni espera del timer de 10s
+05:02 +81 -7: C:/beauty-app/frontend/test/services/crash_reporting_service_test.dart: CrashReportingService incluye X-Trace-Id == correlation_id para correlacionar con el backend
+05:02 +82 -7: C:/beauty-app/frontend/test/services/crash_reporting_service_test.dart: CrashReportingService el payload lleva tipo de crash, error, stack y session_id
+05:02 +83 -7: C:/beauty-app/frontend/test/services/crash_reporting_service_test.dart: CrashReportingService persiste el crash ante fallo de red y lo reenvía tras reinicio conservando el correlation_id original
+🛑 CrashReportingService: envío falló (503); se reintentará
+05:02 +84 -7: C:/beauty-app/frontend/test/services/crash_reporting_service_test.dart: CrashReportingService un crash operativo se reporta aunque la telemetría esté desactivada (no es un evento de producto)
+05:04 +85 -7: C:/beauty-app/frontend/test/services/crash_reporting_wiring_test.dart: FIX-FLUTTER-07 — crash reporting con correlación backend existe CrashReportingService con correlación (X-Trace-Id / correlation_id)
+05:05 +86 -7: C:/beauty-app/frontend/test/services/crash_reporting_wiring_test.dart: FIX-FLUTTER-07 — crash reporting con correlación backend main.dart delega los handlers de crash en CrashReportingService
+05:05 +87 -7: C:/beauty-app/frontend/test/services/crash_reporting_wiring_test.dart: FIX-FLUTTER-07 — crash reporting con correlación backend el bloque de crash de main.dart ya no encola sólo en AnalyticsService
+05:17 +88 -7: C:/beauty-app/frontend/test/theme_widget_test.dart: AppTheme widgets render with correct colors and decorations
+05:21 +89 -7: C:/beauty-app/frontend/test/utils/json_num_test.dart: toDoubleOrNull acepta num
+05:21 +90 -7: C:/beauty-app/frontend/test/utils/json_num_test.dart: toDoubleOrNull acepta String numerico (lo que manda Postgres)
+05:21 +91 -7: C:/beauty-app/frontend/test/utils/json_num_test.dart: toDoubleOrNull no lanza con valores inservibles: devuelve null
+05:21 +92 -7: C:/beauty-app/frontend/test/utils/json_num_test.dart: toDoubleOr usa el respaldo cuando no se puede convertir
+05:21 +93 -7: C:/beauty-app/frontend/test/utils/json_num_test.dart: toDoubleOr convierte cuando puede, incluido String
+05:41 +94 -7: C:/beauty-app/frontend/test/widgets/cross_tenant_warning_banner_test.dart: CrossTenantWarningBanner Widget Tests Muestra el banner cuando isCrossTenant es true con advertencia y colaboradores
+05:41 +95 -7: C:/beauty-app/frontend/test/widgets/cross_tenant_warning_banner_test.dart: CrossTenantWarningBanner Widget Tests Muestra el banner cuando isCrossTenant es true con advertencia y colaboradores
+05:41 +96 -7: C:/beauty-app/frontend/test/widgets/cross_tenant_warning_banner_test.dart: CrossTenantWarningBanner Widget Tests Muestra el banner cuando isCrossTenant es true con advertencia y colaboradores
+05:41 +97 -7: C:/beauty-app/frontend/test/widgets/cross_tenant_warning_banner_test.dart: CrossTenantWarningBanner Widget Tests Muestra el banner cuando isCrossTenant es true con advertencia y colaboradores
+05:41 +98 -7: C:/beauty-app/frontend/test/widgets/cross_tenant_warning_banner_test.dart: CrossTenantWarningBanner Widget Tests Muestra el banner cuando isCrossTenant es true con advertencia y colaboradores
+05:41 +99 -7: C:/beauty-app/frontend/test/widgets/cross_tenant_warning_banner_test.dart: CrossTenantWarningBanner Widget Tests Muestra el banner cuando isCrossTenant es true con advertencia y colaboradores
+05:41 +100 -7: C:/beauty-app/frontend/test/widgets/cross_tenant_warning_banner_test.dart: CrossTenantWarningBanner Widget Tests Muestra el banner cuando isCrossTenant es true con advertencia y colaboradores
+05:43 +101 -7: C:/beauty-app/frontend/test/widgets/cross_tenant_warning_banner_test.dart: CrossTenantWarningBanner Widget Tests Oculta el banner cuando isCrossTenant es false
+05:56 +102 -7: C:/beauty-app/frontend/test/widgets/forced_update_dialog_test.dart: showForcedUpdateDialog — bloqueo real muestra la versión instalada, la mínima y el CTA
+05:58 +103 -7: C:/beauty-app/frontend/test/widgets/forced_update_dialog_test.dart: showForcedUpdateDialog — bloqueo real NO se descarta tocando fuera del diálogo (barrier)
+05:59 +104 -7: C:/beauty-app/frontend/test/widgets/forced_update_dialog_test.dart: showForcedUpdateDialog — bloqueo real NO se descarta con el botón atrás del sistema
+06:00 +105 -7: C:/beauty-app/frontend/test/widgets/forced_update_dialog_test.dart: showForcedUpdateDialog — bloqueo real el CTA invoca el callback de actualización inyectado
+06:00 +106 -7: C:/beauty-app/frontend/test/widgets/forced_update_dialog_test.dart: AppUpdateGate — chequeo en arranque bloquea mostrando el diálogo cuando hay update forzado
+06:01 +107 -7: C:/beauty-app/frontend/test/widgets/forced_update_dialog_test.dart: AppUpdateGate — chequeo en arranque no molesta al usuario cuando la app está al día
+06:01 +108 -7: C:/beauty-app/frontend/test/widgets/forced_update_dialog_test.dart: AppUpdateGate — chequeo en arranque fail-open: si el chequeo lanza, la app sigue usable
+09:15 +109 -7: C:/beauty-app/frontend/test/widget_test.dart: BeautyApp carga correctamente
+  [1m[flutter_map][0m
+    We want to help keep OpenStreetMap available for everyone. Our examples
+    and demo app use the public tile servers, but they are NOT free to use by
+    everyone! Please review whether the OpenStreetMap tile servers are suitable
+    for your project.
+    See:
+      * https://operations.osmfoundation.org/policies/tiles (OSM Tile Usage Policy)
+      * https://docs.fleaflet.dev/osm-warn for more information about this warning
+🔌 ApiService: Fallback automático a staging en https://belleza-app-production.up.railway.app
+09:25 +110 -7: Some tests failed.
+
+Failing tests:
+  C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart: Phase 5 Golden Tests (390x844) BookingScreen - Step 1 (Cuándo y Dónde)
+  C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart: Phase 5 Golden Tests (390x844) BookingScreen - Step 2 (Productos)
+  C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart: Phase 5 Golden Tests (390x844) BookingScreen - Step 3 (Confirmación / Pago)
+  C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart: Phase 5 Golden Tests (390x844) ProviderDetailScreen - Collapsed State
+  ... and 3 more

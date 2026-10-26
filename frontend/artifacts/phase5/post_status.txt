@@ -1,0 +1,62 @@
+ M backend/scripts/ciRagEvaluation.sh
+ M frontend/pubspec.lock
+ M frontend/pubspec.yaml
+ M frontend/test/golden/after/booking_step1_when_where.png
+ M frontend/test/golden/after/booking_step2_products.png
+ M frontend/test/golden/after/booking_step3_checkout.png
+ M frontend/test/golden/after/sticky_summary_empty.png
+ M frontend/test/golden/after/sticky_summary_with_product.png
+ M frontend/test/saas/saas_screens_smoke_test.dart
+ M frontend/test/superadmin/superadmin_screens_smoke_test.dart
+?? .hermes/plans/2026-10-23_184233-beauty-app-test-suite-and-ci.md
+?? .hermes/plans/analyze_after_notifier_fix.txt
+?? .hermes/plans/baseline-branch.txt
+?? .hermes/plans/baseline-git-status.txt
+?? .hermes/plans/baseline-jest-backend.txt
+?? .hermes/plans/baseline-last3.txt
+?? .hermes/plans/baseline-npm-ci-backend.txt
+?? .hermes/plans/ci-yml-diff.txt
+?? .hermes/plans/final-flutter-test.txt
+?? .hermes/plans/final-jest-backend.txt
+?? .hermes/plans/isolated_biometric_cirag.txt
+?? .hermes/plans/isolated_resilience_biometric.txt
+?? .hermes/plans/isolated_wompi_rag.txt
+?? .hermes/plans/jest_backend_output.txt
+?? .hermes/plans/jest_exit_code.txt
+?? .hermes/plans/jest-results.json
+?? .hermes/plans/jest-results-2.json
+?? .hermes/plans/jest-results-3.json
+?? .hermes/plans/jest-results-4.json
+?? .hermes/plans/npm_ci_backend.txt
+?? .hermes/plans/pr64_state.json
+?? .hermes/plans/probe_sla.js
+?? .hermes/plans/quarantine/
+?? backend/.hermes/
+?? backend/scripts/auditAgentsBehaviour.js
+?? backend/src/openapi/saas.yaml
+?? belleza-app-clean/
+?? coverage/
+?? docs/architecture/
+?? docs/audit/AUDITORIA-AGENTES-AURA-2026-10-24.md
+?? docs/audit/AUTOMATIZACION-Y-AGENTES-2026-10-24.md
+?? docs/AUDITORIA_MONOLITOS_Y_TAMANO_COMPILADO.md
+?? docs/backend/
+?? docs/strategy/ESTRATEGIA-MERCADO-Y-LANZAMIENTO-2026-2027.md
+?? frontend/.analysis_options.yaml
+?? frontend/.hermes/
+?? frontend/analysis_full.txt
+?? frontend/analysis_output.txt
+?? frontend/artifacts/
+?? frontend/build_web.txt
+?? frontend/golden_update.txt
+?? frontend/lib/models/superadmin/super_admin_state.dart
+?? frontend/lib/router/
+?? frontend/lib/screens/provider/saas/
+?? frontend/lib/screens/salon/inventario_screen.dart
+?? frontend/lib/screens/salon/reservas_screen.dart
+?? frontend/lib/screens/salon/servicios_screen.dart
+?? frontend/lib/theme/
+?? frontend/PHASE4_REPORT.md
+?? frontend/setup_log.txt
+?? frontend/test_output.txt
+?? frontend/test_summary.md

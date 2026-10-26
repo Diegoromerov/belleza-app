@@ -1,0 +1,4 @@
+﻿STATUS=BLOCKED
+STEP=12 Smoke tests en producción
+REASON=No existe test_driver/app_test.dart ni integration_test/; no hay URL de producción desplegada por esta fase.
+DETAIL=No se ejecutó ''flutter drive''.

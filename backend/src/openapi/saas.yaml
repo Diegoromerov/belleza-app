@@ -1,0 +1,341 @@
+# OpenAPI specification for SaaS CRM endpoints
+openapi: 3.0.0
+info:
+  title: GlowApp SaaS CRM API
+  version: 1.0.0
+  description: API endpoints for Leads and Opportunities used by beauty salons.
+servers:
+  - url: /api/saas
+paths:
+  /leads:
+    post:
+      summary: Create a new lead
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeadCreate'
+      responses:
+        '201':
+          description: Lead created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lead'
+    get:
+      summary: List leads
+      parameters:
+        - in: query
+          name: salonId
+          schema:
+            type: integer
+          description: Filter by salon
+        - in: query
+          name: status
+          schema:
+            type: string
+          description: Filter by status
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of leads
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeadList'
+  /leads/{id}:
+    get:
+      summary: Get lead by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Lead details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lead'
+        '404':
+          description: Lead not found
+    put:
+      summary: Update lead
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeadUpdate'
+      responses:
+        '200':
+          description: Updated lead
+    delete:
+      summary: Delete lead
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Lead deleted
+  /opportunities:
+    post:
+      summary: Create a new opportunity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpportunityCreate'
+      responses:
+        '201':
+          description: Opportunity created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Opportunity'
+    get:
+      summary: List opportunities
+      parameters:
+        - in: query
+          name: salonId
+          schema:
+            type: integer
+        - in: query
+          name: stage
+          schema:
+            type: string
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of opportunities
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpportunityList'
+  /opportunities/{id}:
+    get:
+      summary: Get opportunity by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Opportunity details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Opportunity'
+        '404':
+          description: Not found
+    put:
+      summary: Update opportunity
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpportunityUpdate'
+      responses:
+        '200':
+          description: Updated opportunity
+    delete:
+      summary: Delete opportunity
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Deleted
+  /opportunities/{id}/transition:
+    post:
+      summary: Change stage of an opportunity
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                stage:
+                  type: string
+                  description: New stage value
+      responses:
+        '200':
+          description: Opportunity with updated stage
+components:
+  schemas:
+    Lead:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        status:
+          type: string
+        notes:
+          type: string
+        userId:
+          type: integer
+        salonId:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    LeadCreate:
+      allOf:
+        - $ref: '#/components/schemas/Lead'
+        - required: [name, email]
+    LeadUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        status:
+          type: string
+        notes:
+          type: string
+        salonId:
+          type: integer
+    LeadList:
+      type: object
+      properties:
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Lead'
+    Opportunity:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        amount:
+          type: number
+          format: double
+        stage:
+          type: string
+        probability:
+          type: integer
+        expectedCloseDate:
+          type: string
+          format: date-time
+        notes:
+          type: string
+        leadId:
+          type: integer
+        userId:
+          type: integer
+        salonId:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    OpportunityCreate:
+      allOf:
+        - $ref: '#/components/schemas/Opportunity'
+        - required: [title]
+    OpportunityUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        amount:
+          type: number
+          format: double
+        stage:
+          type: string
+        probability:
+          type: integer
+        expectedCloseDate:
+          type: string
+          format: date-time
+        notes:
+          type: string
+        leadId:
+          type: integer
+        salonId:
+          type: integer
+    OpportunityList:
+      type: object
+      properties:
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Opportunity'

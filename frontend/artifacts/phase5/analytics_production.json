@@ -1,0 +1,6 @@
+﻿{
+  "status": "blocked",
+  "step": "13 analytics production",
+  "reason": "Fase no liberada; faltan API_KEY, VIEW_ID y credenciales OAuth.",
+  "executed": false
+}

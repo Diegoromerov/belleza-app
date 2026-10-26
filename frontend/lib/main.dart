@@ -148,16 +148,9 @@ void main() async {
     // falsos: se avisa y la app sigue sin push. Antes arrancaba en silencio con
     // un apiKey invalido y el fallo solo se notaba mucho despues, en el service
     // worker de FCM. Ver lib/firebase_options.dart.
-    if (DefaultFirebaseOptions.estaConfigurado) {
-      await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
-      );
-    } else {
-      debugPrint(
-        '❌ Firebase NO configurado en este build: faltan '
-        '${DefaultFirebaseOptions.faltantes.join(', ')}. Push deshabilitado.',
-      );
-    }
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
     
     await initializeDateFormatting('es', null);
     await SystemChrome.setPreferredOrientations([

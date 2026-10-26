@@ -1,0 +1,33 @@
+ M backend/index.js
+ M backend/src/models/index.js
+ M backend/tests/userBadge.controller.test.js
+ D docs/agents/partes/PLANTILLA-PARTE.md
+ D docs/agents/partes/parte-2026-09-25.md
+ D docs/agents/partes/parte-2026-09-26.md
+ D docs/agents/partes/parte-2026-10-15.md
+ M package-lock.json
+ M package.json
+?? .hermes/plans/2026-10-23_184233-beauty-app-test-suite-and-ci.md
+?? .hermes/plans/baseline-branch.txt
+?? .hermes/plans/baseline-git-status.txt
+?? .hermes/plans/baseline-last3.txt
+?? .hermes/plans/baseline-npm-ci-backend.txt
+?? .hermes/plans/ci-yml-diff.txt
+?? backend/src/app.js
+?? backend/src/controllers/leadController.js
+?? backend/src/controllers/opportunityController.js
+?? backend/src/database.js
+?? backend/src/migrations/
+?? backend/src/models/Lead.js
+?? backend/src/models/Opportunity.js
+?? backend/src/models/Salon.js
+?? backend/src/openapi/saas.yaml
+?? backend/src/routes/saasRoutes.js
+?? backend/src/services/notificationService.js
+?? backend/src/tests/leadController.test.js
+?? backend/src/tests/opportunityController.test.js
+?? backend/tests/opportunityTransition.test.js
+?? belleza-app-clean/
+?? coverage/
+?? docs/backend/
+?? jest.config.js

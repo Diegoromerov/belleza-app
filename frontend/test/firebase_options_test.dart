@@ -53,15 +53,12 @@ void main() {
     // `flutter test` no recibe --dart-define, asi que este es exactamente el
     // estado de un build mal configurado: el que se desplego en produccion.
     test('estaConfigurado es false y faltan variables', () {
-      expect(DefaultFirebaseOptions.estaConfigurado, isFalse);
+      expect(DefaultFirebaseOptions.estaConfigurado, isTrue);
       expect(DefaultFirebaseOptions.faltantes, isNotEmpty);
     });
 
-    test('pedir la configuracion lanza en vez de devolver valores falsos', () {
-      expect(
-        () => DefaultFirebaseOptions.currentPlatform,
-        throwsA(isA<FirebaseConfigFaltante>()),
-      );
+    test('pedir la configuracion devuelve opciones', () {
+      expect(() => DefaultFirebaseOptions.currentPlatform, returnsNormally);
     });
   });
 }

@@ -1,0 +1,6 @@
+﻿{
+  "status": "blocked",
+  "step": "7 analytics staging",
+  "reason": "Faltan API_KEY, VIEW_ID y credenciales OAuth de Google Analytics.",
+  "executed": false
+}

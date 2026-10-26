@@ -1,0 +1,5 @@
+﻿STATUS=BLOCKED
+STEP=6 Smoke tests en staging
+REASON=No existe test_driver/app_test.dart ni integration_test/; no hay URL de staging desplegada.
+DETAIL=No se ejecutó ''flutter drive''. No se inventa ''All tests passed''.
+REQUIRED_INPUTS=test_driver/app_test.dart + URL de staging

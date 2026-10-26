@@ -1,0 +1,7 @@
+include: package:flutter_lints/flutter.yaml
+linter:
+  rules:
+    # add any custom rules if needed
+analyzer:
+  exclude:
+    - "scratch/**"

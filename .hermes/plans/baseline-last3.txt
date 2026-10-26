@@ -1,0 +1,3 @@
+8828c30a4 feat(aura): add provider and salon operational and financial tools to chat
+a49d7c39c Start server and add sidecar instructions
+a84e90230 fix(glowstore): el recibo del pago deja de decir "cita" y de mostrar Ref. N/A

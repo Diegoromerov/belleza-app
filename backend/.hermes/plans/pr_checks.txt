@@ -1,0 +1,17 @@
+﻿Arnés E2E (reglas del dinero)	pass	50s	https://github.com/Diegoromerov/belleza-app/actions/runs/40119059858/job/120946427893	
+Backend Tests & Lint	pass	1m40s	https://github.com/Diegoromerov/belleza-app/actions/runs/40119059850/job/120946427394	
+CICD - Auditor CI/CD y Contenedores	pass	9s	https://github.com/Diegoromerov/belleza-app/actions/runs/40119059781/job/120946503655	
+DATA - Auditor Datos	pass	12s	https://github.com/Diegoromerov/belleza-app/actions/runs/40119059781/job/120946503772	
+Frontend Flutter Analyze & Build Check	pass	1m42s	https://github.com/Diegoromerov/belleza-app/actions/runs/40119059850/job/120946427667	
+Lint & Type Check	pass	19s	https://github.com/Diegoromerov/belleza-app/actions/runs/40119059880/job/120946427485	
+OBS - Auditor Observabilidad y Rendimiento	pass	10s	https://github.com/Diegoromerov/belleza-app/actions/runs/40119059781/job/120946503737	
+ORQ - Consolidar Hallazgos	pass	8s	https://github.com/Diegoromerov/belleza-app/actions/runs/40119059781/job/120946748002	
+ORQ - Orquestador	pass	16s	https://github.com/Diegoromerov/belleza-app/actions/runs/40119059781/job/120946427215	
+REL - Auditor Release Flutter	pass	34s	https://github.com/Diegoromerov/belleza-app/actions/runs/40119059781/job/120946503622	
+SEC - Auditor Secretos	pass	40s	https://github.com/Diegoromerov/belleza-app/actions/runs/40119059781/job/120946503688	
+SUP - Auditor Supply Chain y Repo	pass	1m1s	https://github.com/Diegoromerov/belleza-app/actions/runs/40119059781/job/120946503673	
+Unit Tests (Core)	pass	1m14s	https://github.com/Diegoromerov/belleza-app/actions/runs/40119059880/job/120946427822	
+Deploy Gate	skipping	0	https://github.com/Diegoromerov/belleza-app/actions/runs/40119059880/job/120946725338	
+Integration Tests (RAG Pipeline)	skipping	0	https://github.com/Diegoromerov/belleza-app/actions/runs/40119059880/job/120946725061	
+Update Baseline Metrics	skipping	0	https://github.com/Diegoromerov/belleza-app/actions/runs/40119059880/job/120946725247	
+grateful-harmony - belleza-app	pass	0	https://railway.com/project/8bddaae9-72df-486b-ba86-e5f218aba74d/service/70a01ad0-27d4-4864-8ac4-1983c75e0eec?id=4311c2f0-617c-44e5-beba-a428babed75d&environmentId=650205d2-1481-43a4-9ed8-776d34ed55d4	Success - belleza-app-belleza-app-pr-64.up.railway.app

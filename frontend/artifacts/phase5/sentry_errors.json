@@ -1,0 +1,6 @@
+﻿{
+  "status": "blocked",
+  "step": "8 sentry staging",
+  "reason": "Falta SENTRY_TOKEN, ORG y PROJECT. No se consultó la API.",
+  "executed": false
+}

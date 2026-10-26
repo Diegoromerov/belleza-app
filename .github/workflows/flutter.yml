@@ -1,0 +1,23 @@
+name: Flutter CI
+
+on:
+  push:
+    branches: [ main, feature/firebase-full-integration ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Run tests
+        run: flutter test
+      - name: Analyze code
+        run: flutter analyze

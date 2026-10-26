@@ -1,0 +1,6 @@
+﻿{
+  "status": "blocked",
+  "step": "13 sentry production",
+  "reason": "Fase no liberada; falta SENTRY_TOKEN/ORG/PROJECT.",
+  "executed": false
+}

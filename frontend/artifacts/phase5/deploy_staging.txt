@@ -1,0 +1,5 @@
+﻿STATUS=BLOCKED
+STEP=5 Deploy a staging
+REASON=firebase CLI no está instalado, no existe firebase.json ni .firebaserc, y no hay PROJECT_ID ni credenciales.
+DETAIL=No se ejecutó ''firebase deploy''. No se inventa ''Deploy complete''.
+REQUIRED_INPUTS=firebase-tools + firebase.json + .firebaserc + login/token + hosting target de staging

@@ -1,0 +1,276 @@
+00:00 +0: loading C:/beauty-app/frontend/test/android_permissions_manifest_test.dart
+00:00 +0: C:/beauty-app/frontend/test/android_permissions_manifest_test.dart: el manifiesto principal declara los permisos peligrosos
+00:00 +1: C:/beauty-app/frontend/test/android_permissions_manifest_test.dart: FIX-FLUTTER-02: cada permiso peligroso tiene android:description
+00:00 +2: C:/beauty-app/frontend/test/android_permissions_manifest_test.dart: FIX-FLUTTER-02: strings.xml define cada android:description referenciado
+00:01 +3: C:/beauty-app/frontend/test/aura_welcome_screen_test.dart: AuraWelcomeScreen initializes without MissingPluginException
+00:02 +4: C:/beauty-app/frontend/test/aura_welcome_screen_test.dart: AuraWelcomeScreen initializes without MissingPluginException
+00:02 +5: C:/beauty-app/frontend/test/aura_welcome_screen_test.dart: AuraWelcomeScreen initializes without MissingPluginException
+00:02 +6: C:/beauty-app/frontend/test/aura_welcome_screen_test.dart: AuraWelcomeScreen initializes without MissingPluginException
+00:02 +7: C:/beauty-app/frontend/test/aura_welcome_screen_test.dart: AuraWelcomeScreen initializes without MissingPluginException
+00:03 +8: C:/beauty-app/frontend/test/chat_reply_delivery_test.dart: ReplyReconciler — Guardián unitario de entrega de respuestas de AURA (a) consulta de inmediato al arrancar y luego cada 4 s
+00:03 +9: C:/beauty-app/frontend/test/chat_reply_delivery_test.dart: ReplyReconciler — Guardián unitario de entrega de respuestas de AURA (b) se detiene cuando el último mensaje es de AURA (sender_id == "0")
+00:03 +10: C:/beauty-app/frontend/test/chat_reply_delivery_test.dart: ReplyReconciler — Guardián unitario de entrega de respuestas de AURA (c) se detiene al recibir un push chat_message
+00:04 +11: C:/beauty-app/frontend/test/chat_reply_delivery_test.dart: ReplyReconciler — Guardián unitario de entrega de respuestas de AURA (d) se detiene automáticamente al vencer el límite de 90 s
+00:05 +12: C:/beauty-app/frontend/test/fcm_service_no_firebase_test.dart: el entorno de test no trae configuracion de Firebase
+00:05 +13: C:/beauty-app/frontend/test/fcm_service_no_firebase_test.dart: pedir FcmService.instance NO toca Firebase y no lanza
+00:05 +14: C:/beauty-app/frontend/test/fcm_service_no_firebase_test.dart: initialize() completa sin app de Firebase en vez de propagar [core/no-app]
+❌ FCM deshabilitado: Firebase no esta configurado en este build. Faltan: FIREBASE_API_KEY, FIREBASE_PROJECT_ID, FIREBASE_MESSAGING_SENDER_ID, appId de la plataforma.
+00:07 +15: C:/beauty-app/frontend/test/firebase_options_test.dart: faltantesDeConfiguracion una configuracion completa no reporta faltantes
+00:07 +16: C:/beauty-app/frontend/test/firebase_options_test.dart: faltantesDeConfiguracion reporta cada variable ausente por su nombre
+00:07 +17: C:/beauty-app/frontend/test/firebase_options_test.dart: faltantesDeConfiguracion detecta un unico faltante
+00:07 +18: C:/beauty-app/frontend/test/firebase_options_test.dart: build sin configuracion inyectada estaConfigurado es false y faltan variables
+00:07 +19: C:/beauty-app/frontend/test/firebase_options_test.dart: build sin configuracion inyectada pedir la configuracion lanza en vez de devolver valores falsos
+00:10 +20: C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart: (setUpAll)
+00:13 +20: C:/beauty-app/frontend/test/my_glow_dashboard_test.dart: MyGlowDashboardScreen initial render smoke test
+00:13 +21: C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart: Phase 5 Golden Tests (390x844) ProviderDetailScreen - Collapsed State
+00:14 +22: C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart: Phase 5 Golden Tests (390x844) ProviderDetailScreen - Collapsed State
+00:16 +23: C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart: Phase 5 Golden Tests (390x844) ProviderDetailScreen - Collapsed State
+00:16 +24: C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart: Phase 5 Golden Tests (390x844) ProviderDetailScreen - Collapsed State
+🔌 ApiService: Fallback automático a staging en https://belleza-app-production.up.railway.app
+📊 AnalyticsService: Evento encolado [VIEW_PROVIDER_PROFILE] en screen [/provider-detail]. Cola: 1
+00:16 +25: C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart: Phase 5 Golden Tests (390x844) ProviderDetailScreen - Expanded State
+📊 AnalyticsService: Evento encolado [VIEW_PROVIDER_PROFILE] en screen [/provider-detail]. Cola: 2
+00:17 +26: C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart: Phase 5 Golden Tests (390x844) BookingScreen - Step 1 (Cuándo y Dónde)
+⚠️  No hay token disponible para Authorization
+00:17 +27: C:/beauty-app/frontend/test/s4_text_field_test.dart: S4TextField renders
+00:19 +27: C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart: Phase 5 Golden Tests (390x844) BookingScreen - Step 2 (Productos)
+⚠️  No hay token disponible para Authorization
+
+Warning: A call to tap() with finder "Found 1 widget with text "09:00": [
+  Text("09:00", inherit: true, color: Color(alpha: 0.8667, red: 0.0000, green: 0.0000, blue: 0.0000, colorSpace: ColorSpace.sRGB), size: 13.0, weight: 700, decoration: TextDecoration.none, dependencies: [DefaultSelectionStyle, DefaultTextStyle, MediaQuery, _ScrollableScope]),
+]" derived an Offset (Offset(74.7, 694.2)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+The finder corresponds to this RenderBox: RenderParagraph#0df21 relayoutBoundary=up12
+The hit test result at that offset is: HitTestResult(_RenderInkFeatures#c0e54@Offset(74.7, 694.2), RenderPhysicalModel#6f6a4@Offset(74.7, 694.2), RenderCustomMultiChildLayoutBox#3edb6@Offset(74.7, 694.2), _RenderInkFeatures#47e16@Offset(74.7, 694.2), RenderPhysicalModel#f849f@Offset(74.7, 694.2), RenderSemanticsAnnotations#af164@Offset(74.7, 694.2), RenderRepaintBoundary#aa253@Offset(74.7, 694.2), RenderIgnorePointer#b7b43@Offset(74.7, 694.2), RenderAnimatedOpacity#a2057@Offset(74.7, 694.2), RenderAnimatedOpacity#12c9d@Offset(74.7, 694.2), _RenderColoredBox#95e50@Offset(74.7, 694.2), RenderAnimatedOpacity#92a01@Offset(74.7, 694.2), RenderIgnorePointer#240de@Offset(74.7, 694.2), RenderAnimatedOpacity#44abf@Offset(74.7, 694.2), RenderRepaintBoundary#e7652@Offset(74.7, 694.2), RenderSemanticsAnnotations#6be61@Offset(74.7, 694.2), RenderOffstage#28899@Offset(74.7, 694.2), RenderSemanticsAnnotations#4c912@Offset(74.7, 694.2), _RenderTheater#99618@Offset(74.7, 694.2), RenderAbsorbPointer#76a45@Offset(74.7, 694.2), RenderPointerListener#643a6@Offset(74.7, 694.2), RenderSemanticsAnnotations#b4478@Offset(74.7, 694.2), RenderCustomPaint#7a82b@Offset(74.7, 694.2), RenderSemanticsAnnotations#6bf0f@Offset(74.7, 694.2), RenderSemanticsAnnotations#4f7e0@Offset(74.7, 694.2), RenderSemanticsAnnotations#350b2@Offset(74.7, 694.2), RenderTapRegionSurface#5f22f@Offset(74.7, 694.2), RenderSemanticsAnnotations#f14bc@Offset(74.7, 694.2), RenderSemanticsAnnotations#aa9af@Offset(74.7, 694.2), HitTestEntry<HitTestTarget>#bcd61(_ReusableRenderView#48e7f), HitTestEntry<HitTestTarget>#2e9b0(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:2165:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1947:12)
+#2      WidgetController.tap (package:flutter_test/src/controller.dart:1080:7)
+#3      main.<anonymous closure>.completeStep1 (file:///C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart:333:22)
+<asynchronous suspension>
+#4      main.<anonymous closure>.<anonymous closure> (file:///C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart:405:7)
+<asynchronous suspension>
+#5      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#6      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1952:5)
+<asynchronous suspension>
+#7      StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "tap()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+00:19 +28: C:/beauty-app/frontend/test/s4_text_field_test.dart: S4TextField renders
+00:19 +29: C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart: Phase 5 Golden Tests (390x844) BookingScreen - Step 3 (Confirmación / Pago)
+⚠️  No hay token disponible para Authorization
+
+Warning: A call to tap() with finder "Found 1 widget with text "09:00": [
+  Text("09:00", inherit: true, color: Color(alpha: 0.8667, red: 0.0000, green: 0.0000, blue: 0.0000, colorSpace: ColorSpace.sRGB), size: 13.0, weight: 700, decoration: TextDecoration.none, dependencies: [DefaultSelectionStyle, DefaultTextStyle, MediaQuery, _ScrollableScope]),
+]" derived an Offset (Offset(74.7, 694.2)) that would not hit test on the specified widget.
+Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+The finder corresponds to this RenderBox: RenderParagraph#415ee relayoutBoundary=up12
+The hit test result at that offset is: HitTestResult(_RenderInkFeatures#62ef1@Offset(74.7, 694.2), RenderPhysicalModel#0432c@Offset(74.7, 694.2), RenderCustomMultiChildLayoutBox#62c52@Offset(74.7, 694.2), _RenderInkFeatures#42074@Offset(74.7, 694.2), RenderPhysicalModel#36472@Offset(74.7, 694.2), RenderSemanticsAnnotations#e2168@Offset(74.7, 694.2), RenderRepaintBoundary#21ddd@Offset(74.7, 694.2), RenderIgnorePointer#0ba94@Offset(74.7, 694.2), RenderAnimatedOpacity#9e112@Offset(74.7, 694.2), RenderAnimatedOpacity#6201c@Offset(74.7, 694.2), _RenderColoredBox#c41e9@Offset(74.7, 694.2), RenderAnimatedOpacity#d37b5@Offset(74.7, 694.2), RenderIgnorePointer#4de9d@Offset(74.7, 694.2), RenderAnimatedOpacity#8384b@Offset(74.7, 694.2), RenderRepaintBoundary#d760c@Offset(74.7, 694.2), RenderSemanticsAnnotations#6b900@Offset(74.7, 694.2), RenderOffstage#6f0f7@Offset(74.7, 694.2), RenderSemanticsAnnotations#a137d@Offset(74.7, 694.2), _RenderTheater#27eaf@Offset(74.7, 694.2), RenderAbsorbPointer#b8923@Offset(74.7, 694.2), RenderPointerListener#93e91@Offset(74.7, 694.2), RenderSemanticsAnnotations#0976d@Offset(74.7, 694.2), RenderCustomPaint#90fa4@Offset(74.7, 694.2), RenderSemanticsAnnotations#688b7@Offset(74.7, 694.2), RenderSemanticsAnnotations#208c7@Offset(74.7, 694.2), RenderSemanticsAnnotations#1f2c9@Offset(74.7, 694.2), RenderTapRegionSurface#b22d9@Offset(74.7, 694.2), RenderSemanticsAnnotations#22edb@Offset(74.7, 694.2), RenderSemanticsAnnotations#0dc9a@Offset(74.7, 694.2), HitTestEntry<HitTestTarget>#747b4(_ReusableRenderView#48e7f), HitTestEntry<HitTestTarget>#c0ee8(<AutomatedTestWidgetsFlutterBinding>))
+#0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:2165:25)
+#1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1947:12)
+#2      WidgetController.tap (package:flutter_test/src/controller.dart:1080:7)
+#3      main.<anonymous closure>.completeStep1 (file:///C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart:333:22)
+<asynchronous suspension>
+#4      main.<anonymous closure>.<anonymous closure> (file:///C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart:450:7)
+<asynchronous suspension>
+#5      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#6      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1952:5)
+<asynchronous suspension>
+#7      StackZoneSpecification._registerCallback.<anonymous closure> (package:stack_trace/src/stack_zone_specification.dart:114:42)
+<asynchronous suspension>
+To silence this warning, pass "warnIfMissed: false" to "tap()".
+To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+
+00:19 +30: C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart: Phase 5 Golden Tests (390x844) Sticky Summary - Empty State Golden
+⚠️  No hay token disponible para Authorization
+00:20 +31: C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart: Phase 5 Golden Tests (390x844) Sticky Summary - With Product Added Golden
+⚠️  No hay token disponible para Authorization
+00:20 +32: C:/beauty-app/frontend/test/saas/saas_models_test.dart: SaasPlanTier — catálogo real precios COP coinciden con invoiceService.getPlanPrice (en centavos)
+00:20 +33: C:/beauty-app/frontend/test/golden/phase5_goldens_test.dart: (tearDownAll)
+00:20 +33: C:/beauty-app/frontend/test/saas/saas_models_test.dart: SaasPlanTier — catálogo real formattedPrice usa separador de miles y COP/mes
+00:20 +34: C:/beauty-app/frontend/test/saas/saas_models_test.dart: SaasPlanTier — catálogo real límites espejo de PLAN_LIMITS
+00:20 +35: C:/beauty-app/frontend/test/saas/saas_models_test.dart: SaasPlanTier — catálogo real solo BASIC/PRO/ENTERPRISE pasan por checkout
+00:20 +36: C:/beauty-app/frontend/test/saas/saas_models_test.dart: Subscription.fromJson — shape backend parsea plan/periodStart/periodEnd en camelCase
+00:20 +37: C:/beauty-app/frontend/test/saas/saas_models_test.dart: Subscription.fromJson — shape backend sin trial no reporta días de prueba
+00:20 +38: C:/beauty-app/frontend/test/saas/saas_models_test.dart: Invoice.fromJson — totales en pesos total en pesos se convierte a centavos y se formatea
+00:20 +39: C:/beauty-app/frontend/test/saas/saas_models_test.dart: Invoice.fromJson — totales en pesos status OPEN no se confunde con pagada
+00:20 +40: C:/beauty-app/frontend/test/saas/saas_models_test.dart: UsageSummary.fromJson — shape backend expone las métricas por feature
+00:20 +41: C:/beauty-app/frontend/test/saas/saas_models_test.dart: UsageSummary.fromJson — shape backend "unlimited" se traduce a límite 0 y progreso 0
+00:20 +42: C:/beauty-app/frontend/test/saas/saas_models_test.dart: UsageSummary.fromJson — shape backend sin consumo no inventa métricas
+00:20 +43: C:/beauty-app/frontend/test/saas/saas_models_test.dart: ApiKey.fromJson — prefijo y key cruda lista: camelCase keyPrefix, sin key completa
+00:20 +44: C:/beauty-app/frontend/test/saas/saas_models_test.dart: ApiKey.fromJson — prefijo y key cruda creación: la key completa queda en rawKey
+00:20 +45: C:/beauty-app/frontend/test/saas/saas_models_test.dart: ApiKey.fromJson — prefijo y key cruda revocada por revokedAt
+00:20 +46: C:/beauty-app/frontend/test/saas/saas_models_test.dart: ApiKey.fromJson — prefijo y key cruda CreateApiKeyRequest envía expiresInDays en camelCase
+00:20 +47: C:/beauty-app/frontend/test/saas/saas_models_test.dart: TeamMember.fromJson — status del backend ACTIVE se mapea a aceptado y OWNER a propietario
+00:20 +48: C:/beauty-app/frontend/test/saas/saas_models_test.dart: TeamMember.fromJson — status del backend PENDING se mapea a invitación pendiente
+00:20 +49: C:/beauty-app/frontend/test/saas/saas_models_test.dart: UsageAlert — severidad derivada por encima del 100% es crítica, por debajo es aviso
+00:22 +50: C:/beauty-app/frontend/test/saas/saas_screens_smoke_test.dart: BillingScreen renderiza plan, facturas y métodos de pago
+00:23 +51: C:/beauty-app/frontend/test/screens/booking_screen_overflow_test.dart: la cabecera del calendario no desborda a 390 dp (RenderFlex overflow check)
+00:23 +52: C:/beauty-app/frontend/test/screens/booking_screen_overflow_test.dart: la cabecera del calendario no desborda a 390 dp (RenderFlex overflow check)
+00:23 +53: C:/beauty-app/frontend/test/screens/booking_screen_overflow_test.dart: la cabecera del calendario no desborda a 390 dp (RenderFlex overflow check)
+🔌 ApiService: Fallback automático a staging en https://belleza-app-production.up.railway.app
+🔌 ApiService: Fallback automático a staging en https://belleza-app-production.up.railway.app
+⚠️  No hay token disponible para Authorization
+Error loading slots (usando fallback): FormatException: Unexpected end of input (at character 1)
+
+^
+
+Error loading products (usando fallback): Exception: Error al obtener productos
+00:24 +54: C:/beauty-app/frontend/test/screens/booking_screen_overflow_test.dart: (tearDownAll)
+00:25 +54: C:/beauty-app/frontend/test/screens/booking_screen_test.dart: (setUpAll)
+00:25 +54: C:/beauty-app/frontend/test/screens/booking_screen_test.dart: Flujo de pasos con sticky summary y verificación de selección de producto
+🔌 ApiService: Fallback automático a staging en https://belleza-app-production.up.railway.app
+🔌 ApiService: Fallback automático a staging en https://belleza-app-production.up.railway.app
+⚠️  No hay token disponible para Authorization
+00:27 +55: C:/beauty-app/frontend/test/screens/gate3_business_no_fabricado_test.dart: Gate 3 — Business Center sin datos inventados backend caído: informa el fallo y no pinta ningún negocio
+00:27 +55: C:/beauty-app/frontend/test/screens/booking_screen_test.dart: Sticky summary color token matches AppTokens.stickySummaryBg
+⚠️  No hay token disponible para Authorization
+00:27 +56: C:/beauty-app/frontend/test/screens/gate3_business_no_fabricado_test.dart: Gate 3 — Business Center sin datos inventados backend caído: informa el fallo y no pinta ningún negocio
+00:28 +57: C:/beauty-app/frontend/test/screens/gate3_business_no_fabricado_test.dart: Gate 3 — Business Center sin datos inventados sin expediente (404): lo dice y ofrece el diagnóstico
+00:28 +58: C:/beauty-app/frontend/test/screens/gate3_business_no_fabricado_test.dart: Gate 3 — Business Center sin datos inventados con datos del servidor: pinta LOS del servidor, no otros
+00:28 +59: C:/beauty-app/frontend/test/screens/gate3_business_no_fabricado_test.dart: Gate 3 — Business Center sin datos inventados detalle de tarea sin tarea recibida: no inventa un trámite
+00:28 +60: C:/beauty-app/frontend/test/screens/gate3_business_no_fabricado_test.dart: Gate 3 — Business Center sin datos inventados detalle de tarea con tarea real: pinta SUS datos
+00:28 +61: C:/beauty-app/frontend/test/screens/owner_dashboard_screen_test.dart: Owner Dashboard Metrics & Widget Tests OwnerDashboardMetrics.fromJson valida contrato estricto del backend
+00:28 +62: C:/beauty-app/frontend/test/screens/owner_dashboard_screen_test.dart: Owner Dashboard Metrics & Widget Tests Renderiza adecuadamente las tarjetas y el banner cross-tenant en OwnerDashboardScreen
+00:30 +63: C:/beauty-app/frontend/test/screens/owner_dashboard_screen_test.dart: Owner Dashboard Metrics & Widget Tests Oculta el banner cross-tenant cuando prestadores_cross_tenant es false
+00:30 +64: C:/beauty-app/frontend/test/security/token_storage_xss_guard_test.dart: FIX-FLUTTER-03 · El JWT nunca se persiste en SharedPreferences/localStorage Ningún archivo de lib/ escribe o lee el token vía SharedPreferences
+00:30 +65: C:/beauty-app/frontend/test/security/token_storage_xss_guard_test.dart: FIX-FLUTTER-03 · El JWT nunca se persiste en SharedPreferences/localStorage auth_service.dart lee el token únicamente desde SecureStorageService
+00:30 +66: C:/beauty-app/frontend/test/security/token_storage_xss_guard_test.dart: FIX-FLUTTER-03 · El JWT nunca se persiste en SharedPreferences/localStorage api_service.dart lee el token desde SecureStorageService (sin fallback)
+00:30 +67: C:/beauty-app/frontend/test/security/token_storage_xss_guard_test.dart: FIX-FLUTTER-03 · El JWT nunca se persiste en SharedPreferences/localStorage No sobrevive ningún fallback explícito a SharedPreferences para el token
+00:31 +68: C:/beauty-app/frontend/test/services/active_salon_service_test.dart: ActiveSalonService Tests Normalización estricta de activeSalonId
+00:31 +69: C:/beauty-app/frontend/test/services/active_salon_service_test.dart: ActiveSalonService Tests setActiveSalon persiste y notifica listeners
+00:31 +70: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: ApiService.isRetryableError marca como reintentables los errores 5xx del servidor
+00:32 +71: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: ApiService.isRetryableError marca como reintentables los fallos de red y de timeout
+00:32 +72: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: ApiService.isRetryableError NO marca como reintentables los errores de cliente 4xx
+00:32 +73: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: ApiService.runWithRetry — backoff exponencial reintenta un fallo transitorio y devuelve el resultado
+🔁 ApiService: reintento 1/3 en 400ms
+🔁 ApiService: reintento 2/3 en 800ms
+00:32 +74: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: ApiService.runWithRetry — backoff exponencial NO reintenta errores no reintentables (4xx) y los propaga
+00:32 +75: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: ApiService.runWithRetry — backoff exponencial agota el presupuesto de reintentos y propaga el último error
+🔁 ApiService: reintento 1/3 en 400ms
+🔁 ApiService: reintento 2/3 en 800ms
+🔁 ApiService: reintento 3/3 en 1600ms
+00:32 +76: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: ApiService.runWithRetry — backoff exponencial no ejecuta la petición cuando no hay conectividad
+🔁 ApiService: reintento 1/3 en 400ms
+🔁 ApiService: reintento 2/3 en 800ms
+🔁 ApiService: reintento 3/3 en 1600ms
+00:32 +77: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: ApiService.runWithRetry — backoff exponencial reanuda la petición cuando vuelve la conectividad
+🔁 ApiService: reintento 1/3 en 400ms
+🔁 ApiService: reintento 2/3 en 800ms
+00:32 +78: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: ConnectivityService reporta conectado cuando el sondeo tiene éxito
+00:32 +79: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: ConnectivityService reporta desconectado cuando el sondeo falla
+📴 ConnectivityService: sin conexión detectada
+00:32 +80: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: ConnectivityService reporta desconectado ante errores inesperados del sondeo
+📴 ConnectivityService: sin conexión detectada
+00:32 +81: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: Configuración de resiliencia centraliza timeout y política de reintentos
+00:32 +82: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: Configuración de resiliencia POST falla rápido con OfflineException cuando no hay red
+📴 ConnectivityService: sin conexión detectada
+00:32 +83: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: Configuración de resiliencia GET falla rápido con OfflineException cuando no hay red
+📴 ConnectivityService: sin conexión detectada
+🔁 ApiService: reintento 1/3 en 400ms
+🔁 ApiService: reintento 2/3 en 800ms
+00:33 +83: C:/beauty-app/frontend/test/services/api_service_header_test.dart: ApiService Header Injection & SwitchSalon Tests Inyecta la cabecera x-active-salon-id si hay sede activa válida
+🔌 ApiService: Fallback automático a staging en https://belleza-app-production.up.railway.app
+⚠️  No hay token disponible para Authorization
+00:33 +84: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: Configuración de resiliencia GET falla rápido con OfflineException cuando no hay red
+00:33 +84: C:/beauty-app/frontend/test/services/api_service_header_test.dart: ApiService Header Injection & SwitchSalon Tests Omite la cabecera x-active-salon-id si activeSalonId es nulo o normalizado a nulo
+⚠️  No hay token disponible para Authorization
+⚠️  No hay token disponible para Authorization
+00:33 +85: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: Configuración de resiliencia GET falla rápido con OfflineException cuando no hay red
+00:33 +86: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: Configuración de resiliencia GET falla rápido con OfflineException cuando no hay red
+00:33 +87: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: Configuración de resiliencia GET falla rápido con OfflineException cuando no hay red
+00:33 +88: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: Configuración de resiliencia GET falla rápido con OfflineException cuando no hay red
+00:33 +89: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: Configuración de resiliencia GET falla rápido con OfflineException cuando no hay red
+🔁 ApiService: reintento 3/3 en 1600ms
+00:34 +90: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: Configuración de resiliencia GET falla rápido con OfflineException cuando no hay red
+00:34 +91: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: Configuración de resiliencia GET falla rápido con OfflineException cuando no hay red
+00:34 +92: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: Configuración de resiliencia GET falla rápido con OfflineException cuando no hay red
+00:34 +93: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: Configuración de resiliencia GET falla rápido con OfflineException cuando no hay red
+00:34 +94: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: Configuración de resiliencia GET falla rápido con OfflineException cuando no hay red
+00:34 +95: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: Configuración de resiliencia GET falla rápido con OfflineException cuando no hay red
+00:34 +96: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: Configuración de resiliencia GET falla rápido con OfflineException cuando no hay red
+00:34 +97: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: Configuración de resiliencia GET falla rápido con OfflineException cuando no hay red
+00:34 +98: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: Configuración de resiliencia GET falla rápido con OfflineException cuando no hay red
+00:34 +99: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: Configuración de resiliencia GET falla rápido con OfflineException cuando no hay red
+00:34 +100: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: Configuración de resiliencia GET falla rápido con OfflineException cuando no hay red
+00:34 +101: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: Configuración de resiliencia GET falla rápido con OfflineException cuando no hay red
+00:34 +102: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: Configuración de resiliencia GET falla rápido con OfflineException cuando no hay red
+00:34 +103: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: Configuración de resiliencia GET falla rápido con OfflineException cuando no hay red
+00:34 +104: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: Configuración de resiliencia GET falla rápido con OfflineException cuando no hay red
+00:34 +105: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: Configuración de resiliencia GET falla rápido con OfflineException cuando no hay red
+00:34 +106: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: Configuración de resiliencia GET falla rápido con OfflineException cuando no hay red
+00:34 +107: C:/beauty-app/frontend/test/services/api_retry_connectivity_test.dart: Configuración de resiliencia GET falla rápido con OfflineException cuando no hay red
+00:36 +108: C:/beauty-app/frontend/test/services/biometric_consent_state_test.dart: BiometricConsentState — permiso concedido con el texto vigente autorizado con la versión actual puede medir
+00:36 +109: C:/beauty-app/frontend/test/services/biometric_consent_state_test.dart: BiometricConsentState — permiso de una versión anterior autorizado con 2.0 necesita re-consentimiento y no puede medir
+00:36 +110: C:/beauty-app/frontend/test/services/biometric_consent_state_test.dart: BiometricConsentState — permiso de una versión anterior la versión vigente llega del backend cuando viene
+00:36 +111: C:/beauty-app/frontend/test/services/biometric_consent_state_test.dart: BiometricConsentState — casos límite sin permiso: ni mide ni pide re-consentimiento (pide consentimiento)
+00:36 +112: C:/beauty-app/frontend/test/services/biometric_consent_state_test.dart: BiometricConsentState — casos límite sin current_version usa la constante del cliente, no un texto vacío
+00:36 +113: C:/beauty-app/frontend/test/services/biometric_consent_state_test.dart: BiometricConsentState — casos límite respuesta incompleta no se toma por permiso
+00:36 +114: C:/beauty-app/frontend/test/services/biometric_consent_state_test.dart: BiometricConsentState — casos límite estado desconocido: se declara desconocido, no «sin permiso»
+00:36 +115: C:/beauty-app/frontend/test/services/biometric_consent_state_test.dart: paridad con el backend la versión del cliente es la vigente del servidor (2.2)
+00:37 +116: C:/beauty-app/frontend/test/services/crash_reporting_service_test.dart: CrashReportingService entrega el crash inmediatamente: un único evento, sin umbral de 10 ni espera del timer de 10s
+00:37 +117: C:/beauty-app/frontend/test/services/crash_reporting_service_test.dart: CrashReportingService incluye X-Trace-Id == correlation_id para correlacionar con el backend
+00:37 +118: C:/beauty-app/frontend/test/services/crash_reporting_service_test.dart: CrashReportingService el payload lleva tipo de crash, error, stack y session_id
+00:37 +119: C:/beauty-app/frontend/test/services/crash_reporting_service_test.dart: CrashReportingService persiste el crash ante fallo de red y lo reenvía tras reinicio conservando el correlation_id original
+🛑 CrashReportingService: envío falló (503); se reintentará
+00:37 +120: C:/beauty-app/frontend/test/services/crash_reporting_service_test.dart: CrashReportingService un crash operativo se reporta aunque la telemetría esté desactivada (no es un evento de producto)
+00:37 +121: C:/beauty-app/frontend/test/services/crash_reporting_wiring_test.dart: FIX-FLUTTER-07 — crash reporting con correlación backend existe CrashReportingService con correlación (X-Trace-Id / correlation_id)
+00:37 +122: C:/beauty-app/frontend/test/services/crash_reporting_wiring_test.dart: FIX-FLUTTER-07 — crash reporting con correlación backend main.dart delega los handlers de crash en CrashReportingService
+00:37 +123: C:/beauty-app/frontend/test/services/crash_reporting_wiring_test.dart: FIX-FLUTTER-07 — crash reporting con correlación backend el bloque de crash de main.dart ya no encola sólo en AnalyticsService
+00:38 +124: C:/beauty-app/frontend/test/superadmin/superadmin_screens_smoke_test.dart: TenantsScreen pinta la lista y la paginación
+00:40 +125: C:/beauty-app/frontend/test/superadmin/superadmin_screens_smoke_test.dart: TenantsScreen pinta la lista y la paginación
+00:40 +126: C:/beauty-app/frontend/test/superadmin/superadmin_screens_smoke_test.dart: TenantsScreen distingue un tenant sin suscripción
+00:40 +127: C:/beauty-app/frontend/test/superadmin/superadmin_screens_smoke_test.dart: RevenueScreen muestra ingresos y pendientes
+00:40 +128: C:/beauty-app/frontend/test/superadmin/superadmin_screens_smoke_test.dart: UsageScreen muestra el exceso de límite
+00:40 +129: C:/beauty-app/frontend/test/superadmin/superadmin_screens_smoke_test.dart: PlansScreen reparte tenants por plan con su precio
+00:40 +130: C:/beauty-app/frontend/test/superadmin/superadmin_screens_smoke_test.dart: SuperAdminScreen monta el rail y no pide nada al usuario
+00:41 +131: C:/beauty-app/frontend/test/superadmin/superadmin_screens_smoke_test.dart: SuperAdminScreen monta el rail y no pide nada al usuario
+00:41 +132: C:/beauty-app/frontend/test/superadmin/superadmin_screens_smoke_test.dart: SuperAdminScreen monta el rail y no pide nada al usuario
+00:41 +133: C:/beauty-app/frontend/test/superadmin/superadmin_screens_smoke_test.dart: SuperAdminScreen monta el rail y no pide nada al usuario
+00:41 +134: C:/beauty-app/frontend/test/superadmin/superadmin_screens_smoke_test.dart: SuperAdminScreen monta el rail y no pide nada al usuario
+00:41 +135: C:/beauty-app/frontend/test/superadmin/superadmin_screens_smoke_test.dart: SuperAdminScreen monta el rail y no pide nada al usuario
+📴 ConnectivityService: sin conexión detectada
+🔁 ApiService: reintento 1/3 en 400ms
+📴 ConnectivityService: sin conexión detectada
+🔁 ApiService: reintento 1/3 en 400ms
+📴 ConnectivityService: sin conexión detectada
+🔁 ApiService: reintento 1/3 en 400ms
+🔁 ApiService: reintento 2/3 en 800ms
+🔁 ApiService: reintento 2/3 en 800ms
+🔁 ApiService: reintento 2/3 en 800ms
+🔁 ApiService: reintento 3/3 en 1600ms
+🔁 ApiService: reintento 3/3 en 1600ms
+🔁 ApiService: reintento 3/3 en 1600ms
+❌ SuperAdminApiService.getTenants: OfflineException: Sin conexión a internet
+❌ SuperAdminApiService.getRevenue: OfflineException: Sin conexión a internet
+❌ SuperAdminApiService.getUsage: OfflineException: Sin conexión a internet
+00:41 +136: C:/beauty-app/frontend/test/superadmin/superadmin_screens_smoke_test.dart: SuperAdminScreen bloquea a quien no es SuperAdmin (403)
+00:42 +137: C:/beauty-app/frontend/test/wcag_contrast_test.dart: WCAG 2.1 Accessibility & Color Contrast Tests Primary body text on background satisfies WCAG AA (>= 4.5:1)
+00:42 +138: C:/beauty-app/frontend/test/wcag_contrast_test.dart: WCAG 2.1 Accessibility & Color Contrast Tests Primary body text on surface satisfies WCAG AA (>= 4.5:1)
+00:42 +139: C:/beauty-app/frontend/test/wcag_contrast_test.dart: WCAG 2.1 Accessibility & Color Contrast Tests White text over ProviderDetail header dark overlay satisfies WCAG AA (>= 4.5:1)
+00:42 +140: C:/beauty-app/frontend/test/wcag_contrast_test.dart: WCAG 2.1 Accessibility & Color Contrast Tests Success state text on success background satisfies WCAG AA (>= 4.5:1)
+00:42 +141: C:/beauty-app/frontend/test/wcag_contrast_test.dart: WCAG 2.1 Accessibility & Color Contrast Tests Error state text on error background satisfies WCAG AA (>= 4.5:1)
+00:42 +142: C:/beauty-app/frontend/test/wcag_contrast_test.dart: WCAG 2.1 Accessibility & Color Contrast Tests Warning state text on warning background satisfies comfortable margin (>= 4.8:1)
+00:43 +143: C:/beauty-app/frontend/test/widgets/cross_tenant_warning_banner_test.dart: CrossTenantWarningBanner Widget Tests Muestra el banner cuando isCrossTenant es true con advertencia y colaboradores
+00:43 +144: C:/beauty-app/frontend/test/widgets/cross_tenant_warning_banner_test.dart: CrossTenantWarningBanner Widget Tests Oculta el banner cuando isCrossTenant es false
+00:44 +145: C:/beauty-app/frontend/test/widgets/forced_update_dialog_test.dart: showForcedUpdateDialog — bloqueo real muestra la versión instalada, la mínima y el CTA
+00:46 +146: C:/beauty-app/frontend/test/widgets/forced_update_dialog_test.dart: showForcedUpdateDialog — bloqueo real NO se descarta tocando fuera del diálogo (barrier)
+00:46 +147: C:/beauty-app/frontend/test/widgets/forced_update_dialog_test.dart: showForcedUpdateDialog — bloqueo real NO se descarta con el botón atrás del sistema
+00:47 +148: C:/beauty-app/frontend/test/widgets/forced_update_dialog_test.dart: showForcedUpdateDialog — bloqueo real el CTA invoca el callback de actualización inyectado
+00:47 +149: C:/beauty-app/frontend/test/widgets/forced_update_dialog_test.dart: AppUpdateGate — chequeo en arranque bloquea mostrando el diálogo cuando hay update forzado
+00:47 +150: C:/beauty-app/frontend/test/widgets/forced_update_dialog_test.dart: AppUpdateGate — chequeo en arranque no molesta al usuario cuando la app está al día
+00:47 +151: C:/beauty-app/frontend/test/widgets/forced_update_dialog_test.dart: AppUpdateGate — chequeo en arranque fail-open: si el chequeo lanza, la app sigue usable
+00:48 +152: C:/beauty-app/frontend/test/widget_test.dart: BeautyApp carga correctamente
+  [1m[flutter_map][0m
+    We want to help keep OpenStreetMap available for everyone. Our examples
+    and demo app use the public tile servers, but they are NOT free to use by
+    everyone! Please review whether the OpenStreetMap tile servers are suitable
+    for your project.
+    See:
+      * https://operations.osmfoundation.org/policies/tiles (OSM Tile Usage Policy)
+      * https://docs.fleaflet.dev/osm-warn for more information about this warning
+🔌 ApiService: Fallback automático a staging en https://belleza-app-production.up.railway.app
+00:50 +153: All tests passed!

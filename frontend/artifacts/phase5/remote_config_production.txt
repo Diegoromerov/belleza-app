@@ -1,0 +1,4 @@
+﻿STATUS=BLOCKED
+STEP=9 Activar newSalonNavigation en producción
+REASON=Staging no fue desplegado ni validado; además faltan PROJECT_ID y TOKEN.
+DETAIL=No se ejecutó ninguna llamada HTTP ni se modificó Remote Config de producción.
