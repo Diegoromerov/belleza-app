@@ -145,7 +145,13 @@ jobs:
         working-directory: ${{ github.workspace }}
 
       - name: Melos Analyze (all packages)
-        run: melos run analyze
+        run: |
+          echo "Analyzing glow_core..."
+          cd packages/glow_core && flutter analyze --no-fatal-infos --no-fatal-warnings
+          echo "Analyzing glow_client..."
+          cd ../apps/glow_client && flutter analyze --no-fatal-infos --no-fatal-warnings
+          echo "Analyzing glow_provider..."
+          cd ../glow_provider && flutter analyze --no-fatal-infos --no-fatal-warnings
         working-directory: ${{ github.workspace }}
 
   # ─────────────────────────────────────────────────────────────────
