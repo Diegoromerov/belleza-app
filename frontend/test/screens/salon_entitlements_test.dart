@@ -31,6 +31,35 @@ void main() {
     expect(find.textContaining('Todavía no hay equipo'), findsNothing);
   });
 
+  testWidgets('sin CUSTOM_BRANDING, las API keys llevan a planes y lo dicen',
+      (tester) async {
+    await tester.pumpWidget(_app(entitlements: const ['TEAM_MANAGEMENT']));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Más'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('API keys'), findsOneWidget);
+    expect(
+      find.textContaining('Requiere un plan con integraciones'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('con CUSTOM_BRANDING, las API keys abren la pantalla normal',
+      (tester) async {
+    await tester.pumpWidget(
+      _app(entitlements: const ['TEAM_MANAGEMENT', 'CUSTOM_BRANDING'], plan: 'PRO'),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Más'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('API keys'), findsOneWidget);
+    expect(find.textContaining('Requiere un plan con integraciones'), findsNothing);
+  });
+
   testWidgets('con TEAM_MANAGEMENT, Equipo se abre y no hay bloqueo',
       (tester) async {
     await tester.pumpWidget(
