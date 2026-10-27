@@ -228,6 +228,12 @@
       "rootUri": "file:///C:/Users/Compu%20casa/belleza-app-audit/apps/glow_client",
       "packageUri": "lib/",
       "languageVersion": "3.0"
+    },
+    {
+      "name": "glow_provider",
+      "rootUri": "file:///C:/Users/Compu%20casa/belleza-app-audit/apps/glow_provider",
+      "packageUri": "lib/",
+      "languageVersion": "3.12"
     }
   ],
   "generator": "pub",
