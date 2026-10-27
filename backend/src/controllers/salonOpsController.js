@@ -103,12 +103,19 @@ function crearControladorOps(db = pool) {
     }
 
     try {
-      const { rows: salonRows } = await db.query(
-        `SELECT tenant_id FROM salones WHERE id = $1`,
+      // Inquilino desde el perfil de negocio (fuente única, D-GL-027).
+      // `salones.tenant_id` es legado y puede ser NULL: usarlo producía un
+      // INSERT con NULL en una columna NOT NULL.
+      const { rows: perfilRows } = await db.query(
+        `SELECT tenant_id FROM business_profiles
+          WHERE id = left('salon-' || $1::text, 36)`,
         [req.salonId]
       );
-      if (salonRows.length === 0) {
-        return res.status(404).json({ error: 'El salón no existe.' });
+      if (perfilRows.length === 0) {
+        return res.status(409).json({
+          error: 'El salón no tiene identidad provisionada (business_profiles).',
+          salon_id: Number(req.salonId),
+        });
       }
 
       const { rows } = await db.query(
@@ -118,7 +125,7 @@ function crearControladorOps(db = pool) {
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
          RETURNING id, nombre, categoria, unidad, stock_actual, stock_minimo, costo_unitario`,
         [
-          salonRows[0].tenant_id, req.salonId, String(nombre).trim(), categoriaNorm,
+          perfilRows[0].tenant_id, req.salonId, String(nombre).trim(), categoriaNorm,
           String(unidad || 'UNIDAD').toUpperCase(), inicial, minimo, costo,
           proveedor || null,
         ]
@@ -292,19 +299,26 @@ function crearControladorOps(db = pool) {
     }
 
     try {
-      const { rows: salonRows } = await db.query(
-        `SELECT tenant_id FROM salones WHERE id = $1`,
+      // Inquilino desde el perfil de negocio (fuente única, D-GL-027).
+      // `salones.tenant_id` es legado y puede ser NULL: usarlo producía un
+      // INSERT con NULL en una columna NOT NULL.
+      const { rows: perfilRows } = await db.query(
+        `SELECT tenant_id FROM business_profiles
+          WHERE id = left('salon-' || $1::text, 36)`,
         [req.salonId]
       );
-      if (salonRows.length === 0) {
-        return res.status(404).json({ error: 'El salón no existe.' });
+      if (perfilRows.length === 0) {
+        return res.status(409).json({
+          error: 'El salón no tiene identidad provisionada (business_profiles).',
+          salon_id: Number(req.salonId),
+        });
       }
 
       const { rows } = await db.query(
         `INSERT INTO recursos_alquilables (tenant_id, salon_id, nombre, tipo, canon_mensual)
          VALUES ($1, $2, $3, $4, $5)
          RETURNING id, nombre, tipo, canon_mensual, estado`,
-        [salonRows[0].tenant_id, req.salonId, String(nombre).trim(), tipoNorm, canon]
+        [perfilRows[0].tenant_id, req.salonId, String(nombre).trim(), tipoNorm, canon]
       );
 
       return res.status(201).json({

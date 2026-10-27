@@ -220,12 +220,20 @@ function crearControladorCaja(db = pool) {
     }
 
     try {
-      const { rows: salonRows } = await db.query(
-        `SELECT tenant_id FROM salones WHERE id = $1`,
+      // El inquilino sale del perfil de negocio, que es la fuente única
+      // (D-GL-027). `salones.tenant_id` es legado y puede estar en NULL: leerlo
+      // dejaba la caja en 500 con salones reales, porque el INSERT recibía NULL
+      // en una columna NOT NULL.
+      const { rows: perfilRows } = await db.query(
+        `SELECT tenant_id FROM business_profiles
+          WHERE id = left('salon-' || $1::text, 36)`,
         [req.salonId]
       );
-      if (salonRows.length === 0) {
-        return res.status(404).json({ error: 'El salón no existe.' });
+      if (perfilRows.length === 0) {
+        return res.status(409).json({
+          error: 'El salón no tiene identidad provisionada (business_profiles).',
+          salon_id: Number(req.salonId),
+        });
       }
 
       const constancia = nuevaConstancia(req.salonId);
@@ -236,7 +244,7 @@ function crearControladorCaja(db = pool) {
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, COALESCE($12::timestamptz, NOW()))
          RETURNING id, tipo, concepto, monto, metodo_pago, constancia_ref, fecha_movimiento`,
         [
-          salonRows[0].tenant_id, req.salonId, tipoNorm, conceptoNorm,
+          perfilRows[0].tenant_id, req.salonId, tipoNorm, conceptoNorm,
           descripcion || null, montoNum, metodoNorm,
           personaId || null, bookingId || null, constancia, req.user.id,
           fecha || null,
