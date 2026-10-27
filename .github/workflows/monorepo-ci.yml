@@ -210,11 +210,11 @@ jobs:
           path: apps/glow_client/build/web/
           retention-days: 7
 
-      - name: Setup JDK 17 (for Android build)
+      - name: Setup JDK 11 (for Android build)
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '11'
 
       - name: Build Glow Client Android (Release)
         run: |
@@ -290,11 +290,11 @@ jobs:
           path: apps/glow_provider/build/web/
           retention-days: 7
 
-      - name: Setup JDK 17 (for Android build)
+      - name: Setup JDK 11 (for Android build)
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '11'
 
       - name: Build Glow Provider Android (Release)
         run: |
