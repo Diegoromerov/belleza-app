@@ -34,12 +34,14 @@ function dbFalso({ totales, porConcepto = [], salon = [{ tenant_id: 'tenant-1' }
   return {
     llamadas,
     query: async (sql, params) => {
-      llamadas.push({ sql: sql.replace(/\s+/g, ' ').trim(), params });
-      if (/SELECT\s+tenant_id FROM salones/i.test(sql)) return { rows: salon };
-      if (/GROUP BY tipo, concepto/i.test(sql)) return { rows: porConcepto };
-      if (/COALESCE\(SUM\(CASE WHEN tipo = 'INGRESO'/i.test(sql)) return { rows: [totales] };
-      if (/INSERT INTO caja_movimientos/i.test(sql)) return { rows: insert };
-      if (/JOIN salones s ON s.id = m.salon_id/i.test(sql)) return { rows: constancia };
+      const limpio = sql.replace(/\s+/g, ' ').trim();
+      llamadas.push({ sql: limpio, params });
+      // El inquilino se resuelve en business_profiles (fuente única, D-GL-027).
+      if (/FROM business_profiles WHERE id = left/i.test(limpio)) return { rows: salon };
+      if (/GROUP BY tipo, concepto/i.test(limpio)) return { rows: porConcepto };
+      if (/COALESCE\(SUM\(CASE WHEN tipo = 'INGRESO'/i.test(limpio)) return { rows: [totales] };
+      if (/INSERT INTO caja_movimientos/i.test(limpio)) return { rows: insert };
+      if (/JOIN salones s ON s\.id = m\.salon_id/i.test(limpio)) return { rows: constancia };
       return { rows: [] };
     },
   };
