@@ -14,32 +14,37 @@ const {
 // ==========================================
 exports.getMySalon = async (req, res) => {
   try {
-    const ownerId = req.user.id;
+    const userId = req.user.id;
+
+    // La pertenencia se resuelve en `memberships`, que es la fuente única
+    // (D-GL-027, D-0). Antes se buscaba sólo por `salones.id_dueno`, de modo que
+    // un OWNER o ADMIN invitado no encontraba su salón.
     const salonRes = await pool.query(
-      `SELECT s.id, s.nombre_salon, s.nit, s.direccion, s.telefono, s.ciudad, s.plan_saas, s.id_dueno,
-              s.latitude, s.longitude, s.location_enabled, s.location_public
-       FROM salones s
-       WHERE s.id_dueno = $1
-       LIMIT 1`,
-      [ownerId]
+      `SELECT s.id, s.nombre_salon, s.nit, s.direccion, s.telefono, s.ciudad,
+              s.plan_saas, s.id_dueno, s.latitude, s.longitude,
+              s.location_enabled, s.location_public
+         FROM memberships m
+         JOIN business_profiles bp ON bp.id = m.business_profile_id
+         JOIN salones s ON bp.id = left('salon-' || s.id::text, 36)
+        WHERE m.user_id = $1 AND m.status = 'ACTIVE'
+        ORDER BY s.id
+        LIMIT 1`,
+      [userId]
     );
 
-    let salon = salonRes.rows[0];
+    const salon = salonRes.rows[0] || null;
+
+    // Sin salón se devuelve `null`, no un salón de mentira. Hasta aquí había un
+    // objeto escrito a mano («Salón Elegance Studio», con NIT y dirección
+    // inventados) que se servía en producción cuando la consulta no encontraba
+    // nada: la pantalla mostraba un negocio que no existe.
     if (!salon) {
-      salon = {
-        id: 1,
-        nombre_salon: 'Salón Elegance Studio',
-        nit: '901888777-1',
-        direccion: 'Calle 127 # 7-18',
-        telefono: '3109998877',
-        ciudad: 'Bogotá',
-        plan_saas: 'FREE_TRIAL',
-        id_dueno: ownerId,
-        latitude: 4.6735,
-        longitude: -74.1422,
-        location_enabled: true,
-        location_public: true,
-      };
+      return res.json({
+        success: true,
+        salon: null,
+        members: [],
+        message: 'Tu cuenta no tiene un salón activo. Crea uno o acepta una invitación.',
+      });
     }
 
     const plan = salon.plan_saas || 'FREE_TRIAL';
