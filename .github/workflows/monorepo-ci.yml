@@ -182,6 +182,10 @@ jobs:
             ${{ github.workspace }}/apps/glow_provider/.dart_tool
           key: melos-${{ runner.os }}-${{ hashFiles('**/pubspec.yaml', '**/pubspec.lock', 'melos.yaml') }}
 
+      - name: Melos Bootstrap
+        run: melos bootstrap
+        working-directory: ${{ github.workspace }}
+
       - name: Run Glow Client Tests
         run: cd apps/glow_client && flutter test
         working-directory: ${{ github.workspace }}
@@ -251,6 +255,10 @@ jobs:
             ${{ github.workspace }}/apps/glow_client/.dart_tool
             ${{ github.workspace }}/apps/glow_provider/.dart_tool
           key: melos-${{ runner.os }}-${{ hashFiles('**/pubspec.yaml', '**/pubspec.lock', 'melos.yaml') }}
+
+      - name: Melos Bootstrap
+        run: melos bootstrap
+        working-directory: ${{ github.workspace }}
 
       - name: Run Glow Provider Tests
         run: cd apps/glow_provider && flutter test
