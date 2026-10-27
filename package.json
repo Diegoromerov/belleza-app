@@ -15,10 +15,17 @@
     "turbo": "^2.10.3"
   },
   "scripts": {
-    "seed": "node run_seed.js",
-    "test": "cd frontend && flutter test"
+    "test:backend": "cd backend && npx jest --runInBand --coverage=false",
+    "test": "npm run test:backend && cd frontend && flutter test",
+    "seed": "node run_seed.js"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "bcryptjs": "^3.0.3",
+    "jest": "^30.5.2",
+    "pg-mem": "^3.0.14",
+    "supertest": "^7.3.1"
+  }
 }

@@ -25,6 +25,15 @@ app.use('/api/consent', biometricConsentRoutes);
 describe('Sprint 3.1 — Contractual API & UX Alignment Tests', () => {
 
   test('1. Validar SLA de tiempo de respuesta (<300ms) en comprobación de estado de consentimiento', async () => {
+    // Calentamiento: la primera petición paga la inicialización perezosa de pg-mem y
+    // de toda la cadena de middlewares. Medir esa primera petición mide el arranque
+    // del proceso (600-1000 ms en Windows), no el SLA del endpoint. El contrato habla
+    // del estado estable (<300 ms), así que se calienta una vez y se mide después.
+    // Sin este calentamiento el caso era rojo intermitente por entorno, no por API.
+    await request(app)
+      .get('/api/consent/status/7')
+      .set('Authorization', 'Bearer valid-jwt-token');
+
     const startTime = Date.now();
 
     const res = await request(app)
