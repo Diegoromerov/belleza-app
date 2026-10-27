@@ -81,10 +81,10 @@ class _ColorPaletteWidgetState extends State<ColorPaletteWidget> {
           decoration: BoxDecoration(
             color: AppTheme.passportSurface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppTheme.passportPrimary.withValues(alpha: 0.15), width: 1.2),
+            border: Border.all(color: AppTheme.passportPrimary.withOpacity(0.15), width: 1.2),
             boxShadow: [
               BoxShadow(
-                color: AppTheme.passportPrimary.withValues(alpha: 0.04),
+                color: AppTheme.passportPrimary.withOpacity(0.04),
                 blurRadius: 8,
                 offset: const Offset(0, 3),
               ),
@@ -117,7 +117,7 @@ class _ColorPaletteWidgetState extends State<ColorPaletteWidget> {
                         border: Border.all(color: Colors.black12, width: 1),
                         boxShadow: [
                           BoxShadow(
-                            color: displayColor.withValues(alpha: 0.3),
+                            color: displayColor.withOpacity(0.3),
                             blurRadius: 6,
                             offset: const Offset(0, 3),
                           )

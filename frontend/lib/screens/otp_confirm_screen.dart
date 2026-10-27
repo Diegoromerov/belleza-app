@@ -155,7 +155,7 @@ class _OtpConfirmScreenState extends State<OtpConfirmScreen>
                             border: Border.all(color: const Color(0xFFE8DFD8), width: 1),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.04),
+                                color: Colors.black.withOpacity(0.04),
                                 blurRadius: 6,
                                 offset: const Offset(0, 2),
                               ),
@@ -181,7 +181,7 @@ class _OtpConfirmScreenState extends State<OtpConfirmScreen>
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFC5A052).withValues(alpha: 0.35),
+                          color: const Color(0xFFC5A052).withOpacity(0.35),
                           blurRadius: 18,
                           offset: const Offset(0, 6),
                         ),
@@ -293,7 +293,7 @@ class _OtpConfirmScreenState extends State<OtpConfirmScreen>
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFC5A052).withValues(alpha: 0.35),
+                          color: const Color(0xFFC5A052).withOpacity(0.35),
                           blurRadius: 14,
                           offset: const Offset(0, 4),
                         ),
@@ -333,7 +333,7 @@ class _OtpConfirmScreenState extends State<OtpConfirmScreen>
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.6),
+                  color: Colors.white.withOpacity(0.6),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: const Color(0xFFEADCD6)),
                 ),
@@ -467,7 +467,7 @@ class _ConfirmacionExitosaScreen extends StatelessWidget {
                     width: 100,
                     height: 100,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                      color: const Color(0xFF10B981).withOpacity(0.15),
                       shape: BoxShape.circle,
                       border:
                           Border.all(color: const Color(0xFF10B981), width: 3),

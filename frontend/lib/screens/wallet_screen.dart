@@ -366,7 +366,7 @@ class _WalletScreenState extends State<WalletScreen>
                                   border: Border.all(color: const Color(0xFFE8DFD8), width: 1),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withValues(alpha: 0.04),
+                                      color: Colors.black.withOpacity(0.04),
                                       blurRadius: 6,
                                       offset: const Offset(0, 2),
                                     ),
@@ -406,7 +406,7 @@ class _WalletScreenState extends State<WalletScreen>
                                 border: Border.all(color: const Color(0xFFE8DFD8), width: 1),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.04),
+                                    color: Colors.black.withOpacity(0.04),
                                     blurRadius: 6,
                                     offset: const Offset(0, 2),
                                   ),
@@ -433,12 +433,12 @@ class _WalletScreenState extends State<WalletScreen>
                               ),
                               borderRadius: BorderRadius.circular(24),
                               border: Border.all(
-                                color: const Color(0xFFD4AF37).withValues(alpha: 0.5),
+                                color: const Color(0xFFD4AF37).withOpacity(0.5),
                                 width: 1.2,
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(0xFFC5A052).withValues(alpha: 0.18),
+                                  color: const Color(0xFFC5A052).withOpacity(0.18),
                                   blurRadius: 20,
                                   offset: const Offset(0, 8),
                                 ),
@@ -726,7 +726,7 @@ class _WalletScreenState extends State<WalletScreen>
               width: 36,
               height: 4,
               decoration: BoxDecoration(
-                color: const Color(0xFFC5A052).withValues(alpha: 0.4),
+                color: const Color(0xFFC5A052).withOpacity(0.4),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -736,7 +736,7 @@ class _WalletScreenState extends State<WalletScreen>
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: esCredito ? const Color(0xFF10B981).withValues(alpha: 0.15) : const Color(0xFFC5A052).withValues(alpha: 0.15),
+                    color: esCredito ? const Color(0xFF10B981).withOpacity(0.15) : const Color(0xFFC5A052).withOpacity(0.15),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -778,7 +778,7 @@ class _WalletScreenState extends State<WalletScreen>
               decoration: BoxDecoration(
                 color: const Color(0xFF261E17),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFC5A052).withValues(alpha: 0.3)),
+                border: Border.all(color: const Color(0xFFC5A052).withOpacity(0.3)),
               ),
               child: Column(
                 children: [
@@ -832,9 +832,9 @@ class _WalletScreenState extends State<WalletScreen>
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.05),
+                  color: Colors.white.withOpacity(0.05),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFC5A052).withValues(alpha: 0.2)),
+                  border: Border.all(color: const Color(0xFFC5A052).withOpacity(0.2)),
                 ),
                 child: Row(
                   children: [
@@ -972,7 +972,7 @@ class _WalletScreenState extends State<WalletScreen>
           boxShadow: selected
               ? [
                   BoxShadow(
-                    color: const Color(0xFFC5A052).withValues(alpha: 0.25),
+                    color: const Color(0xFFC5A052).withOpacity(0.25),
                     blurRadius: 6,
                     offset: const Offset(0, 2),
                   ),
@@ -1040,7 +1040,7 @@ class _WalletScreenState extends State<WalletScreen>
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
+                color: Colors.black.withOpacity(0.04),
                 blurRadius: 10,
                 offset: const Offset(0, 3),
               ),
@@ -1055,7 +1055,7 @@ class _WalletScreenState extends State<WalletScreen>
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: estadoColor.withValues(alpha: 0.12),
+                      color: estadoColor.withOpacity(0.12),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(Icons.account_balance_wallet_outlined,
@@ -1096,7 +1096,7 @@ class _WalletScreenState extends State<WalletScreen>
                         padding:
                             const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: estadoColor.withValues(alpha: 0.1),
+                          color: estadoColor.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -1197,10 +1197,10 @@ class _WalletScreenState extends State<WalletScreen>
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFC5A052).withValues(alpha: 0.4)),
+            border: Border.all(color: const Color(0xFFC5A052).withOpacity(0.4)),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFFC5A052).withValues(alpha: 0.12),
+                color: const Color(0xFFC5A052).withOpacity(0.12),
                 blurRadius: 14,
                 offset: const Offset(0, 4),
               ),
@@ -1283,7 +1283,7 @@ class _WalletScreenState extends State<WalletScreen>
             border: Border.all(color: const Color(0xFFF7ECE9)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
+                color: Colors.black.withOpacity(0.03),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -1318,10 +1318,10 @@ class _WalletScreenState extends State<WalletScreen>
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFF10B981).withValues(alpha: 0.08),
+              color: const Color(0xFF10B981).withOpacity(0.08),
               borderRadius: BorderRadius.circular(12),
               border:
-                  Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.25)),
+                  Border.all(color: const Color(0xFF10B981).withOpacity(0.25)),
             ),
             child: Row(
               children: [
@@ -1361,10 +1361,10 @@ class _WalletScreenState extends State<WalletScreen>
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFFF59E0B).withValues(alpha: 0.08),
+              color: const Color(0xFFF59E0B).withOpacity(0.08),
               borderRadius: BorderRadius.circular(12),
               border:
-                  Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.25)),
+                  Border.all(color: const Color(0xFFF59E0B).withOpacity(0.25)),
             ),
             child: Row(
               children: [
@@ -1589,7 +1589,7 @@ class _TransaccionTile extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.03),
+                  color: Colors.black.withOpacity(0.03),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -1602,7 +1602,7 @@ class _TransaccionTile extends StatelessWidget {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.12),
+                    color: color.withOpacity(0.12),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(icono, color: color, size: 20),
@@ -1662,9 +1662,9 @@ class _ResumenCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
+        color: color.withOpacity(0.08),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
+        border: Border.all(color: color.withOpacity(0.2)),
       ),
       child: Row(
         children: [

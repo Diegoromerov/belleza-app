@@ -363,7 +363,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.amber.withValues(alpha: 0.1),
+                        color: Colors.amber.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: Colors.amber, width: 1),
                       ),
@@ -409,7 +409,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
 
                     return ListTile(
                       selected: isCurrent,
-                      selectedTileColor: themeColor.withValues(alpha: 0.08),
+                      selectedTileColor: themeColor.withOpacity(0.08),
                       enabled: !isLocked,
                       leading: Icon(
                         isCompleted

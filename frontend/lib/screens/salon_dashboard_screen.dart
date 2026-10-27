@@ -433,7 +433,7 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
                         padding: const EdgeInsets.symmetric(
                             horizontal: Spacing.xs, vertical: 1),
                         decoration: BoxDecoration(
-                          color: t.brandPrimary.withValues(alpha: 0.12),
+                          color: t.brandPrimary.withOpacity(0.12),
                           borderRadius:
                               BorderRadius.circular(Radii.xs),
                         ),
@@ -748,7 +748,7 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
         gradient: t.premiumGradient,
         borderRadius: BorderRadius.circular(Radii.lg),
         border: Border.all(
-          color: t.borderStrong.withValues(alpha: 0.4),
+          color: t.borderStrong.withOpacity(0.4),
         ),
         boxShadow: AppShadow.card(t),
       ),
@@ -757,7 +757,7 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
           Container(
             padding: const EdgeInsets.all(Spacing.md),
             decoration: BoxDecoration(
-              color: t.brandPrimary.withValues(alpha: 0.15),
+              color: t.brandPrimary.withOpacity(0.15),
               shape: BoxShape.circle,
             ),
             child: GlowIcon.resolve(
@@ -839,7 +839,7 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
         contentPadding: const EdgeInsets.symmetric(
             horizontal: Spacing.lg, vertical: Spacing.xs),
         leading: CircleAvatar(
-          backgroundColor: t.brandPrimary.withValues(alpha: 0.12),
+          backgroundColor: t.brandPrimary.withOpacity(0.12),
           child: GlowIcon.resolve(
             'hair',
             color: t.brandPrimary,
@@ -954,7 +954,7 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
         contentPadding: const EdgeInsets.symmetric(
             horizontal: Spacing.lg, vertical: Spacing.xs),
         leading: CircleAvatar(
-          backgroundColor: t.info.withValues(alpha: 0.12),
+          backgroundColor: t.info.withOpacity(0.12),
           child: GlowIcon.resolve(
             'profile',
             color: t.info,
@@ -975,7 +975,7 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
           padding: const EdgeInsets.symmetric(
               horizontal: Spacing.sm, vertical: Spacing.xs),
           decoration: BoxDecoration(
-            color: t.brandPrimary.withValues(alpha: 0.12),
+            color: t.brandPrimary.withOpacity(0.12),
             borderRadius: BorderRadius.circular(Radii.pill),
           ),
           child: Text(
@@ -1207,7 +1207,7 @@ class _SalonDashboardScreenState extends State<SalonDashboardScreen>
           Container(
             padding: const EdgeInsets.all(Spacing.sm),
             decoration: BoxDecoration(
-              color: (accentColor ?? t.brandPrimary).withValues(alpha: 0.10),
+              color: (accentColor ?? t.brandPrimary).withOpacity(0.10),
               borderRadius: BorderRadius.circular(Radii.sm),
             ),
             child: icon,

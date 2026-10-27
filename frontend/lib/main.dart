@@ -277,7 +277,7 @@ class BeautyApp extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(24),
                                 side: BorderSide(
                                   color: isMen
-                                      ? MensTheme.champagneGold.withValues(alpha: 0.2)
+                                      ? MensTheme.champagneGold.withOpacity(0.2)
                                       : const Color(0xFFE8E0D5), // LuxeColors.nude200
                                   width: 1,
                                 ),
@@ -1295,18 +1295,18 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
             filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
             child: Container(
               decoration: BoxDecoration(
-                color: const Color(0xFFFAF8F5).withValues(alpha: 0.92), // Nude Seda Satinado
+                color: const Color(0xFFFAF8F5).withOpacity(0.92), // Nude Seda Satinado
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(32),
                   topRight: Radius.circular(32),
                 ),
                 border: Border.all(
-                  color: const Color(0xFFC5A052).withValues(alpha: 0.35), // Oro Champán 871
+                  color: const Color(0xFFC5A052).withOpacity(0.35), // Oro Champán 871
                   width: 1.2,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFC5A052).withValues(alpha: 0.15),
+                    color: const Color(0xFFC5A052).withOpacity(0.15),
                     blurRadius: 24,
                     offset: const Offset(0, -8),
                   ),
@@ -1322,7 +1322,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                       width: 44,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFC5A052).withValues(alpha: 0.4),
+                        color: const Color(0xFFC5A052).withOpacity(0.4),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -1405,7 +1405,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                           color: const Color(0xFFF4EFEA),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: const Color(0xFFC5A052).withValues(alpha: 0.3),
+                            color: const Color(0xFFC5A052).withOpacity(0.3),
                             width: 1,
                           ),
                         ),
@@ -1522,7 +1522,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
-                                    color: const Color(0xFFC5A052).withValues(alpha: 0.3),
+                                    color: const Color(0xFFC5A052).withOpacity(0.3),
                                     width: 1,
                                   ),
                                   image: imgUrl.isNotEmpty
@@ -1694,7 +1694,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
                                       color: isSelected
-                                          ? AppTheme.primary.withValues(alpha: 0.15)
+                                          ? AppTheme.primary.withOpacity(0.15)
                                           : Colors.grey.shade50,
                                       border: Border.all(
                                         color: isSelected
@@ -1816,7 +1816,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: shadow.withValues(alpha: 0.4),
+                      color: shadow.withOpacity(0.4),
                       blurRadius: 10,
                       spreadRadius: 2,
                       offset: const Offset(0, 4),
@@ -2000,7 +2000,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                               offset: const Offset(0, 6),
                             ),
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.08),
+                              color: Colors.black.withOpacity(0.08),
                               blurRadius: 8,
                               offset: const Offset(0, 3),
                             ),
@@ -2017,7 +2017,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: const Color(0xFFD4AF37).withValues(alpha: 0.35),
+                                color: const Color(0xFFD4AF37).withOpacity(0.35),
                                 width: 1.0,
                               ),
                             ),
@@ -2053,8 +2053,8 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: isMen
-            ? const Color(0xFF141210).withValues(alpha: 0.94)
-            : const Color(0xFFFAF8F5).withValues(alpha: 0.95),
+            ? const Color(0xFF141210).withOpacity(0.94)
+            : const Color(0xFFFAF8F5).withOpacity(0.95),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
           color: const Color(0xFFD4AF37).withValues(alpha: isMen ? 0.6 : 0.45),
@@ -2328,7 +2328,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                       child: Container(
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: const Color(0xFFD4AF37).withValues(alpha: 0.2),
+                          color: const Color(0xFFD4AF37).withOpacity(0.2),
                           border: Border.all(
                               color: const Color(0xFFD4AF37), width: 2),
                         ),
@@ -2402,12 +2402,12 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                                 color: isMen ? const Color(0xFF141210) : const Color(0xFFFDFBF7),
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                  color: const Color(0xFFD4AF37).withValues(alpha: 0.6),
+                                  color: const Color(0xFFD4AF37).withOpacity(0.6),
                                   width: 0.8,
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.2),
+                                    color: Colors.black.withOpacity(0.2),
                                     blurRadius: 4,
                                     offset: const Offset(0, 1),
                                   ),
@@ -2458,8 +2458,8 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
                     color: isMen
-                        ? const Color(0xFF141210).withValues(alpha: 0.94)
-                        : const Color(0xFFFAF8F5).withValues(alpha: 0.95),
+                        ? const Color(0xFF141210).withOpacity(0.94)
+                        : const Color(0xFFFAF8F5).withOpacity(0.95),
                     borderRadius: BorderRadius.circular(30),
                     border: Border.all(
                       color: const Color(0xFFD4AF37).withValues(alpha: isMen ? 0.6 : 0.45),
@@ -2503,8 +2503,8 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                             hintStyle: TextStyle(
                               fontSize: 12.0,
                               color: isMen
-                                  ? const Color(0xFFD4AF37).withValues(alpha: 0.75)
-                                  : const Color(0xFF6B5E55).withValues(alpha: 0.8),
+                                  ? const Color(0xFFD4AF37).withOpacity(0.75)
+                                  : const Color(0xFF6B5E55).withOpacity(0.8),
                               letterSpacing: 0.1,
                             ),
                             contentPadding: const EdgeInsets.symmetric(vertical: 10),
@@ -2553,7 +2553,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
               padding: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
                 color: isMen
-                    ? const Color(0xFF141210).withValues(alpha: 0.95)
+                    ? const Color(0xFF141210).withOpacity(0.95)
                     : const Color(0xFFFDFBF7),
                 borderRadius: BorderRadius.circular(36),
                 border: Border.all(
@@ -2689,7 +2689,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                                 leading: Container(
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFF3D59B).withValues(alpha: 0.3),
+                                    color: const Color(0xFFF3D59B).withOpacity(0.3),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: const Icon(Icons.chat_bubble_outline_rounded, color: Color(0xFFC5A052)),
@@ -2715,7 +2715,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                                 leading: Container(
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFC5A052).withValues(alpha: 0.2),
+                                    color: const Color(0xFFC5A052).withOpacity(0.2),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: const Icon(Icons.storefront_rounded, color: Color(0xFFC5A052)),
@@ -2741,7 +2741,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
                                 leading: Container(
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF25D366).withValues(alpha: 0.15),
+                                    color: const Color(0xFF25D366).withOpacity(0.15),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: const Icon(Icons.support_agent_rounded, color: Color(0xFF25D366)),
@@ -2947,7 +2947,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
               border: Border.all(color: const Color(0xFFD4AF37), width: 3),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFD4AF37).withValues(alpha: 0.6),
+                  color: const Color(0xFFD4AF37).withOpacity(0.6),
                   blurRadius: 20,
                   spreadRadius: 6,
                 ),
@@ -3064,7 +3064,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
         GestureDetector(
           onTap: () {}, 
           child: Container(
-            color: Colors.black.withValues(alpha: 0.7),
+            color: Colors.black.withOpacity(0.7),
           ),
         ),
         
@@ -3078,7 +3078,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
           child: FloatingActionButton.small(
             heroTag: 'tutorial_skip_fab',
             onPressed: _completeTutorial,
-            backgroundColor: Colors.white.withValues(alpha: 0.9),
+            backgroundColor: Colors.white.withOpacity(0.9),
             foregroundColor: AppTheme.text,
             child: const Icon(Icons.close, size: 20),
           ),
@@ -3098,7 +3098,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> with TickerProviderSt
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(28),
-              border: Border.all(color: AppTheme.accent.withValues(alpha: 0.4), width: 1.5),
+              border: Border.all(color: AppTheme.accent.withOpacity(0.4), width: 1.5),
               boxShadow: AppTheme.glassShadow,
             ),
             child: AnimatedSize(

@@ -20,9 +20,9 @@ class ScoreCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.06),
+        color: color.withOpacity(0.06),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withValues(alpha: 0.18), width: 1.2),
+        border: Border.all(color: color.withOpacity(0.18), width: 1.2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -60,7 +60,7 @@ class ScoreCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(6),
             child: LinearProgressIndicator(
               value: (value.clamp(0, 100)) / 100,
-              backgroundColor: color.withValues(alpha: 0.15),
+              backgroundColor: color.withOpacity(0.15),
               color: color,
               minHeight: 7,
             ),
@@ -106,7 +106,7 @@ class GlowScoreGaugeWidget extends StatelessWidget {
         border: Border.all(color: const Color(0xFFEADBCE), width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: Colors.black.withOpacity(0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -119,7 +119,7 @@ class GlowScoreGaugeWidget extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF3D59B).withValues(alpha: 0.35),
+                  color: const Color(0xFFF3D59B).withOpacity(0.35),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Text(
@@ -329,9 +329,9 @@ class DermoFamiliesWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: accentColor.withValues(alpha: 0.04),
+        color: accentColor.withOpacity(0.04),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: accentColor.withValues(alpha: 0.2)),
+        border: Border.all(color: accentColor.withOpacity(0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
