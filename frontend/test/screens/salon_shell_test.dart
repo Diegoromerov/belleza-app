@@ -49,6 +49,11 @@ void main() {
   });
 
   testWidgets('Más lleva al resumen previo y marca lo que no existe aún', (tester) async {
+    // Superficie alta para que el ListView construya todo el panel: si se
+    // afirma sobre elementos fuera del viewport, el finder no los ve.
+    tester.view.physicalSize = const Size(1000, 2600);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
     await montar(tester);
 
     await tester.tap(find.text('Más'));
@@ -56,6 +61,12 @@ void main() {
 
     expect(find.text('Resumen del salón'), findsOneWidget);
     expect(find.text('Inventario'), findsOneWidget);
+    // Inventario y alquileres son módulos entregados: van bajo su propio
+    // encabezado, no bajo «No incluido en esta etapa».
+    expect(find.text('Operación del salón'), findsOneWidget);
     expect(find.text('No incluido en esta etapa'), findsOneWidget);
+    // El marcador duplicado de E-06 ya no debe existir.
+    expect(find.textContaining('Llega con E-06'), findsNothing);
+    expect(find.text('Recursos alquilables'), findsNothing);
   });
 }

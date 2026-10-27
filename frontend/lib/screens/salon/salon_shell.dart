@@ -186,6 +186,7 @@ class _SalonShellState extends State<SalonShell> {
         return _MasTab(
           onInventario: () => _abrir((id) => InventarioScreen(salonId: id)),
           onAlquileres: () => _abrir((id) => AlquileresScreen(salonId: id)),
+          apiKeysHabilitadas: _tiene('CUSTOM_BRANDING'),
         );
     }
   }
@@ -501,7 +502,13 @@ class _ServiciosPlaceholder extends StatelessWidget {
 class _MasTab extends StatelessWidget {
   final VoidCallback? onInventario;
   final VoidCallback? onAlquileres;
-  const _MasTab({this.onInventario, this.onAlquileres});
+  /// El plan incluye `CUSTOM_BRANDING`, que es lo que habilita las API keys.
+  final bool apiKeysHabilitadas;
+  const _MasTab({
+    this.onInventario,
+    this.onAlquileres,
+    this.apiKeysHabilitadas = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -617,12 +624,16 @@ class _MasTab extends StatelessWidget {
         enlace('Resumen del salón', '/salon/resumen', detalle: 'KPIs, equipo y ajustes'),
         enlace('Facturación del plan', '/saas/billing'),
         enlace('Uso del plan', '/saas/usage'),
-        enlace('API keys', '/saas/api-keys'),
+        if (apiKeysHabilitadas)
+          enlace('API keys', '/saas/api-keys')
+        else
+          enlace('API keys', '/saas/billing',
+              detalle: 'Requiere un plan con integraciones (CUSTOM_BRANDING)'),
         enlace('Configuración', '/settings'),
         enlace('Ayuda y soporte', '/support'),
         const SizedBox(height: Spacing.lg),
         Text(
-          'No incluido en esta etapa',
+          'Operación del salón',
           style: TypographyTokens.bodySmall(t).copyWith(
             color: t.textSecondary,
             fontWeight: FontWeight.w700,
@@ -636,7 +647,18 @@ class _MasTab extends StatelessWidget {
         if (onAlquileres != null)
           accion('Recursos y alquileres', 'Sillas, mesas y puestos alquilados',
               onAlquileres!),
-        bloqueado('Recursos alquilables', 'Llega con E-06'),
+        const SizedBox(height: Spacing.lg),
+        Text(
+          'No incluido en esta etapa',
+          style: TypographyTokens.bodySmall(t).copyWith(
+            color: t.textSecondary,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.4,
+          ),
+        ),
+        const SizedBox(height: Spacing.sm),
+        // E-06 ya entregó inventario y alquileres: aquí sólo queda lo que de
+        // verdad no existe todavía.
         bloqueado('Analytics', 'Se consulta por Aura'),
       ],
     );
