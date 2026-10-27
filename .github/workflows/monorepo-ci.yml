@@ -218,12 +218,24 @@ jobs:
 
       - name: Patch Flutter gradle plugin for Groovy 4.x + AGP 8.x compat
         run: |
-          FLUTTER_GROOVY="/opt/hostedtoolcache/flutter/stable-3.24.3-x64/flutter/packages/flutter_tools/gradle/src/main/groovy/flutter.groovy"
-          sed -i "s/import groovy.xml.QName/import javax.xml.namespace.QName/" "$FLUTTER_GROOVY"
-          sed -i "s/groovy.xml.QName/javax.xml.namespace.QName/g" "$FLUTTER_GROOVY"
-          sed -i "1i import groovy.xml.XmlParser\nimport groovy.xml.XmlSlurper" "$FLUTTER_GROOVY"
-          sed -i "s/getDefaultProguardFile('proguard-android.txt')/getDefaultProguardFile('proguard-android-optimize.txt')/g" "$FLUTTER_GROOVY"
-          sed -i 's/getDefaultProguardFile("proguard-android.txt")/getDefaultProguardFile("proguard-android-optimize.txt")/g' "$FLUTTER_GROOVY"
+          python3 << 'PYEOF'
+          import re
+          path = "/opt/hostedtoolcache/flutter/stable-3.24.3-x64/flutter/packages/flutter_tools/gradle/src/main/groovy/flutter.groovy"
+          with open(path, "r") as f:
+              content = f.read()
+          # Fix QName import
+          content = content.replace("import groovy.xml.QName", "import javax.xml.namespace.QName")
+          content = content.replace("groovy.xml.QName", "javax.xml.namespace.QName")
+          # Add missing imports at top if not present
+          if "import groovy.xml.XmlParser" not in content:
+              content = "import groovy.xml.XmlParser\nimport groovy.xml.XmlSlurper\n" + content
+          # Fix ProGuard file
+          content = content.replace("getDefaultProguardFile('proguard-android.txt')", "getDefaultProguardFile('proguard-android-optimize.txt')")
+          content = content.replace('getDefaultProguardFile("proguard-android.txt")', 'getDefaultProguardFile("proguard-android-optimize.txt")')
+          with open(path, "w") as f:
+              f.write(content)
+          print("Patched flutter.groovy successfully")
+          PYEOF
 
       - name: Build Glow Client Android (Release)
         run: |
@@ -307,12 +319,24 @@ jobs:
 
       - name: Patch Flutter gradle plugin for Groovy 4.x + AGP 8.x compat
         run: |
-          FLUTTER_GROOVY="/opt/hostedtoolcache/flutter/stable-3.24.3-x64/flutter/packages/flutter_tools/gradle/src/main/groovy/flutter.groovy"
-          sed -i "s/import groovy.xml.QName/import javax.xml.namespace.QName/" "$FLUTTER_GROOVY"
-          sed -i "s/groovy.xml.QName/javax.xml.namespace.QName/g" "$FLUTTER_GROOVY"
-          sed -i "1i import groovy.xml.XmlParser\nimport groovy.xml.XmlSlurper" "$FLUTTER_GROOVY"
-          sed -i "s/getDefaultProguardFile('proguard-android.txt')/getDefaultProguardFile('proguard-android-optimize.txt')/g" "$FLUTTER_GROOVY"
-          sed -i 's/getDefaultProguardFile("proguard-android.txt")/getDefaultProguardFile("proguard-android-optimize.txt")/g' "$FLUTTER_GROOVY"
+          python3 << 'PYEOF'
+          import re
+          path = "/opt/hostedtoolcache/flutter/stable-3.24.3-x64/flutter/packages/flutter_tools/gradle/src/main/groovy/flutter.groovy"
+          with open(path, "r") as f:
+              content = f.read()
+          # Fix QName import
+          content = content.replace("import groovy.xml.QName", "import javax.xml.namespace.QName")
+          content = content.replace("groovy.xml.QName", "javax.xml.namespace.QName")
+          # Add missing imports at top if not present
+          if "import groovy.xml.XmlParser" not in content:
+              content = "import groovy.xml.XmlParser\nimport groovy.xml.XmlSlurper\n" + content
+          # Fix ProGuard file
+          content = content.replace("getDefaultProguardFile('proguard-android.txt')", "getDefaultProguardFile('proguard-android-optimize.txt')")
+          content = content.replace('getDefaultProguardFile("proguard-android.txt")', 'getDefaultProguardFile("proguard-android-optimize.txt")')
+          with open(path, "w") as f:
+              f.write(content)
+          print("Patched flutter.groovy successfully")
+          PYEOF
 
       - name: Build Glow Provider Android (Release)
         run: |
