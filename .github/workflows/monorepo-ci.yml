@@ -134,7 +134,7 @@ jobs:
           cache-key: flutter-${{ runner.os }}-${{ env.FLUTTER_VERSION }}-${{ hashFiles('**/pubspec.yaml', '**/pubspec.lock') }}
 
       - name: Install Melos
-        run: dart pub global activate melos 6.2.1
+        run: dart pub global activate melos 6.3.3
         id: melos
 
       - name: Add Melos to PATH
