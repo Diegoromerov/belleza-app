@@ -8,7 +8,7 @@ on:
 
 env:
   FLUTTER_CHANNEL: stable
-  FLUTTER_VERSION: '3.24.3'
+  FLUTTER_VERSION: '3.29.2'
 
 jobs:
   # ─────────────────────────────────────────────────────────────────
@@ -219,8 +219,12 @@ jobs:
       - name: Patch Flutter gradle plugin for Groovy 4.x + AGP 8.x compat
         run: |
           python3 << 'PYEOF'
-          import re
-          path = "/opt/hostedtoolcache/flutter/stable-3.24.3-x64/flutter/packages/flutter_tools/gradle/src/main/groovy/flutter.groovy"
+          import glob, os
+          matches = glob.glob("/opt/hostedtoolcache/flutter/stable-*-x64/flutter/packages/flutter_tools/gradle/src/main/groovy/flutter.groovy")
+          if not matches:
+              print("flutter.groovy not found")
+              exit(1)
+          path = matches[0]
           with open(path, "r") as f:
               content = f.read()
           # Fix QName import
@@ -234,7 +238,7 @@ jobs:
           content = content.replace('getDefaultProguardFile("proguard-android.txt")', 'getDefaultProguardFile("proguard-android-optimize.txt")')
           with open(path, "w") as f:
               f.write(content)
-          print("Patched flutter.groovy successfully")
+          print(f"Patched {path} successfully")
           PYEOF
 
       - name: Build Glow Client Android (Release)
@@ -320,8 +324,12 @@ jobs:
       - name: Patch Flutter gradle plugin for Groovy 4.x + AGP 8.x compat
         run: |
           python3 << 'PYEOF'
-          import re
-          path = "/opt/hostedtoolcache/flutter/stable-3.24.3-x64/flutter/packages/flutter_tools/gradle/src/main/groovy/flutter.groovy"
+          import glob, os
+          matches = glob.glob("/opt/hostedtoolcache/flutter/stable-*-x64/flutter/packages/flutter_tools/gradle/src/main/groovy/flutter.groovy")
+          if not matches:
+              print("flutter.groovy not found")
+              exit(1)
+          path = matches[0]
           with open(path, "r") as f:
               content = f.read()
           # Fix QName import
@@ -335,7 +343,7 @@ jobs:
           content = content.replace('getDefaultProguardFile("proguard-android.txt")', 'getDefaultProguardFile("proguard-android-optimize.txt")')
           with open(path, "w") as f:
               f.write(content)
-          print("Patched flutter.groovy successfully")
+          print(f"Patched {path} successfully")
           PYEOF
 
       - name: Build Glow Provider Android (Release)
