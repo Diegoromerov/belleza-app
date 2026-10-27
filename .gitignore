@@ -100,6 +100,8 @@ belleza-app2/
 # BLOQUEANTE verifyNoVersionedSecrets.js del CI. Debe inyectarse por variable de
 # entorno; su lugar en el repo es google-services.json.template.
 frontend/android/app/google-services.json
+apps/glow_client/android/app/google-services.json
+apps/glow_provider/android/app/google-services.json
 # Salida que flutter_test escribe en cada corrida de golden fallida: artefacto
 # generado, ningún código lo lee.
 frontend/test/golden/failures/
