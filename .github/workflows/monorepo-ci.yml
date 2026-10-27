@@ -222,7 +222,7 @@ jobs:
           sed -i "s/import groovy.xml.QName/import javax.xml.namespace.QName/" "$FLUTTER_GROOVY"
           sed -i "s/groovy.xml.QName/javax.xml.namespace.QName/g" "$FLUTTER_GROOVY"
           sed -i "1i import groovy.xml.XmlParser\nimport groovy.xml.XmlSlurper" "$FLUTTER_GROOVY"
-          sed -i \"s/getDefaultProguardFile('proguard-android.txt')/getDefaultProguardFile('proguard-android-optimize.txt')/g\" "$FLUTTER_GROOVY"
+          sed -i "s/getDefaultProguardFile('proguard-android.txt')/getDefaultProguardFile('proguard-android-optimize.txt')/g" "$FLUTTER_GROOVY"
           sed -i 's/getDefaultProguardFile("proguard-android.txt")/getDefaultProguardFile("proguard-android-optimize.txt")/g' "$FLUTTER_GROOVY"
 
       - name: Build Glow Client Android (Release)
@@ -311,7 +311,7 @@ jobs:
           sed -i "s/import groovy.xml.QName/import javax.xml.namespace.QName/" "$FLUTTER_GROOVY"
           sed -i "s/groovy.xml.QName/javax.xml.namespace.QName/g" "$FLUTTER_GROOVY"
           sed -i "1i import groovy.xml.XmlParser\nimport groovy.xml.XmlSlurper" "$FLUTTER_GROOVY"
-          sed -i \"s/getDefaultProguardFile('proguard-android.txt')/getDefaultProguardFile('proguard-android-optimize.txt')/g\" "$FLUTTER_GROOVY"
+          sed -i "s/getDefaultProguardFile('proguard-android.txt')/getDefaultProguardFile('proguard-android-optimize.txt')/g" "$FLUTTER_GROOVY"
           sed -i 's/getDefaultProguardFile("proguard-android.txt")/getDefaultProguardFile("proguard-android-optimize.txt")/g' "$FLUTTER_GROOVY"
 
       - name: Build Glow Provider Android (Release)
