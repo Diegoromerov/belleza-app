@@ -256,50 +256,50 @@ jobs:
           retention-days: 7
 
   # ─────────────────────────────────────────────────────────────────
-    # DEPLOY TO FIREBASE HOSTING (staging branch → staging channel, main branch → live channel)
-    # ─────────────────────────────────────────────────────────────────
-    deploy-client-web:
-      name: Deploy Client
-      needs: [glow-client-web, backend-ci]
-      if: github.event_name == 'push' && (github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main')
-      runs-on: ubuntu-latest
-      steps:
-        - uses: actions/checkout@v4
-        - name: Download Glow Client Web Artifact
-          uses: actions/download-artifact@v4
-          with:
-            name: glow-client-web
-            path: apps/glow_client/build/web/
-        - name: Copy firebase.json for Client
-          run: cp firebase.client.json apps/glow_client/build/web/firebase.json
-        - name: Deploy to Firebase Hosting (Client)
-          uses: FirebaseExtended/action-hosting-deploy@v0
-          with:
-            repoToken: ${{ secrets.GITHUB_TOKEN }}
-            firebaseServiceAccount: ${{ secrets.CLIENT_FIREBASE_SERVICE_ACCOUNT }}
-            projectId: ${{ secrets.CLIENT_FIREBASE_PROJECT_ID }}
-            channelId: ${{ github.ref == 'refs/heads/main' && 'live' || 'staging' }}
-            entryPoint: apps/glow_client/build/web
+  # DEPLOY TO FIREBASE HOSTING (staging branch → staging channel, main branch → live channel)
+  # ─────────────────────────────────────────────────────────────────
+  deploy-client-web:
+    name: Deploy Client
+    needs: [glow-client-web, backend-ci]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download Glow Client Web Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: glow-client-web
+          path: apps/glow_client/build/web/
+      - name: Copy firebase.json for Client
+        run: cp firebase.client.json apps/glow_client/build/web/firebase.json
+      - name: Deploy to Firebase Hosting (Client)
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.CLIENT_FIREBASE_SERVICE_ACCOUNT }}
+          projectId: ${{ secrets.CLIENT_FIREBASE_PROJECT_ID }}
+          channelId: ${{ github.ref == 'refs/heads/main' && 'live' || 'staging' }}
+          entryPoint: apps/glow_client/build/web
 
-    deploy-provider-web:
-      name: Deploy Provider
-      needs: [glow-provider-web, backend-ci]
-      if: github.event_name == 'push' && (github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main')
-      runs-on: ubuntu-latest
-      steps:
-        - uses: actions/checkout@v4
-        - name: Download Glow Provider Web Artifact
-          uses: actions/download-artifact@v4
-          with:
-            name: glow-provider-web
-            path: apps/glow_provider/build/web/
-        - name: Copy firebase.json for Provider
-          run: cp firebase.provider.json apps/glow_provider/build/web/firebase.json
-        - name: Deploy to Firebase Hosting (Provider)
-          uses: FirebaseExtended/action-hosting-deploy@v0
-          with:
-            repoToken: ${{ secrets.GITHUB_TOKEN }}
-            firebaseServiceAccount: ${{ secrets.PROVIDER_FIREBASE_SERVICE_ACCOUNT }}
-            projectId: ${{ secrets.PROVIDER_FIREBASE_PROJECT_ID }}
-            channelId: ${{ github.ref == 'refs/heads/main' && 'live' || 'staging' }}
-            entryPoint: apps/glow_provider/build/web
+  deploy-provider-web:
+    name: Deploy Provider
+    needs: [glow-provider-web, backend-ci]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download Glow Provider Web Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: glow-provider-web
+          path: apps/glow_provider/build/web/
+      - name: Copy firebase.json for Provider
+        run: cp firebase.provider.json apps/glow_provider/build/web/firebase.json
+      - name: Deploy to Firebase Hosting (Provider)
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.PROVIDER_FIREBASE_SERVICE_ACCOUNT }}
+          projectId: ${{ secrets.PROVIDER_FIREBASE_PROJECT_ID }}
+          channelId: ${{ github.ref == 'refs/heads/main' && 'live' || 'staging' }}
+          entryPoint: apps/glow_provider/build/web
