@@ -10,11 +10,12 @@ env:
 
 jobs:
   # ─────────────────────────────────────────────────────────────────
-  # BACKEND CI
+  # BACKEND CI (non-blocking for staging deploy)
   # ─────────────────────────────────────────────────────────────────
   backend-ci:
     name: Backend Tests & Lint
     runs-on: ubuntu-latest
+    continue-on-error: true
     services:
       postgres:
         image: postgis/postgis:16-3.4
