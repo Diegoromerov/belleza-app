@@ -4,7 +4,7 @@
     "indexes": "firestore-provider.indexes.json"
   },
   "hosting": {
-    "public": "apps/glow_provider/build/web",
+    "public": ".",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
       {
