@@ -195,7 +195,14 @@ jobs:
       - name: Build Glow Client Web (Release)
         run: |
           cd apps/glow_client
-          flutter build web --release             --dart-define=FIREBASE_API_KEY=${{ secrets.CLIENT_FIREBASE_API_KEY }}             --dart-define=FIREBASE_PROJECT_ID=${{ secrets.CLIENT_FIREBASE_PROJECT_ID }}             --dart-define=FIREBASE_MESSAGING_SENDER_ID=${{ secrets.CLIENT_FIREBASE_MESSAGING_SENDER_ID }}             --dart-define=FIREBASE_STORAGE_BUCKET=${{ secrets.CLIENT_FIREBASE_STORAGE_BUCKET }}             --dart-define=FIREBASE_WEB_APP_ID=${{ secrets.CLIENT_FIREBASE_WEB_APP_ID }}             --dart-define=FIREBASE_ANDROID_APP_ID=${{ secrets.CLIENT_FIREBASE_ANDROID_APP_ID }}             --dart-define=FIREBASE_IOS_APP_ID=${{ secrets.CLIENT_FIREBASE_IOS_APP_ID }}
+          flutter build web --release \
+            --dart-define=FIREBASE_API_KEY=${{ secrets.CLIENT_FIREBASE_API_KEY }} \
+            --dart-define=FIREBASE_PROJECT_ID=${{ secrets.CLIENT_FIREBASE_PROJECT_ID }} \
+            --dart-define=FIREBASE_MESSAGING_SENDER_ID=${{ secrets.CLIENT_FIREBASE_MESSAGING_SENDER_ID }} \
+            --dart-define=FIREBASE_STORAGE_BUCKET=${{ secrets.CLIENT_FIREBASE_STORAGE_BUCKET }} \
+            --dart-define=FIREBASE_WEB_APP_ID=${{ secrets.CLIENT_FIREBASE_WEB_APP_ID }} \
+            --dart-define=FIREBASE_ANDROID_APP_ID=${{ secrets.CLIENT_FIREBASE_ANDROID_APP_ID }} \
+            --dart-define=FIREBASE_IOS_APP_ID=${{ secrets.CLIENT_FIREBASE_IOS_APP_ID }}
         working-directory: ${{ github.workspace }}
 
       - name: Upload Glow Client Web Artifact
@@ -258,9 +265,7 @@ jobs:
           content = content.replace("import groovy.xml.QName", "import javax.xml.namespace.QName")
           content = content.replace("groovy.xml.QName", "javax.xml.namespace.QName")
           if "import groovy.xml.XmlParser" not in content:
-              content = "import groovy.xml.XmlParser
-import groovy.xml.XmlSlurper
-" + content
+              content = "import groovy.xml.XmlParser\nimport groovy.xml.XmlSlurper\n" + content
           content = content.replace("getDefaultProguardFile('proguard-android.txt')", "getDefaultProguardFile('proguard-android-optimize.txt')")
           content = content.replace('getDefaultProguardFile("proguard-android.txt")', 'getDefaultProguardFile("proguard-android-optimize.txt")')
           with open(path, "w") as f:
@@ -271,7 +276,12 @@ import groovy.xml.XmlSlurper
       - name: Build Glow Client Android (Release)
         run: |
           cd apps/glow_client
-          flutter build apk --release             --dart-define=FIREBASE_API_KEY=${{ secrets.CLIENT_FIREBASE_API_KEY }}             --dart-define=FIREBASE_PROJECT_ID=${{ secrets.CLIENT_FIREBASE_PROJECT_ID }}             --dart-define=FIREBASE_MESSAGING_SENDER_ID=${{ secrets.CLIENT_FIREBASE_MESSAGING_SENDER_ID }}             --dart-define=FIREBASE_STORAGE_BUCKET=${{ secrets.CLIENT_FIREBASE_STORAGE_BUCKET }}             --dart-define=FIREBASE_ANDROID_APP_ID=${{ secrets.CLIENT_FIREBASE_ANDROID_APP_ID }}
+          flutter build apk --release \
+            --dart-define=FIREBASE_API_KEY=${{ secrets.CLIENT_FIREBASE_API_KEY }} \
+            --dart-define=FIREBASE_PROJECT_ID=${{ secrets.CLIENT_FIREBASE_PROJECT_ID }} \
+            --dart-define=FIREBASE_MESSAGING_SENDER_ID=${{ secrets.CLIENT_FIREBASE_MESSAGING_SENDER_ID }} \
+            --dart-define=FIREBASE_STORAGE_BUCKET=${{ secrets.CLIENT_FIREBASE_STORAGE_BUCKET }} \
+            --dart-define=FIREBASE_ANDROID_APP_ID=${{ secrets.CLIENT_FIREBASE_ANDROID_APP_ID }}
         working-directory: ${{ github.workspace }}
 
       - name: Upload Glow Client APK
@@ -320,7 +330,14 @@ import groovy.xml.XmlSlurper
       - name: Build Glow Provider Web (Release)
         run: |
           cd apps/glow_provider
-          flutter build web --release             --dart-define=FIREBASE_API_KEY=${{ secrets.PROVIDER_FIREBASE_API_KEY }}             --dart-define=FIREBASE_PROJECT_ID=${{ secrets.PROVIDER_FIREBASE_PROJECT_ID }}             --dart-define=FIREBASE_MESSAGING_SENDER_ID=${{ secrets.PROVIDER_FIREBASE_MESSAGING_SENDER_ID }}             --dart-define=FIREBASE_STORAGE_BUCKET=${{ secrets.PROVIDER_FIREBASE_STORAGE_BUCKET }}             --dart-define=FIREBASE_WEB_APP_ID=${{ secrets.PROVIDER_FIREBASE_WEB_APP_ID }}             --dart-define=FIREBASE_ANDROID_APP_ID=${{ secrets.PROVIDER_FIREBASE_ANDROID_APP_ID }}             --dart-define=FIREBASE_IOS_APP_ID=${{ secrets.PROVIDER_FIREBASE_IOS_APP_ID }}
+          flutter build web --release \
+            --dart-define=FIREBASE_API_KEY=${{ secrets.PROVIDER_FIREBASE_API_KEY }} \
+            --dart-define=FIREBASE_PROJECT_ID=${{ secrets.PROVIDER_FIREBASE_PROJECT_ID }} \
+            --dart-define=FIREBASE_MESSAGING_SENDER_ID=${{ secrets.PROVIDER_FIREBASE_MESSAGING_SENDER_ID }} \
+            --dart-define=FIREBASE_STORAGE_BUCKET=${{ secrets.PROVIDER_FIREBASE_STORAGE_BUCKET }} \
+            --dart-define=FIREBASE_WEB_APP_ID=${{ secrets.PROVIDER_FIREBASE_WEB_APP_ID }} \
+            --dart-define=FIREBASE_ANDROID_APP_ID=${{ secrets.PROVIDER_FIREBASE_ANDROID_APP_ID }} \
+            --dart-define=FIREBASE_IOS_APP_ID=${{ secrets.PROVIDER_FIREBASE_IOS_APP_ID }}
         working-directory: ${{ github.workspace }}
 
       - name: Upload Glow Provider Web Artifact
@@ -383,20 +400,23 @@ import groovy.xml.XmlSlurper
           content = content.replace("import groovy.xml.QName", "import javax.xml.namespace.QName")
           content = content.replace("groovy.xml.QName", "javax.xml.namespace.QName")
           if "import groovy.xml.XmlParser" not in content:
-              content = "import groovy.xml.XmlParser
-import groovy.xml.XmlSlurper
-" + content
+              content = "import groovy.xml.XmlParser\nimport groovy.xml.XmlSlurper\n" + content
           content = content.replace("getDefaultProguardFile('proguard-android.txt')", "getDefaultProguardFile('proguard-android-optimize.txt')")
           content = content.replace('getDefaultProguardFile("proguard-android.txt")', 'getDefaultProguardFile("proguard-android-optimize.txt")')
           with open(path, "w") as f:
               f.write(content)
-          print(f"Patched {path} successfully")
+          print(f"Patched {path} successful")
           PYEOF
 
       - name: Build Glow Provider Android (Release)
         run: |
           cd apps/glow_provider
-          flutter build apk --release             --dart-define=FIREBASE_API_KEY=${{ secrets.PROVIDER_FIREBASE_API_KEY }}             --dart-define=FIREBASE_PROJECT_ID=${{ secrets.PROVIDER_FIREBASE_PROJECT_ID }}             --dart-define=FIREBASE_MESSAGING_SENDER_ID=${{ secrets.PROVIDER_FIREBASE_MESSAGING_SENDER_ID }}             --dart-define=FIREBASE_STORAGE_BUCKET=${{ secrets.PROVIDER_FIREBASE_STORAGE_BUCKET }}             --dart-define=FIREBASE_ANDROID_APP_ID=${{ secrets.PROVIDER_FIREBASE_ANDROID_APP_ID }}
+          flutter build apk --release \
+            --dart-define=FIREBASE_API_KEY=${{ secrets.PROVIDER_FIREBASE_API_KEY }} \
+            --dart-define=FIREBASE_PROJECT_ID=${{ secrets.PROVIDER_FIREBASE_PROJECT_ID }} \
+            --dart-define=FIREBASE_MESSAGING_SENDER_ID=${{ secrets.PROVIDER_FIREBASE_MESSAGING_SENDER_ID }} \
+            --dart-define=FIREBASE_STORAGE_BUCKET=${{ secrets.PROVIDER_FIREBASE_STORAGE_BUCKET }} \
+            --dart-define=FIREBASE_ANDROID_APP_ID=${{ secrets.PROVIDER_FIREBASE_ANDROID_APP_ID }}
         working-directory: ${{ github.workspace }}
 
       - name: Upload Glow Provider APK
