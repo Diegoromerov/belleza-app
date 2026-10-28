@@ -9,6 +9,9 @@ env:
   FLUTTER_VERSION: '3.29.2'
 
 jobs:
+  # ─────────────────────────────────────────────────────────────────
+  # BACKEND CI
+  # ─────────────────────────────────────────────────────────────────
   backend-ci:
     name: Backend Tests & Lint
     runs-on: ubuntu-latest
@@ -38,31 +41,122 @@ jobs:
         with: { node-version: '22.x', cache: 'npm', cache-dependency-path: backend/package-lock.json }
       - name: Install Backend Dependencies
         run: cd backend && npm ci --legacy-peer-deps
-      - name: Echo test
-        run: echo "backend ci test"
+      - name: Compuerta anti-marcadores de conflicto
+        run: cd backend && node scripts/checkNoConflictMarkers.js
+      - name: Escaneo de credenciales versionadas
+        run: cd backend && node scripts/verifyNoVersionedSecrets.js
+      - name: Guard de numeracion de migraciones
+        run: cd backend && node tests/migrationsNoDuplicateNumbers.test.js
+      - name: Guardas node:test
+        run: |
+          cd backend
+          set -o pipefail
+          npm run test:node 2>&1 | tee /tmp/node-tests.log
+          rc=$?
+          if [ $rc -ne 0 ]; then
+            echo "::error::Guardas node:test en rojo (exit $rc)"
+            tail -25 /tmp/node-tests.log | while IFS= read -r l; do echo "::error::$l"; done
+          fi
+          exit $rc
+      - name: Compuerta de contrato OpenAPI
+        run: |
+          cd backend
+          set -o pipefail
+          node scripts/checkOpenApiSpec.js 2>&1 | tee /tmp/openapi-drift.log
+          rc=$?
+          if [ $rc -ne 0 ]; then
+            echo "::error::Compuerta de contrato OpenAPI en rojo (exit $rc)"
+            tail -30 /tmp/openapi-drift.log | while IFS= read -r l; do echo "::error::$l"; done
+          fi
+          exit $rc
+      - name: Tests de contrato
+        run: |
+          cd backend
+          set -o pipefail
+          npx jest src/tests/contract/openapi.contract.test.js src/tests/contract/critical-endpoints.contract.test.js src/tests/contract/routersMontados.contract.test.js --runInBand --forceExit 2>&1 | tee /tmp/contract-tests.log
+          rc=$?
+          if [ $rc -ne 0 ]; then
+            echo "::error::Tests de contrato en rojo (exit $rc)"
+            grep -E 'Tests:|Test Suites:' /tmp/contract-tests.log | paste -sd ' . ' - | while IFS= read -r l; do echo "::error::$l"; done
+          fi
+          exit $rc
+      - name: Preparar esquema multi-tenant y roles RLS
+        run: |
+          cd backend
+          set -o pipefail
+          node scripts/prepareRlsDatabase.js 2>&1 | tee /tmp/prep-rls.log
+          rc=$?
+          if [ $rc -ne 0 ]; then
+            echo "::error::prepareRlsDatabase.js fallo con exit $rc - ultimas 20 lineas:"
+            tail -20 /tmp/prep-rls.log | while IFS= read -r l; do echo "::error::$l"; done
+          fi
+          exit $rc
+      - name: Verificar aislamiento multi-tenant (RLS)
+        continue-on-error: true
+        env:
+          TEST_DATABASE_URL: postgres://app_owner:***@localhost:5432/glowtest
+        run: |
+          cd backend
+          set -o pipefail
+          node scripts/verifyTenantIsolation.js 2>&1 | tee /tmp/verify-rls.log
+          rc=$?
+          if [ $rc -ne 0 ]; then
+            echo "::warning::verifyTenantIsolation.js fallo con exit $rc (requiere PostgreSQL vivo con roles RLS) - ultimas 20 lineas:"
+            tail -20 /tmp/verify-rls.log | while IFS= read -r l; do echo "::warning::$l"; done
+          else
+            echo "[OK] Verificacion RLS exitosa"
+          fi
+      - name: Run Backend Integration & Unit Tests
+        env:
+          DATABASE_URL: postgres://app_rls_user:***@localhost:5432/glowtest
+          JWT_SECRET: ci_secret_key_glowapp_2026_super_secure
+          RLS_ROLE_PASSWORD: ci_only_password
+        run: |
+          cd backend
+          set -o pipefail
+          npm test -- --coverage --testPathIgnorePatterns="geminiService|geminiFallback|auraToolExecutor|contract|biometric|resilience|contextCompressor|fase5|api.cors" 2>&1 | tee /tmp/jest-gate.log
 
+  # ─────────────────────────────────────────────────────────────────
+  # MONOREPO SETUP (shared for frontend jobs)
+  # ─────────────────────────────────────────────────────────────────
   monorepo-setup:
     name: Monorepo Setup & Analyze
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
+
       - name: Setup Dart/Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: ${{ env.FLUTTER_CHANNEL }}
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
+          cache-key: flutter-${{ runner.os }}-${{ env.FLUTTER_VERSION }}-${{ hashFiles('**/pubspec.yaml', '**/pubspec.lock') }}
+
       - name: Install Melos
         run: dart pub global activate melos 6.2.0
+
       - name: Add Melos to PATH
         run: echo "$HOME/.pub-cache/bin" >> $GITHUB_PATH
+
       - name: Melos Bootstrap
         run: melos bootstrap
         working-directory: ${{ github.workspace }}
-      - name: Echo test
-        run: echo "monorepo setup test"
 
+      - name: Melos Analyze (all packages)
+        run: |
+          echo "Analyzing glow_core..."
+          cd ${{ github.workspace }}/packages/glow_core && flutter analyze --no-fatal-infos --no-fatal-warnings
+          echo "Analyzing glow_client..."
+          cd ${{ github.workspace }}/apps/glow_client && flutter analyze --no-fatal-infos --no-fatal-warnings
+          echo "Analyzing glow_provider..."
+          cd ${{ github.workspace }}/apps/glow_provider && flutter analyze --no-fatal-infos --no-fatal-warnings
+        working-directory: ${{ github.workspace }}
+
+  # ─────────────────────────────────────────────────────────────────
+  # GLOW_CLIENT - Web Build (REQUIRED for deploy)
+  # ─────────────────────────────────────────────────────────────────
   glow-client-web:
     name: Glow Client - Test & Web Build
     needs: monorepo-setup
@@ -70,15 +164,118 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
+
       - name: Setup Dart/Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: ${{ env.FLUTTER_CHANNEL }}
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
-      - name: Echo test
-        run: echo "glow-client-web test"
 
+      - name: Restore Melos Cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ github.workspace }}/.dart_tool
+            ${{ github.workspace }}/packages/glow_core/.dart_tool
+            ${{ github.workspace }}/apps/glow_client/.dart_tool
+            ${{ github.workspace }}/apps/glow_provider/.dart_tool
+          key: melos-${{ runner.os }}-${{ hashFiles('**/pubspec.yaml', '**/pubspec.lock', 'melos.yaml') }}
+
+      - name: Melos Bootstrap
+        run: melos bootstrap
+        working-directory: ${{ github.workspace }}
+
+      - name: Run Glow Client Tests
+        run: cd apps/glow_client && flutter test
+        working-directory: ${{ github.workspace }}
+
+      - name: Build Glow Client Web (Release)
+        run: |
+          cd apps/glow_client
+          flutter build web --release             --dart-define=FIREBASE_API_KEY=${{ secrets.CLIENT_FIREBASE_API_KEY }}             --dart-define=FIREBASE_PROJECT_ID=${{ secrets.CLIENT_FIREBASE_PROJECT_ID }}             --dart-define=FIREBASE_MESSAGING_SENDER_ID=${{ secrets.CLIENT_FIREBASE_MESSAGING_SENDER_ID }}             --dart-define=FIREBASE_STORAGE_BUCKET=${{ secrets.CLIENT_FIREBASE_STORAGE_BUCKET }}             --dart-define=FIREBASE_WEB_APP_ID=${{ secrets.CLIENT_FIREBASE_WEB_APP_ID }}             --dart-define=FIREBASE_ANDROID_APP_ID=${{ secrets.CLIENT_FIREBASE_ANDROID_APP_ID }}             --dart-define=FIREBASE_IOS_APP_ID=${{ secrets.CLIENT_FIREBASE_IOS_APP_ID }}
+        working-directory: ${{ github.workspace }}
+
+      - name: Upload Glow Client Web Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: glow-client-web
+          path: apps/glow_client/build/web/
+          retention-days: 7
+
+  # ─────────────────────────────────────────────────────────────────
+  # GLOW_CLIENT - Android Build (OPTIONAL, non-blocking)
+  # ─────────────────────────────────────────────────────────────────
+  glow-client-android:
+    name: Glow Client - Android Build
+    needs: monorepo-setup
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - name: Setup Dart/Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: ${{ env.FLUTTER_CHANNEL }}
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Restore Melos Cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ github.workspace }}/.dart_tool
+            ${{ github.workspace }}/packages/glow_core/.dart_tool
+            ${{ github.workspace }}/apps/glow_client/.dart_tool
+            ${{ github.workspace }}/apps/glow_provider/.dart_tool
+          key: melos-${{ runner.os }}-${{ hashFiles('**/pubspec.yaml', '**/pubspec.lock', 'melos.yaml') }}
+
+      - name: Melos Bootstrap
+        run: melos bootstrap
+        working-directory: ${{ github.workspace }}
+
+      - name: Setup JDK 17 (for Android build)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Patch Flutter gradle plugin for Groovy 4.x + AGP 8.x compat
+        run: |
+          FLUTTER_GROOVY=$(find /opt/hostedtoolcache/flutter -name "flutter.groovy" -path "*/packages/flutter_tools/gradle/*" 2>/dev/null | head -1)
+          if [ -z "$FLUTTER_GROOVY" ]; then
+            echo "flutter.groovy not found"
+            exit 1
+          fi
+          sed -i 's/import groovy.xml.QName/import javax.xml.namespace.QName/g' "$FLUTTER_GROOVY"
+          sed -i 's/groovy.xml.QName/javax.xml.namespace.QName/g' "$FLUTTER_GROOVY"
+          if ! grep -q "import groovy.xml.XmlParser" "$FLUTTER_GROOVY"; then
+            sed -i '1i import groovy.xml.XmlParser
+import groovy.xml.XmlSlurper' "$FLUTTER_GROOVY"
+          fi
+          sed -i "s/getDefaultProguardFile('proguard-android.txt')/getDefaultProguardFile('proguard-android-optimize.txt')/g" "$FLUTTER_GROOVY"
+          sed -i 's/getDefaultProguardFile("proguard-android.txt")/getDefaultProguardFile("proguard-android-optimize.txt")/g' "$FLUTTER_GROOVY"
+          echo "Patched $FLUTTER_GROOVY successfully"
+        working-directory: ${{ github.workspace }}
+
+      - name: Build Glow Client Android (Release)
+        run: |
+          cd apps/glow_client
+          flutter build apk --release             --dart-define=FIREBASE_API_KEY=${{ secrets.CLIENT_FIREBASE_API_KEY }}             --dart-define=FIREBASE_PROJECT_ID=${{ secrets.CLIENT_FIREBASE_PROJECT_ID }}             --dart-define=FIREBASE_MESSAGING_SENDER_ID=${{ secrets.CLIENT_FIREBASE_MESSAGING_SENDER_ID }}             --dart-define=FIREBASE_STORAGE_BUCKET=${{ secrets.CLIENT_FIREBASE_STORAGE_BUCKET }}             --dart-define=FIREBASE_ANDROID_APP_ID=${{ secrets.CLIENT_FIREBASE_ANDROID_APP_ID }}
+        working-directory: ${{ github.workspace }}
+
+      - name: Upload Glow Client APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: glow-client-apk
+          path: apps/glow_client/build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 7
+
+  # ─────────────────────────────────────────────────────────────────
+  # GLOW_PROVIDER - Web Build (REQUIRED for deploy)
+  # ─────────────────────────────────────────────────────────────────
   glow-provider-web:
     name: Glow Provider - Test & Web Build
     needs: monorepo-setup
@@ -86,11 +283,162 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
+
       - name: Setup Dart/Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: ${{ env.FLUTTER_CHANNEL }}
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
-      - name: Echo test
-        run: echo "glow-provider-web test"
+
+      - name: Restore Melos Cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ github.workspace }}/.dart_tool
+            ${{ github.workspace }}/packages/glow_core/.dart_tool
+            ${{ github.workspace }}/apps/glow_client/.dart_tool
+            ${{ github.workspace }}/apps/glow_provider/.dart_tool
+          key: melos-${{ runner.os }}-${{ hashFiles('**/pubspec.yaml', '**/pubspec.lock', 'melos.yaml') }}
+
+      - name: Melos Bootstrap
+        run: melos bootstrap
+        working-directory: ${{ github.workspace }}
+
+      - name: Run Glow Provider Tests
+        run: cd apps/glow_provider && flutter test
+        working-directory: ${{ github.workspace }}
+
+      - name: Build Glow Provider Web (Release)
+        run: |
+          cd apps/glow_provider
+          flutter build web --release             --dart-define=FIREBASE_API_KEY=${{ secrets.PROVIDER_FIREBASE_API_KEY }}             --dart-define=FIREBASE_PROJECT_ID=${{ secrets.PROVIDER_FIREBASE_PROJECT_ID }}             --dart-define=FIREBASE_MESSAGING_SENDER_ID=${{ secrets.PROVIDER_FIREBASE_MESSAGING_SENDER_ID }}             --dart-define=FIREBASE_STORAGE_BUCKET=${{ secrets.PROVIDER_FIREBASE_STORAGE_BUCKET }}             --dart-define=FIREBASE_WEB_APP_ID=${{ secrets.PROVIDER_FIREBASE_WEB_APP_ID }}             --dart-define=FIREBASE_ANDROID_APP_ID=${{ secrets.PROVIDER_FIREBASE_ANDROID_APP_ID }}             --dart-define=FIREBASE_IOS_APP_ID=${{ secrets.PROVIDER_FIREBASE_IOS_APP_ID }}
+        working-directory: ${{ github.workspace }}
+
+      - name: Upload Glow Provider Web Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: glow-provider-web
+          path: apps/glow_provider/build/web/
+          retention-days: 7
+
+  # ─────────────────────────────────────────────────────────────────
+  # GLOW_PROVIDER - Android Build (OPTIONAL, non-blocking)
+  # ─────────────────────────────────────────────────────────────────
+  glow-provider-android:
+    name: Glow Provider - Android Build
+    needs: monorepo-setup
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - name: Setup Dart/Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: ${{ env.FLUTTER_CHANNEL }}
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Restore Melos Cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ github.workspace }}/.dart_tool
+            ${{ github.workspace }}/packages/glow_core/.dart_tool
+            ${{ github.workspace }}/apps/glow_client/.dart_tool
+            ${{ github.workspace }}/apps/glow_provider/.dart_tool
+          key: melos-${{ runner.os }}-${{ hashFiles('**/pubspec.yaml', '**/pubspec.lock', 'melos.yaml') }}
+
+      - name: Melos Bootstrap
+        run: melos bootstrap
+        working-directory: ${{ github.workspace }}
+
+      - name: Setup JDK 17 (for Android build)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Patch Flutter gradle plugin for Groovy 4.x + AGP 8.x compat
+        run: |
+          FLUTTER_GROOVY=$(find /opt/hostedtoolcache/flutter -name "flutter.groovy" -path "*/packages/flutter_tools/gradle/*" 2>/dev/null | head -1)
+          if [ -z "$FLUTTER_GROOVY" ]; then
+            echo "flutter.groovy not found"
+            exit 1
+          fi
+          sed -i 's/import groovy.xml.QName/import javax.xml.namespace.QName/g' "$FLUTTER_GROOVY"
+          sed -i 's/groovy.xml.QName/javax.xml.namespace.QName/g' "$FLUTTER_GROOVY"
+          if ! grep -q "import groovy.xml.XmlParser" "$FLUTTER_GROOVY"; then
+            sed -i '1i import groovy.xml.XmlParser
+import groovy.xml.XmlSlurper' "$FLUTTER_GROOVY"
+          fi
+          sed -i "s/getDefaultProguardFile('proguard-android.txt')/getDefaultProguardFile('proguard-android-optimize.txt')/g" "$FLUTTER_GROOVY"
+          sed -i 's/getDefaultProguardFile("proguard-android.txt")/getDefaultProguardFile("proguard-android-optimize.txt")/g' "$FLUTTER_GROOVY"
+          echo "Patched $FLUTTER_GROOVY successfully"
+        working-directory: ${{ github.workspace }}
+
+      - name: Build Glow Provider Android (Release)
+        run: |
+          cd apps/glow_provider
+          flutter build apk --release             --dart-define=FIREBASE_API_KEY=${{ secrets.PROVIDER_FIREBASE_API_KEY }}             --dart-define=FIREBASE_PROJECT_ID=${{ secrets.PROVIDER_FIREBASE_PROJECT_ID }}             --dart-define=FIREBASE_MESSAGING_SENDER_ID=${{ secrets.PROVIDER_FIREBASE_MESSAGING_SENDER_ID }}             --dart-define=FIREBASE_STORAGE_BUCKET=${{ secrets.PROVIDER_FIREBASE_STORAGE_BUCKET }}             --dart-define=FIREBASE_ANDROID_APP_ID=${{ secrets.PROVIDER_FIREBASE_ANDROID_APP_ID }}
+        working-directory: ${{ github.workspace }}
+
+      - name: Upload Glow Provider APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: glow-provider-apk
+          path: apps/glow_provider/build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 7
+
+  # ─────────────────────────────────────────────────────────────────
+  # DEPLOY TO FIREBASE HOSTING (on push to staging)
+  # ─────────────────────────────────────────────────────────────────
+  deploy-client-web:
+    name: Deploy Glow Client to Firebase Hosting
+    needs: [glow-client-web, backend-ci]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/staging'
+    runs-on: ubuntu-latest
+    working-directory: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download Glow Client Web Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: glow-client-web
+          path: apps/glow_client/build/web/
+      - name: Copy firebase.json for Client
+        run: cp firebase.client.json apps/glow_client/build/web/firebase.json
+      - name: Deploy to Firebase Hosting (Client)
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.CLIENT_FIREBASE_SERVICE_ACCOUNT }}
+          projectId: ${{ secrets.CLIENT_FIREBASE_PROJECT_ID }}
+          channelId: "staging"
+          entryPoint: apps/glow_client/build/web
+
+  deploy-provider-web:
+    name: Deploy Glow Provider to Firebase Hosting
+    needs: [glow-provider-web, backend-ci]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/staging'
+    runs-on: ubuntu-latest
+    working-directory: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download Glow Provider Web Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: glow-provider-web
+          path: apps/glow_provider/build/web/
+      - name: Copy firebase.json for Provider
+        run: cp firebase.provider.json apps/glow_provider/build/web/firebase.json
+      - name: Deploy to Firebase Hosting (Provider)
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.PROVIDER_FIREBASE_SERVICE_ACCOUNT }}
+          projectId: ${{ secrets.PROVIDER_FIREBASE_PROJECT_ID }}
+          channelId: "staging"
+          entryPoint: apps/glow_provider/build/web
