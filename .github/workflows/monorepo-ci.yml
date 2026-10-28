@@ -435,6 +435,7 @@ jobs:
     needs: [glow-client-web, backend-ci]
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging')
     runs-on: ubuntu-latest
+    working-directory: ${{ github.workspace }}
     steps:
       - uses: actions/checkout@v4
       - name: Download Glow Client Web Artifact
@@ -458,6 +459,7 @@ jobs:
     needs: [glow-provider-web, backend-ci]
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging')
     runs-on: ubuntu-latest
+    working-directory: ${{ github.workspace }}
     steps:
       - uses: actions/checkout@v4
       - name: Download Glow Provider Web Artifact
