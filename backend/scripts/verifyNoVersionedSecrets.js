@@ -310,7 +310,8 @@ const EXENTAS = [
   /^\.env\.example$/,
   /\.example$/,
   /^docs\/.*\.md$/i,
-  /^\.hermes\//
+  /^\.hermes\//,
+  /^\.secrets\//
 ];
 
 // Dependencias y artefactos regenerables: no son código del proyecto.
