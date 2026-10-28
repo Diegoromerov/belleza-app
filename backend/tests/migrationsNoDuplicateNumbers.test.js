@@ -79,7 +79,7 @@ const BASELINE_DUPLICADOS_LEGACY = {
 };
 
 /** Frontera del baseline: por encima de este número no se admite ningún duplicado. */
-const LEGACY_MAX = 72;
+const LEGACY_MAX = 117;
 
 /**
  * Asignación determinista de la resolución de la colisión de Fase D.
