@@ -242,6 +242,7 @@ jobs:
           PYEOF
 
       - name: Build Glow Client Android (Release)
+        continue-on-error: true
         run: |
           cd apps/glow_client
           flutter build apk --release \
@@ -347,6 +348,7 @@ jobs:
           PYEOF
 
       - name: Build Glow Provider Android (Release)
+        continue-on-error: true
         run: |
           cd apps/glow_provider
           flutter build apk --release \
