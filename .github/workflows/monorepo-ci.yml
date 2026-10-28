@@ -11,9 +11,9 @@ env:
   FLUTTER_VERSION: '3.29.2'
 
 jobs:
-  # ─────────────────────────────────────────────────────────────────
+  # -----------------------------------------------------------------
   # BACKEND CI (existing - unchanged)
-  # ─────────────────────────────────────────────────────────────────
+  # -----------------------------------------------------------------
   backend-ci:
     name: Backend Tests & Lint
     runs-on: ubuntu-latest
@@ -45,7 +45,7 @@ jobs:
         run: cd backend && node scripts/checkNoConflictMarkers.js
       - name: Escaneo de credenciales versionadas
         run: cd backend && node scripts/verifyNoVersionedSecrets.js
-      - name: Guard de numeración de migraciones
+      - name: Guard de numeracion de migraciones
         run: cd backend && node tests/migrationsNoDuplicateNumbers.test.js
       - name: Guardas node:test
         run: |
@@ -77,7 +77,7 @@ jobs:
           rc=$?
           if [ $rc -ne 0 ]; then
             echo "::error::Tests de contrato en rojo (exit $rc)"
-            grep -E 'Tests:|Test Suites:' /tmp/contract-tests.log | paste -sd ' · ' - | while IFS= read -r l; do echo "::error::$l"; done
+            grep -E 'Tests:|Test Suites:' /tmp/contract-tests.log | paste -sd ' . ' - | while IFS= read -r l; do echo "::error::$l"; done
           fi
           exit $rc
       - name: Preparar esquema multi-tenant y roles RLS
@@ -87,7 +87,7 @@ jobs:
           node scripts/prepareRlsDatabase.js 2>&1 | tee /tmp/prep-rls.log
           rc=$?
           if [ $rc -ne 0 ]; then
-            echo "::error::prepareRlsDatabase.js falló con exit $rc — últimas 20 líneas:"
+            echo "::error::prepareRlsDatabase.js fallo con exit $rc - últimas 20 líneas:"
             tail -20 /tmp/prep-rls.log | while IFS= read -r l; do echo "::error::$l"; done
           fi
           exit $rc
@@ -101,10 +101,10 @@ jobs:
           node scripts/verifyTenantIsolation.js 2>&1 | tee /tmp/verify-rls.log
           rc=$?
           if [ $rc -ne 0 ]; then
-            echo "::warning::verifyTenantIsolation.js falló con exit $rc (requiere PostgreSQL vivo con roles RLS) — últimas 20 líneas:"
+            echo "::warning::verifyTenantIsolation.js fallo con exit $rc (requiere PostgreSQL vivo con roles RLS) - últimas 20 líneas:"
             tail -20 /tmp/verify-rls.log | while IFS= read -r l; do echo "::warning::$l"; done
           else
-            echo "✅ Verificación RLS exitosa"
+            echo "[OK] Verificacion RLS exitosa"
           fi
       - name: Run Backend Integration & Unit Tests
         env:
@@ -116,9 +116,9 @@ jobs:
           set -o pipefail
           npm test -- --coverage --testPathIgnorePatterns="geminiService|geminiFallback|auraToolExecutor|contract|biometric|resilience|contextCompressor|fase5|api.cors" 2>&1 | tee /tmp/jest-gate.log
 
-  # ─────────────────────────────────────────────────────────────────
+  # -----------------------------------------------------------------
   # MONOREPO SETUP (shared for frontend jobs)
-  # ─────────────────────────────────────────────────────────────────
+  # -----------------------------------------------------------------
   monorepo-setup:
     name: Monorepo Setup & Analyze
     runs-on: ubuntu-latest
@@ -157,9 +157,9 @@ jobs:
           cd ${{ github.workspace }}/apps/glow_provider && flutter analyze --no-fatal-infos --no-fatal-warnings
         working-directory: ${{ github.workspace }}
 
-  # ─────────────────────────────────────────────────────────────────
+  # -----------------------------------------------------------------
   # GLOW_CLIENT - Web Build (REQUIRED for deploy)
-  # ─────────────────────────────────────────────────────────────────
+  # -----------------------------------------------------------------
   glow-client-web:
     name: Glow Client - Test & Web Build
     needs: monorepo-setup
@@ -206,9 +206,9 @@ jobs:
           path: apps/glow_client/build/web/
           retention-days: 7
 
-  # ─────────────────────────────────────────────────────────────────
+  # -----------------------------------------------------------------
   # GLOW_CLIENT - Android Build (OPTIONAL, non-blocking)
-  # ─────────────────────────────────────────────────────────────────
+  # -----------------------------------------------------------------
   glow-client-android:
     name: Glow Client - Android Build
     needs: monorepo-setup
@@ -275,9 +275,9 @@ jobs:
           path: apps/glow_client/build/app/outputs/flutter-apk/app-release.apk
           retention-days: 7
 
-  # ─────────────────────────────────────────────────────────────────
+  # -----------------------------------------------------------------
   # GLOW_PROVIDER - Web Build (REQUIRED for deploy)
-  # ─────────────────────────────────────────────────────────────────
+  # -----------------------------------------------------------------
   glow-provider-web:
     name: Glow Provider - Test & Web Build
     needs: monorepo-setup
@@ -324,9 +324,9 @@ jobs:
           path: apps/glow_provider/build/web/
           retention-days: 7
 
-  # ─────────────────────────────────────────────────────────────────
+  # -----------------------------------------------------------------
   # GLOW_PROVIDER - Android Build (OPTIONAL, non-blocking)
-  # ─────────────────────────────────────────────────────────────────
+  # -----------------------------------------------------------------
   glow-provider-android:
     name: Glow Provider - Android Build
     needs: monorepo-setup
@@ -393,9 +393,9 @@ jobs:
           path: apps/glow_provider/build/app/outputs/flutter-apk/app-release.apk
           retention-days: 7
 
-  # ─────────────────────────────────────────────────────────────────
+  # -----------------------------------------------------------------
   # DEPLOY TO FIREBASE HOSTING (on push to main/staging)
-  # ─────────────────────────────────────────────────────────────────
+  # -----------------------------------------------------------------
   deploy-client-web:
     name: Deploy Glow Client to Firebase Hosting
     needs: [glow-client-web, backend-ci]
