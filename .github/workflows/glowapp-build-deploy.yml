@@ -1,0 +1,120 @@
+name: GlowApp Build and Deploy
+
+on:
+  push:
+    branches: [ main, staging ]
+  pull_request:
+    branches: [ main, staging ]
+
+env:
+  FLUTTER_CHANNEL: stable
+  FLUTTER_VERSION: '3.29.2'
+
+jobs:
+  backend-ci:
+    name: Backend Tests & Lint
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: glowtest
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: [ 5432, 5432 ]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      NODE_ENV: test
+      JWT_SECRET: ci_secret_key_glowapp_2026_super_secure
+      PORT: 3000
+      DATABASE_URL_ADMIN: postgres://postgres:***@localhost:5432/glowtest
+      RLS_ROLE_PASSWORD: ci_only_password
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22.x', cache: 'npm', cache-dependency-path: backend/package-lock.json }
+      - name: Install Backend Dependencies
+        run: cd backend && npm ci --legacy-peer-deps
+      - name: Echo test
+        run: echo "backend ci test"
+
+  monorepo-setup:
+    name: Monorepo Setup & Analyze
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: Setup Dart/Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: ${{ env.FLUTTER_CHANNEL }}
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - name: Install Melos
+        run: dart pub global activate melos 6.2.0
+      - name: Add Melos to PATH
+        run: echo "$HOME/.pub-cache/bin" >> $GITHUB_PATH
+      - name: Melos Bootstrap
+        run: melos bootstrap
+        working-directory: ${{ github.workspace }}
+      - name: Echo test
+        run: echo "monorepo setup test"
+
+  glow-client-web:
+    name: Glow Client - Test & Web Build
+    needs: monorepo-setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: Setup Dart/Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: ${{ env.FLUTTER_CHANNEL }}
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - name: Echo test
+        run: echo "glow-client-web test"
+
+  glow-provider-web:
+    name: Glow Provider - Test & Web Build
+    needs: monorepo-setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: Setup Dart/Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: ${{ env.FLUTTER_CHANNEL }}
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - name: Echo test
+        run: echo "glow-provider-web test"
+
+  deploy-client-web:
+    name: Deploy Glow Client to Firebase Hosting
+    needs: [glow-client-web, backend-ci]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging')
+    runs-on: ubuntu-latest
+    working-directory: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Echo test
+        run: echo "deploy-client-web test"
+
+  deploy-provider-web:
+    name: Deploy Glow Provider to Firebase Hosting
+    needs: [glow-provider-web, backend-ci]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging')
+    runs-on: ubuntu-latest
+    working-directory: ${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Echo test
+        run: echo "deploy-provider-web test"
