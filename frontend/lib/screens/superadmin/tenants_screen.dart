@@ -263,7 +263,7 @@ class _TenantsScreenState extends ConsumerState<TenantsScreen> {
   Widget _pill(String label, Color color) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: .10),
+          color: color.withOpacity(.10),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(label,

@@ -360,7 +360,7 @@ class _StoreScreenState extends State<StoreScreen> {
                             leading: Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: AppTheme.primary.withValues(alpha: 0.1),
+                                color: AppTheme.primary.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: const Icon(Icons.add_location_alt_outlined, color: AppTheme.primary),
@@ -500,7 +500,7 @@ class _StoreScreenState extends State<StoreScreen> {
                         'Conectando con la pasarela de GlowApp...',
                         style: TextStyle(
                           fontSize: 12,
-                          color: AppTheme.text.withValues(alpha: 0.6),
+                          color: AppTheme.text.withOpacity(0.6),
                         ),
                       ),
                     ],
@@ -528,7 +528,7 @@ class _StoreScreenState extends State<StoreScreen> {
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            color: AppTheme.primary.withValues(alpha: 0.8),
+                            color: AppTheme.primary.withOpacity(0.8),
                           ),
                         ),
                       ],
@@ -593,9 +593,9 @@ class _StoreScreenState extends State<StoreScreen> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppTheme.primary.withValues(alpha: 0.08),
+                        color: AppTheme.primary.withOpacity(0.08),
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: AppTheme.primary.withValues(alpha: 0.2)),
+                        border: Border.all(color: AppTheme.primary.withOpacity(0.2)),
                       ),
                       child: Row(
                         children: [
@@ -607,7 +607,7 @@ class _StoreScreenState extends State<StoreScreen> {
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
-                                color: AppTheme.text.withValues(alpha: 0.8),
+                                color: AppTheme.text.withOpacity(0.8),
                               ),
                             ),
                           ),
@@ -977,7 +977,7 @@ class _StoreScreenState extends State<StoreScreen> {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14,
-                    color: AppTheme.text.withValues(alpha: 0.8),
+                    color: AppTheme.text.withOpacity(0.8),
                     height: 1.4,
                   ),
                 ),
@@ -1013,7 +1013,7 @@ class _StoreScreenState extends State<StoreScreen> {
           label,
           style: TextStyle(
             fontSize: 13,
-            color: AppTheme.text.withValues(alpha: 0.6),
+            color: AppTheme.text.withOpacity(0.6),
           ),
         ),
         Text(
@@ -1182,7 +1182,7 @@ class _StoreScreenState extends State<StoreScreen> {
                                           color: isMen ? MensTheme.obsidianCard : Colors.grey.shade100,
                                           borderRadius: BorderRadius.circular(21),
                                           border: Border.all(
-                                            color: isMen ? MensTheme.bronzeAccent.withValues(alpha: 0.3) : Colors.grey.shade300,
+                                            color: isMen ? MensTheme.bronzeAccent.withOpacity(0.3) : Colors.grey.shade300,
                                           ),
                                         ),
                                         padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -1228,7 +1228,7 @@ class _StoreScreenState extends State<StoreScreen> {
                                                 label: Text(cat),
                                                 selected: isSelected,
                                                 onSelected: (_) => _selectCategory(cat),
-                                                selectedColor: accentColor.withValues(alpha: 0.2),
+                                                selectedColor: accentColor.withOpacity(0.2),
                                                 disabledColor: Colors.transparent,
                                                 backgroundColor: isMen ? MensTheme.obsidianCard : Colors.transparent,
                                                 labelStyle: TextStyle(
@@ -1239,7 +1239,7 @@ class _StoreScreenState extends State<StoreScreen> {
                                                 shape: RoundedRectangleBorder(
                                                   borderRadius: BorderRadius.circular(18),
                                                   side: BorderSide(
-                                                    color: isSelected ? accentColor : (isMen ? MensTheme.bronzeAccent.withValues(alpha: 0.4) : Colors.grey.shade300),
+                                                    color: isSelected ? accentColor : (isMen ? MensTheme.bronzeAccent.withOpacity(0.4) : Colors.grey.shade300),
                                                   ),
                                                 ),
                                               ),
@@ -1315,7 +1315,7 @@ class _StoreScreenState extends State<StoreScreen> {
         border: Border(left: BorderSide(color: Colors.grey.shade200, width: 1.5)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
+            color: Colors.black.withOpacity(0.08),
             blurRadius: 20,
             offset: const Offset(-4, 0),
           ),
@@ -1412,7 +1412,7 @@ class _StoreScreenState extends State<StoreScreen> {
                                   _formatCOP(pPrice),
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: AppTheme.text.withValues(alpha: 0.6),
+                                    color: AppTheme.text.withOpacity(0.6),
                                   ),
                                 ),
                                 const SizedBox(height: 8),
@@ -1542,7 +1542,7 @@ class _StoreScreenState extends State<StoreScreen> {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFC5A052).withValues(alpha: 0.35),
+                          color: const Color(0xFFC5A052).withOpacity(0.35),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),

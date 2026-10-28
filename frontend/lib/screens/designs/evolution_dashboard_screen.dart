@@ -546,13 +546,13 @@ class SkinDeteriorationPainter extends CustomPainter {
     // 1. Capa de enrojecimiento / deshidratación (tono sepia/rojizo semi-transparente)
     final rect = Offset.zero & size;
     final paintRed = Paint()
-      ..color = AppTheme.primary.withValues(alpha: 0.15)
+      ..color = AppTheme.primary.withOpacity(0.15)
       ..blendMode = BlendMode.colorBurn;
     canvas.drawRect(rect, paintRed);
 
     // 2. Dibujar algunas imperfecciones / granitos simulados en coordenadas fijas de la cara
     final paintBlemish = Paint()
-      ..color = const Color(0xFFE57373).withValues(alpha: 0.45)
+      ..color = const Color(0xFFE57373).withOpacity(0.45)
       ..style = PaintingStyle.fill
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3); // Bordes suaves difuminados
 
@@ -564,7 +564,7 @@ class SkinDeteriorationPainter extends CustomPainter {
     
     // Un puntito rojo adicional
     final paintBlemishCore = Paint()
-      ..color = const Color(0xFFD32F2F).withValues(alpha: 0.55)
+      ..color = const Color(0xFFD32F2F).withOpacity(0.55)
       ..style = PaintingStyle.fill;
     canvas.drawCircle(Offset(size.width * 0.4, size.height * 0.48), 1.5, paintBlemishCore);
     canvas.drawCircle(Offset(size.width * 0.52, size.height * 0.35), 1.0, paintBlemishCore);
