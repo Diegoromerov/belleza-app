@@ -417,7 +417,7 @@ jobs:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.CLIENT_FIREBASE_SERVICE_ACCOUNT }}
           projectId: ${{ secrets.CLIENT_FIREBASE_PROJECT_ID }}
-          channelId: ${{ github.ref == 'refs/heads/staging' && 'staging' || 'live' }}
+          channelId: "${{ github.ref == 'refs/heads/staging' ? 'staging' : 'live' }}"
           entryPoint: apps/glow_client/build/web
 
   deploy-provider-web:
@@ -441,5 +441,5 @@ jobs:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.PROVIDER_FIREBASE_SERVICE_ACCOUNT }}
           projectId: ${{ secrets.PROVIDER_FIREBASE_PROJECT_ID }}
-          channelId: ${{ github.ref == 'refs/heads/staging' && 'staging' || 'live' }}
+          channelId: "${{ github.ref == 'refs/heads/staging' ? 'staging' : 'live' }}"
           entryPoint: apps/glow_provider/build/web
