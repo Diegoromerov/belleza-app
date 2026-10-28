@@ -1,0 +1,65 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'glowapp'
+    environment: '${ENVIRONMENT:-development}'
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - 'alertmanager:9093'
+
+rule_files:
+  - 'alerts.yml'
+
+scrape_configs:
+  # ─────────────────────────────────────────────────────────────────
+  # Prometheus self-monitoring
+  # ─────────────────────────────────────────────────────────────────
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # ─────────────────────────────────────────────────────────────────
+  # GlowApp Backend (Railway / local)
+  # ─────────────────────────────────────────────────────────────────
+  - job_name: 'glowapp-backend'
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['host.docker.internal:8080']  # local development
+        labels:
+          app: 'glowapp-backend'
+          env: 'development'
+    # En producción (Railway), usar service discovery o targets fijos:
+    # - targets: ['glowapp-backend.railway.internal:8080']
+    #   labels:
+    #     app: 'glowapp-backend'
+    #     env: 'production'
+
+  # ─────────────────────────────────────────────────────────────────
+  # Node Exporter (host metrics)
+  # ─────────────────────────────────────────────────────────────────
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['host.docker.internal:9100']
+        labels:
+          app: 'node-exporter'
+
+  # ─────────────────────────────────────────────────────────────────
+  # Cadvisor (container metrics)
+  # ─────────────────────────────────────────────────────────────────
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['host.docker.internal:8081']
+        labels:
+          app: 'cadvisor'
+
+  # ─────────────────────────────────────────────────────────────────
+  # Firebase Hosting (via Cloud Monitoring exporter - opcional)
+  # ─────────────────────────────────────────────────────────────────
+  # - job_name: 'firebase-hosting'
+  #   static_configs:
+  #     - targets: ['firebase-exporter:9090']
