@@ -247,7 +247,7 @@ class _GlowNBackScreenState extends State<GlowNBackScreen>
                           width: 130,
                           height: 130,
                           decoration: BoxDecoration(
-                            color: stimulusColor.withValues(alpha: 0.15),
+                            color: stimulusColor.withOpacity(0.15),
                             shape: BoxShape.circle,
                             border: Border.all(
                                 color: stimulusColor, width: 3),

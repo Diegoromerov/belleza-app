@@ -431,7 +431,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            baseColor.withValues(alpha: 0.8),
+            baseColor.withOpacity(0.8),
             baseColor,
           ],
           begin: Alignment.topLeft,
@@ -442,7 +442,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
         child: Icon(
           icon,
           size: 80,
-          color: Colors.white.withValues(alpha: 0.7),
+          color: Colors.white.withOpacity(0.7),
         ),
       ),
     );
@@ -595,7 +595,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
               leading: Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: CircleAvatar(
-                  backgroundColor: Colors.black.withValues(alpha: 0.5),
+                  backgroundColor: Colors.black.withOpacity(0.5),
                   child: Semantics(
                     label: 'Regresar',
                     button: true,
@@ -611,7 +611,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                 Padding(
                   padding: const EdgeInsets.only(right: 8.0),
                   child: CircleAvatar(
-                    backgroundColor: Colors.black.withValues(alpha: 0.5),
+                    backgroundColor: Colors.black.withOpacity(0.5),
                     child: Semantics(
                       label: 'Compartir perfil',
                       button: true,
@@ -653,8 +653,8 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          Colors.black.withValues(alpha: 0.6),
-                          Colors.black.withValues(alpha: 0.8),
+                          Colors.black.withOpacity(0.6),
+                          Colors.black.withOpacity(0.8),
                         ],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
@@ -682,7 +682,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.4),
+                                color: Colors.black.withOpacity(0.4),
                                 blurRadius: 12,
                                 offset: const Offset(0, 4),
                               ),
@@ -724,15 +724,15 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 10, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: specColor.withValues(alpha: 0.95),
+                                  color: specColor.withOpacity(0.95),
                                   borderRadius: BorderRadius.circular(20),
                                   border: Border.all(
-                                    color: Colors.white.withValues(alpha: 0.3),
+                                    color: Colors.white.withOpacity(0.3),
                                     width: 0.8,
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withValues(alpha: 0.2),
+                                      color: Colors.black.withOpacity(0.2),
                                       blurRadius: 6,
                                       offset: const Offset(0, 2),
                                     ),
@@ -787,10 +787,10 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                   decoration: BoxDecoration(
-                                    color: Colors.black.withValues(alpha: 0.45),
+                                    color: Colors.black.withOpacity(0.45),
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
-                                      color: const Color(0xFFC5A052).withValues(alpha: 0.4),
+                                      color: const Color(0xFFC5A052).withOpacity(0.4),
                                       width: 0.8,
                                     ),
                                   ),
@@ -814,7 +814,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                           '(${p['rating_count'] ?? p['reviews_count'] ?? 0} opiniones)',
                                           style: TextStyle(
                                               fontFamily: 'Inter',
-                                              color: Colors.white.withValues(alpha: 0.9),
+                                              color: Colors.white.withOpacity(0.9),
                                               fontSize: 11.5),
                                           overflow: TextOverflow.ellipsis,
                                         ),
@@ -909,10 +909,10 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                         decoration: BoxDecoration(
                           color: const Color(0xFFFAF6EE),
                           borderRadius: BorderRadius.circular(18),
-                          border: Border.all(color: const Color(0xFFC5A052).withValues(alpha: 0.2), width: 1),
+                          border: Border.all(color: const Color(0xFFC5A052).withOpacity(0.2), width: 1),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFFC5A052).withValues(alpha: 0.05),
+                              color: const Color(0xFFC5A052).withOpacity(0.05),
                               blurRadius: 10,
                               offset: const Offset(0, 3),
                             ),
@@ -1285,7 +1285,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                                 borderRadius: BorderRadius.circular(14),
                                                 boxShadow: [
                                                   BoxShadow(
-                                                    color: Colors.black.withValues(alpha: 0.1),
+                                                    color: Colors.black.withOpacity(0.1),
                                                     blurRadius: 4,
                                                     offset: const Offset(0, 2),
                                                   ),
@@ -1393,7 +1393,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                                                     Navigator.pop(context),
                                                 child: Container(
                                                   color: Colors.black
-                                                      .withValues(alpha: 0.5),
+                                                      .withOpacity(0.5),
                                                   width: double.infinity,
                                                   height: double.infinity,
                                                 ),
@@ -1820,7 +1820,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFFC5A052).withValues(alpha: 0.35),
+                        color: const Color(0xFFC5A052).withOpacity(0.35),
                         blurRadius: 12,
                         offset: const Offset(0, 4),
                       ),
@@ -1992,7 +1992,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF3D59B).withValues(alpha: 0.3),
+                            color: const Color(0xFFF3D59B).withOpacity(0.3),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Icon(Icons.help_outline_rounded,
@@ -2323,7 +2323,7 @@ class _ProviderDetailScreenState extends State<ProviderDetailScreen> {
         ),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-            color: const Color(0xFFC5A052).withValues(alpha: 0.35), width: 1.2),
+            color: const Color(0xFFC5A052).withOpacity(0.35), width: 1.2),
         boxShadow: const [
           BoxShadow(
             color: Color(0x06000000),

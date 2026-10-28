@@ -183,7 +183,7 @@ class _QuizScreenState extends State<QuizScreen> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.amber.withValues(alpha: 0.1),
+                      color: Colors.amber.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: Colors.amber, width: 2),
                     ),
@@ -338,7 +338,7 @@ class _QuizScreenState extends State<QuizScreen> {
                                   return Container(
                                     margin: const EdgeInsets.only(bottom: 8.0),
                                     decoration: BoxDecoration(
-                                      color: isSelected ? themeColor.withValues(alpha: 0.08) : Colors.transparent,
+                                      color: isSelected ? themeColor.withOpacity(0.08) : Colors.transparent,
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
                                         color: isSelected ? themeColor : Colors.grey[300]!,
@@ -380,7 +380,7 @@ class _QuizScreenState extends State<QuizScreen> {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFC5A052).withValues(alpha: 0.35),
+                          color: const Color(0xFFC5A052).withOpacity(0.35),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),

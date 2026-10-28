@@ -143,10 +143,10 @@ class AppTheme {
         ).copyWith(
           overlayColor: WidgetStateProperty.resolveWith<Color?>((states) {
             if (states.contains(WidgetState.pressed)) {
-              return t.brandPrimaryOn.withValues(alpha: 0.1);
+              return t.brandPrimaryOn.withOpacity(0.1);
             }
             if (states.contains(WidgetState.hovered)) {
-              return t.brandPrimaryOn.withValues(alpha: 0.05);
+              return t.brandPrimaryOn.withOpacity(0.05);
             }
             return null;
           }),
@@ -170,10 +170,10 @@ class AppTheme {
         ).copyWith(
           backgroundColor: WidgetStateProperty.resolveWith<Color?>((states) {
             if (states.contains(WidgetState.pressed)) {
-              return t.brandPrimary.withValues(alpha: 0.1);
+              return t.brandPrimary.withOpacity(0.1);
             }
             if (states.contains(WidgetState.hovered)) {
-              return t.brandPrimary.withValues(alpha: 0.05);
+              return t.brandPrimary.withOpacity(0.05);
             }
             return null;
           }),
@@ -236,7 +236,7 @@ class AppTheme {
       // Chip
       chipTheme: ChipThemeData(
         backgroundColor: t.surfaceVariant,
-        selectedColor: t.brandPrimary.withValues(alpha: 0.15),
+        selectedColor: t.brandPrimary.withOpacity(0.15),
         disabledColor: t.n100,
         padding: const EdgeInsets.symmetric(
           horizontal: Spacing.md,
@@ -275,7 +275,7 @@ class AppTheme {
           borderRadius: BorderRadius.circular(Radii.lg),
         ),
         tileColor: Colors.transparent,
-        selectedTileColor: t.brandPrimary.withValues(alpha: 0.08),
+        selectedTileColor: t.brandPrimary.withOpacity(0.08),
         selectedColor: t.brandPrimary,
       ),
 
@@ -333,7 +333,7 @@ class AppTheme {
         dividerColor: Colors.transparent,
         overlayColor: WidgetStateProperty.resolveWith<Color?>((states) {
           if (states.contains(WidgetState.pressed)) {
-            return t.brandPrimary.withValues(alpha: 0.1);
+            return t.brandPrimary.withOpacity(0.1);
           }
           return null;
         }),
@@ -351,7 +351,7 @@ class AppTheme {
         activeTrackColor: t.brandPrimary,
         inactiveTrackColor: t.n200,
         thumbColor: t.brandPrimary,
-        overlayColor: t.brandPrimary.withValues(alpha: 0.15),
+        overlayColor: t.brandPrimary.withOpacity(0.15),
         valueIndicatorColor: t.brandPrimary,
         valueIndicatorTextStyle: AppTypography.labelSmall(t).copyWith(color: t.brandPrimaryOn),
         trackHeight: 4,
@@ -365,7 +365,7 @@ class AppTheme {
         }),
         trackColor: WidgetStateProperty.resolveWith<Color>((states) {
           if (states.contains(WidgetState.selected)) {
-            return t.brandPrimary.withValues(alpha: 0.5);
+            return t.brandPrimary.withOpacity(0.5);
           }
           return t.n300;
         }),
@@ -510,10 +510,10 @@ class AppTheme {
         ).copyWith(
           overlayColor: WidgetStateProperty.resolveWith<Color?>((states) {
             if (states.contains(WidgetState.pressed)) {
-              return t.brandPrimaryOn.withValues(alpha: 0.1);
+              return t.brandPrimaryOn.withOpacity(0.1);
             }
             if (states.contains(WidgetState.hovered)) {
-              return t.brandPrimaryOn.withValues(alpha: 0.05);
+              return t.brandPrimaryOn.withOpacity(0.05);
             }
             return null;
           }),
@@ -536,10 +536,10 @@ class AppTheme {
         ).copyWith(
           backgroundColor: WidgetStateProperty.resolveWith<Color?>((states) {
             if (states.contains(WidgetState.pressed)) {
-              return t.brandPrimary.withValues(alpha: 0.1);
+              return t.brandPrimary.withOpacity(0.1);
             }
             if (states.contains(WidgetState.hovered)) {
-              return t.brandPrimary.withValues(alpha: 0.05);
+              return t.brandPrimary.withOpacity(0.05);
             }
             return null;
           }),
@@ -599,7 +599,7 @@ class AppTheme {
 
       chipTheme: ChipThemeData(
         backgroundColor: t.surfaceVariant,
-        selectedColor: t.brandPrimary.withValues(alpha: 0.2),
+        selectedColor: t.brandPrimary.withOpacity(0.2),
         disabledColor: t.n800,
         padding: const EdgeInsets.symmetric(
           horizontal: Spacing.md,
@@ -633,7 +633,7 @@ class AppTheme {
           borderRadius: BorderRadius.circular(Radii.lg),
         ),
         tileColor: Colors.transparent,
-        selectedTileColor: t.brandPrimary.withValues(alpha: 0.12),
+        selectedTileColor: t.brandPrimary.withOpacity(0.12),
         selectedColor: t.brandPrimary,
       ),
 
@@ -692,7 +692,7 @@ class AppTheme {
         activeTrackColor: t.brandPrimary,
         inactiveTrackColor: t.n700,
         thumbColor: t.brandPrimary,
-        overlayColor: t.brandPrimary.withValues(alpha: 0.15),
+        overlayColor: t.brandPrimary.withOpacity(0.15),
         valueIndicatorColor: t.brandPrimary,
         valueIndicatorTextStyle: AppTypography.labelSmall(t).copyWith(color: t.brandPrimaryOn),
         trackHeight: 4,
@@ -705,7 +705,7 @@ class AppTheme {
         }),
         trackColor: WidgetStateProperty.resolveWith<Color>((states) {
           if (states.contains(WidgetState.selected)) {
-            return t.brandPrimary.withValues(alpha: 0.5);
+            return t.brandPrimary.withOpacity(0.5);
           }
           return t.n700;
         }),
@@ -1002,10 +1002,10 @@ class AppTheme {
         ).copyWith(
           overlayColor: WidgetStateProperty.resolveWith<Color?>((states) {
             if (states.contains(WidgetState.pressed)) {
-              return t.brandPrimaryOn.withValues(alpha: 0.1);
+              return t.brandPrimaryOn.withOpacity(0.1);
             }
             if (states.contains(WidgetState.hovered)) {
-              return t.brandPrimaryOn.withValues(alpha: 0.05);
+              return t.brandPrimaryOn.withOpacity(0.05);
             }
             return null;
           }),
@@ -1028,10 +1028,10 @@ class AppTheme {
         ).copyWith(
           backgroundColor: WidgetStateProperty.resolveWith<Color?>((states) {
             if (states.contains(WidgetState.pressed)) {
-              return t.brandPrimary.withValues(alpha: 0.1);
+              return t.brandPrimary.withOpacity(0.1);
             }
             if (states.contains(WidgetState.hovered)) {
-              return t.brandPrimary.withValues(alpha: 0.05);
+              return t.brandPrimary.withOpacity(0.05);
             }
             return null;
           }),
@@ -1091,7 +1091,7 @@ class AppTheme {
 
       chipTheme: ChipThemeData(
         backgroundColor: t.surfaceVariant,
-        selectedColor: t.brandPrimary.withValues(alpha: 0.15),
+        selectedColor: t.brandPrimary.withOpacity(0.15),
         disabledColor: isDark ? t.n800 : t.n100,
         padding: const EdgeInsets.symmetric(
           horizontal: Spacing.md,
@@ -1186,7 +1186,7 @@ class AppTheme {
         activeTrackColor: t.brandPrimary,
         inactiveTrackColor: isDark ? t.n700 : t.n200,
         thumbColor: t.brandPrimary,
-        overlayColor: t.brandPrimary.withValues(alpha: 0.15),
+        overlayColor: t.brandPrimary.withOpacity(0.15),
         valueIndicatorColor: t.brandPrimary,
         valueIndicatorTextStyle: AppTypography.labelSmall(t).copyWith(color: t.brandPrimaryOn),
         trackHeight: 4,
@@ -1199,7 +1199,7 @@ class AppTheme {
         }),
         trackColor: WidgetStateProperty.resolveWith<Color>((states) {
           if (states.contains(WidgetState.selected)) {
-            return t.brandPrimary.withValues(alpha: 0.5);
+            return t.brandPrimary.withOpacity(0.5);
           }
           return isDark ? t.n700 : t.n300;
         }),

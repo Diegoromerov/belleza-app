@@ -260,7 +260,7 @@ class _BusinessOnboardingScreenState extends State<BusinessOnboardingScreen> {
             boxShadow: [
               if (isSelected)
                 BoxShadow(
-                  color: obsidianBg.withValues(alpha: 0.15),
+                  color: obsidianBg.withOpacity(0.15),
                   blurRadius: 8,
                   offset: const Offset(0, 4),
                 ),
