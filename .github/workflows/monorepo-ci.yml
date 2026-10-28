@@ -247,26 +247,19 @@ jobs:
 
       - name: Patch Flutter gradle plugin for Groovy 4.x + AGP 8.x compat
         run: |
-          cat > /tmp/patch_flutter.py << 'PYEOF'
-          import glob, os
-          matches = glob.glob("/opt/hostedtoolcache/flutter/stable-*-x64/flutter/packages/flutter_tools/gradle/src/main/groovy/flutter.groovy")
-          if not matches:
-              print("flutter.groovy not found")
-              exit(1)
-          path = matches[0]
-          with open(path, "r") as f:
-              content = f.read()
-          content = content.replace("import groovy.xml.QName", "import javax.xml.namespace.QName")
-          content = content.replace("groovy.xml.QName", "javax.xml.namespace.QName")
-          if "import groovy.xml.XmlParser" not in content:
-              content = "import groovy.xml.XmlParser\nimport groovy.xml.XmlSlurper\n" + content
-          content = content.replace("getDefaultProguardFile('proguard-android.txt')", "getDefaultProguardFile('proguard-android-optimize.txt')")
-          content = content.replace('getDefaultProguardFile("proguard-android.txt")', 'getDefaultProguardFile("proguard-android-optimize.txt")')
-          with open(path, "w") as f:
-              f.write(content)
-          print(f"Patched {path} successfully")
-          PYEOF
-          python3 /tmp/patch_flutter.py
+          FLUTTER_GROOVY=$(find /opt/hostedtoolcache/flutter -name "flutter.groovy" -path "*/packages/flutter_tools/gradle/*" 2>/dev/null | head -1)
+          if [ -z "$FLUTTER_GROOVY" ]; then
+            echo "flutter.groovy not found"
+            exit 1
+          fi
+          sed -i 's/import groovy.xml.QName/import javax.xml.namespace.QName/g' "$FLUTTER_GROOVY"
+          sed -i 's/groovy.xml.QName/javax.xml.namespace.QName/g' "$FLUTTER_GROOVY"
+          if ! grep -q "import groovy.xml.XmlParser" "$FLUTTER_GROOVY"; then
+            sed -i '1i import groovy.xml.XmlParser\nimport groovy.xml.XmlSlurper' "$FLUTTER_GROOVY"
+          fi
+          sed -i "s/getDefaultProguardFile('proguard-android.txt')/getDefaultProguardFile('proguard-android-optimize.txt')/g" "$FLUTTER_GROOVY"
+          sed -i 's/getDefaultProguardFile("proguard-android.txt")/getDefaultProguardFile("proguard-android-optimize.txt")/g' "$FLUTTER_GROOVY"
+          echo "Patched $FLUTTER_GROOVY successfully"
         working-directory: ${{ github.workspace }}
 
       - name: Build Glow Client Android (Release)
@@ -372,26 +365,19 @@ jobs:
 
       - name: Patch Flutter gradle plugin for Groovy 4.x + AGP 8.x compat
         run: |
-          cat > /tmp/patch_flutter.py << 'PYEOF'
-          import glob, os
-          matches = glob.glob("/opt/hostedtoolcache/flutter/stable-*-x64/flutter/packages/flutter_tools/gradle/src/main/groovy/flutter.groovy")
-          if not matches:
-              print("flutter.groovy not found")
-              exit(1)
-          path = matches[0]
-          with open(path, "r") as f:
-              content = f.read()
-          content = content.replace("import groovy.xml.QName", "import javax.xml.namespace.QName")
-          content = content.replace("groovy.xml.QName", "javax.xml.namespace.QName")
-          if "import groovy.xml.XmlParser" not in content:
-              content = "import groovy.xml.XmlParser\nimport groovy.xml.XmlSlurper\n" + content
-          content = content.replace("getDefaultProguardFile('proguard-android.txt')", "getDefaultProguardFile('proguard-android-optimize.txt')")
-          content = content.replace('getDefaultProguardFile("proguard-android.txt")', 'getDefaultProguardFile("proguard-android-optimize.txt")')
-          with open(path, "w") as f:
-              f.write(content)
-          print(f"Patched {path} successfully")
-          PYEOF
-          python3 /tmp/patch_flutter.py
+          FLUTTER_GROOVY=$(find /opt/hostedtoolcache/flutter -name "flutter.groovy" -path "*/packages/flutter_tools/gradle/*" 2>/dev/null | head -1)
+          if [ -z "$FLUTTER_GROOVY" ]; then
+            echo "flutter.groovy not found"
+            exit 1
+          fi
+          sed -i 's/import groovy.xml.QName/import javax.xml.namespace.QName/g' "$FLUTTER_GROOVY"
+          sed -i 's/groovy.xml.QName/javax.xml.namespace.QName/g' "$FLUTTER_GROOVY"
+          if ! grep -q "import groovy.xml.XmlParser" "$FLUTTER_GROOVY"; then
+            sed -i '1i import groovy.xml.XmlParser\nimport groovy.xml.XmlSlurper' "$FLUTTER_GROOVY"
+          fi
+          sed -i "s/getDefaultProguardFile('proguard-android.txt')/getDefaultProguardFile('proguard-android-optimize.txt')/g" "$FLUTTER_GROOVY"
+          sed -i 's/getDefaultProguardFile("proguard-android.txt")/getDefaultProguardFile("proguard-android-optimize.txt")/g' "$FLUTTER_GROOVY"
+          echo "Patched $FLUTTER_GROOVY successfully"
         working-directory: ${{ github.workspace }}
 
       - name: Build Glow Provider Android (Release)
