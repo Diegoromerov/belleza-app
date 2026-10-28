@@ -2,9 +2,7 @@ name: GlowApp Build and Deploy
 
 on:
   push:
-    branches: [ main, staging ]
-  pull_request:
-    branches: [ main, staging ]
+    branches: [ staging ]
 
 env:
   FLUTTER_CHANNEL: stable
@@ -100,7 +98,7 @@ jobs:
   deploy-client-web:
     name: Deploy Glow Client to Firebase Hosting
     needs: [glow-client-web, backend-ci]
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging')
+    if: github.event_name == 'push' && github.ref == 'refs/heads/staging'
     runs-on: ubuntu-latest
     working-directory: ${{ github.workspace }}
     steps:
@@ -111,7 +109,7 @@ jobs:
   deploy-provider-web:
     name: Deploy Glow Provider to Firebase Hosting
     needs: [glow-provider-web, backend-ci]
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging')
+    if: github.event_name == 'push' && github.ref == 'refs/heads/staging'
     runs-on: ubuntu-latest
     working-directory: ${{ github.workspace }}
     steps:
