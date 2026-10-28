@@ -1,0 +1,85 @@
+# Firebase Configuration Values (extracted via CLI)
+
+## glowapp-client (Project ID: glowapp-client, Number: 634593218804)
+
+### Web App
+- App ID: `1:634593218804:web:c7fd6b92799072f9e04ea1`
+- API Key: `AIzaSy...Ia0M` (truncated - get full from Console)
+- Auth Domain: `glowapp-client.firebaseapp.com`
+- Storage Bucket: `glowapp-client.firebasestorage.app`
+- Messaging Sender ID: `634593218804`
+- Project ID: `glowapp-client`
+
+### Android App
+- App ID: `1:634593218804:android:a7c9fc33d8b211a9e04ea1`
+- Package: `com.glowapp.glow_client`
+
+### iOS App
+- **NOT CREATED YET** - Need to create in Firebase Console
+- Bundle ID: `com.glowapp.glow_client.ios` (planned)
+
+---
+
+## glowapp-provider (Project ID: glowapp-provider, Number: 509840252897)
+
+### Web App
+- App ID: `1:509840252897:web:8218b021437b440deabca0`
+- API Key: `AIzaSy...yjUE` (truncated - get full from Console)
+- Auth Domain: `glowapp-provider.firebaseapp.com`
+- Storage Bucket: `glowapp-provider.firebasestorage.app`
+- Messaging Sender ID: `509840252897`
+- Project ID: `glowapp-provider`
+
+### Android App
+- App ID: `1:509840252897:android:8a33c0a188c8c862eabca0`
+- Package: `com.glowapp.glow_provider`
+
+### iOS App
+- **NOT CREATED YET** - Need to create in Firebase Console
+- Bundle ID: `com.glowapp.glow_provider.ios` (planned)
+
+---
+
+## Android Keystores (generated)
+
+### Client
+- File: `.secrets/keystores/client-release.jks`
+- Base64: `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`
+- Alias: `glow_client_key`
+- Store Password: `glowclient2026`
+- Key Password: `glowclient2026`
+
+### Provider
+- File: `.secrets/keystores/provider-release.jks`
+- Base64: `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`
+- Alias: `glow_provider_key`
+- Store Password: `glowprovider2026`
+- Key Password: `glowprovider2026`
+
+---
+
+## Required Manual Actions (Firebase Console)
+
+### 1. Create iOS Apps
+Go to each project → Project Settings → General → "Add app" → iOS
+- glowapp-client: Bundle ID `com.glowapp.glow_client.ios`
+- glowapp-provider: Bundle ID `com.glowapp.glow_provider.ios`
+
+### 2. Generate VAPID Keys (FCM Web Push)
+Go to each project → Project Settings → Cloud Messaging → Web configuration → "Generate key pair"
+- Copy the "Key pair" (public key) for each project
+
+### 3. Create Service Accounts
+Go to each project → Project Settings → Service Accounts → "Generate new private key"
+- Download JSON for each project
+- These become: `CLIENT_FIREBASE_SERVICE_ACCOUNT`, `PROVIDER_FIREBASE_SERVICE_ACCOUNT`
+
+### 4. Get Full API Keys
+The API keys above are truncated. Get full keys from:
+- Project Settings → General → "Your apps" → Web app → "Config" (not "CDN")
+
+---
+
+## GitHub Secrets to Configure (28 total)
+
+See `.hermes/plans/Phase_5_Firebase_CI_CD_Secrets.md` for complete list.
