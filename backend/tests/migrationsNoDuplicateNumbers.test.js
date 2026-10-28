@@ -75,6 +75,7 @@ const BASELINE_DUPLICADOS_LEGACY = {
   '065': ['065_add_business_profile_id_bookings.sql', '065_multi_tenant_hardening.sql'],
   '066': ['066_fix_academia_curriculum_and_content.sql', '066_invalidate_legacy_unhashed_invitations.sql'],
   '067': ['067_academy_integrity_and_verifiable_certificates.sql', '067_create_multi_salon_ddl.sql'],
+  '117': ['117_inventario_y_alquileres.sql', '117_rls_roles_array.sql'],
 };
 
 /** Frontera del baseline: por encima de este número no se admite ningún duplicado. */
