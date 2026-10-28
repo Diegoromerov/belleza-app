@@ -97,7 +97,7 @@ jobs:
 
   deploy-client-web:
     name: Deploy Glow Client to Firebase Hosting
-    needs: [glow-client-web, backend-ci]
+    needs: glow-client-web
     runs-on: ubuntu-latest
     working-directory: ${{ github.workspace }}
     steps:
@@ -107,7 +107,7 @@ jobs:
 
   deploy-provider-web:
     name: Deploy Glow Provider to Firebase Hosting
-    needs: [glow-provider-web, backend-ci]
+    needs: glow-provider-web
     runs-on: ubuntu-latest
     working-directory: ${{ github.workspace }}
     steps:
