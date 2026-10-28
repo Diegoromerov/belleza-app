@@ -96,20 +96,18 @@ jobs:
         run: echo "glow-provider-web test"
 
   deploy-client-web:
-    name: Deploy Glow Client to Firebase Hosting
+    name: Deploy Client
     needs: glow-client-web
     runs-on: ubuntu-latest
-    working-directory: ${{ github.workspace }}
     steps:
       - uses: actions/checkout@v4
       - name: Echo test
         run: echo "deploy-client-web test"
 
   deploy-provider-web:
-    name: Deploy Glow Provider to Firebase Hosting
+    name: Deploy Provider
     needs: glow-provider-web
     runs-on: ubuntu-latest
-    working-directory: ${{ github.workspace }}
     steps:
       - uses: actions/checkout@v4
       - name: Echo test
