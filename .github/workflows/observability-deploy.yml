@@ -1,0 +1,142 @@
+name: Deploy Observability Stack
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+      stack:
+        description: 'Stack components to deploy'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - loki
+          - prometheus
+          - grafana
+          - tempo
+          - alertmanager
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/observability
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────
+  # Build & Push Images (si se usan imágenes custom)
+  # ─────────────────────────────────────────────────────────────────
+  build:
+    name: Build Observability Images
+    runs-on: ubuntu-latest
+    if: github.event.inputs.stack != 'all' || true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+  # ─────────────────────────────────────────────────────────────────
+  # Deploy to Grafana Cloud (recomendado para producción)
+  # ─────────────────────────────────────────────────────────────────
+  deploy-grafana-cloud:
+    name: Deploy to Grafana Cloud
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event.inputs.environment == 'production'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: ./scripts
+
+      - name: Provision Grafana Cloud
+        env:
+          GRAFANA_CLOUD_STACK: ${{ secrets.GRAFANA_CLOUD_STACK }}
+          GRAFANA_CLOUD_API_KEY: ${{ secrets.GRAFANA_CLOUD_API_KEY }}
+          PROMETHEUS_URL: ${{ secrets.GRAFANA_CLOUD_PROMETHEUS_URL }}
+          LOKI_URL: ${{ secrets.GRAFANA_CLOUD_LOKI_URL }}
+          TEMPO_URL: ${{ secrets.GRAFANA_CLOUD_TEMPO_URL }}
+          PROMETHEUS_USER: ${{ secrets.GRAFANA_CLOUD_PROMETHEUS_USER }}
+          PROMETHEUS_PASSWORD: ${{ secrets.GRAFANA_CLOUD_API_KEY }}
+        run: node provision-grafana-cloud.js
+        working-directory: ./scripts
+
+  # ─────────────────────────────────────────────────────────────────
+  # Validate Deployment
+  # ─────────────────────────────────────────────────────────────────
+  validate:
+    name: Validate Observability Stack
+    runs-on: ubuntu-latest
+    needs: deploy-grafana-cloud
+    steps:
+      - name: Wait for services
+        run: sleep 30
+
+      - name: Check Prometheus targets
+        run: |
+          curl -f "https://${{ secrets.GRAFANA_CLOUD_STACK }}.grafana.net/api/datasources/proxy/1/api/v1/targets" \
+            -H "Authorization: Bearer ${{ secrets.GRAFANA_CLOUD_API_KEY }}" \
+            | jq '.data.activeTargets[] | select(.health != "up")' | wc -l
+          # Debe ser 0
+
+      - name: Check Loki ingestion
+        run: |
+          curl -f "https://${{ secrets.GRAFANA_CLOUD_STACK }}.grafana.net/api/datasources/proxy/2/ready" \
+            -H "Authorization: Bearer ${{ secrets.GRAFANA_CLOUD_API_KEY }}"
+
+      - name: Test Alert Firing
+        run: |
+          curl -X POST \
+            -H "Authorization: Bearer ${{ secrets.GRAFANA_CLOUD_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{"receiver":"test","alerts":[{"labels":{"alertname":"TestAlert","severity":"info"},"annotations":{"summary":"Test alert from CI"}}]}' \
+            "https://${{ secrets.GRAFANA_CLOUD_STACK }}.grafana.net/api/v1/alerts"
+
+      - name: Verify Dashboards
+        run: |
+          curl -f "https://${{ secrets.GRAFANA_CLOUD_STACK }}.grafana.net/api/dashboards/uid/glowapp-system-health" \
+            -H "Authorization: Bearer ${{ secrets.GRAFANA_CLOUD_API_KEY }}" \
+            | jq '.dashboard.title' | grep -q "GlowApp - System Health"
+
+  # ─────────────────────────────────────────────────────────────────
+  # Notify
+  # ─────────────────────────────────────────────────────────────────
+  notify:
+    name: Notify Deployment
+    runs-on: ubuntu-latest
+    needs: validate
+    if: always()
+    steps:
+      - name: Slack Notification
+        if: success()
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data '{"text":"✅ Observability stack deployed successfully to ${{ github.event.inputs.environment }}","blocks":[{"type":"section","text":{"type":"mrkdwn","text":"✅ *Observability stack deployed successfully*\n*Environment:* ${{ github.event.inputs.environment }}\n*Stack:* ${{ github.event.inputs.stack }}\n*Commit:* ${{ github.sha }}\n*Dashboards:* <https://${{ secrets.GRAFANA_CLOUD_STACK }}.grafana.net/d/glowapp-system-health|System Health>"}}]}' \
+            ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Slack Notification (Failure)
+        if: failure()
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data '{"text":"❌ Observability stack deployment failed","blocks":[{"type":"section","text":{"type":"mrkdwn","text":"❌ *Observability stack deployment FAILED*\n*Environment:* ${{ github.event.inputs.environment }}\n*Stack:* ${{ github.event.inputs.stack }}\n*Run:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Logs>"}}]}' \
+            ${{ secrets.SLACK_WEBHOOK_URL }}

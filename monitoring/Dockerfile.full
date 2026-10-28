@@ -1,0 +1,28 @@
+# Dockerfile for Railway - runs full observability stack via docker-compose
+FROM docker:24-dind
+
+# Install docker-compose
+RUN apk add --no-cache docker-compose
+
+# Copy monitoring configs
+WORKDIR /monitoring
+COPY . .
+
+# Create a script to run docker-compose
+RUN cat > /start.sh << 'EOF'
+#!/bin/sh
+# Start Docker daemon in background
+dockerd-entrypoint.sh &
+# Wait for Docker daemon to be ready
+while ! docker ps >/dev/null 2>&1; do
+    sleep 1
+done
+# Run docker-compose
+docker-compose up
+EOF
+RUN chmod +x /start.sh
+
+# Expose ports for all services
+EXPOSE 3000 3100 3200 9090 9093 9080 4317 4318 14268
+
+CMD ["/start.sh"]
