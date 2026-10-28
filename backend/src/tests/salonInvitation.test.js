@@ -153,7 +153,10 @@ describe('POST /api/salon/accept-invitation', () => {
 
     const [sql, params] = mockPoolQuery.mock.calls[1];
     expect(sql.trim()).toMatch(/^WITH/i);
-    expect(sql).toMatch(/INSERT INTO salon_miembros/);
+    // T-127: la tabla heredada ya no se escribe; la sentencia ata la membresía
+    // canónica y el consumo del token.
+    expect(sql).not.toMatch(/salon_miembros/);
+    expect(sql).toMatch(/INSERT INTO memberships/);
     expect(sql).toMatch(/UPDATE salon_invitaciones/);
     expect(params).toEqual([3, 42, 'EMPLEADO', 7]);
   });

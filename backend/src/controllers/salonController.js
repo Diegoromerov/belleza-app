@@ -14,32 +14,37 @@ const {
 // ==========================================
 exports.getMySalon = async (req, res) => {
   try {
-    const ownerId = req.user.id;
+    const userId = req.user.id;
+
+    // La pertenencia se resuelve en `memberships`, que es la fuente única
+    // (D-GL-027, D-0). Antes se buscaba sólo por `salones.id_dueno`, de modo que
+    // un OWNER o ADMIN invitado no encontraba su salón.
     const salonRes = await pool.query(
-      `SELECT s.id, s.nombre_salon, s.nit, s.direccion, s.telefono, s.ciudad, s.plan_saas, s.id_dueno,
-              s.latitude, s.longitude, s.location_enabled, s.location_public
-       FROM salones s
-       WHERE s.id_dueno = $1
-       LIMIT 1`,
-      [ownerId]
+      `SELECT s.id, s.nombre_salon, s.nit, s.direccion, s.telefono, s.ciudad,
+              s.plan_saas, s.id_dueno, s.latitude, s.longitude,
+              s.location_enabled, s.location_public
+         FROM memberships m
+         JOIN business_profiles bp ON bp.id = m.business_profile_id
+         JOIN salones s ON bp.id = left('salon-' || s.id::text, 36)
+        WHERE m.user_id = $1 AND m.status = 'ACTIVE'
+        ORDER BY s.id
+        LIMIT 1`,
+      [userId]
     );
 
-    let salon = salonRes.rows[0];
+    const salon = salonRes.rows[0] || null;
+
+    // Sin salón se devuelve `null`, no un salón de mentira. Hasta aquí había un
+    // objeto escrito a mano («Salón Elegance Studio», con NIT y dirección
+    // inventados) que se servía en producción cuando la consulta no encontraba
+    // nada: la pantalla mostraba un negocio que no existe.
     if (!salon) {
-      salon = {
-        id: 1,
-        nombre_salon: 'Salón Elegance Studio',
-        nit: '901888777-1',
-        direccion: 'Calle 127 # 7-18',
-        telefono: '3109998877',
-        ciudad: 'Bogotá',
-        plan_saas: 'FREE_TRIAL',
-        id_dueno: ownerId,
-        latitude: 4.6735,
-        longitude: -74.1422,
-        location_enabled: true,
-        location_public: true,
-      };
+      return res.json({
+        success: true,
+        salon: null,
+        members: [],
+        message: 'Tu cuenta no tiene un salón activo. Crea uno o acepta una invitación.',
+      });
     }
 
     const plan = salon.plan_saas || 'FREE_TRIAL';
@@ -115,13 +120,9 @@ exports.createSalon = async (req, res) => {
 
     const salon = salonRes.rows[0];
 
-    // Asignar al usuario como DUEÑO en salon_miembros
-    await pool.query(
-      `INSERT INTO salon_miembros (salon_id, user_id, sub_rol, estatus)
-       VALUES ($1, $2, 'DUEÑO', 'ACTIVO')
-       ON CONFLICT (salon_id, user_id) DO UPDATE SET sub_rol = 'DUEÑO', estatus = 'ACTIVO'`,
-      [salon.id, ownerId]
-    );
+    // T-127 (D-GL-027): la tabla heredada `salon_miembros` ya no se escribe.
+    // El dueño queda en `memberships` con el rol canónico mediante
+    // `ensureSalonOwnerIdentity`, que es la única fuente de identidad.
 
     // E-02a (D-GL-027): el salón nace con su identidad canónica
     // (business_profiles + memberships). Sin esto, `req.saas` queda vacío y toda
@@ -270,13 +271,7 @@ exports.acceptInvitation = async (req, res) => {
     // depende de él (ver middleware/tenantContext.js) y no comparte transacción
     // entre consultas.
     await pool.query(
-      `WITH miembro AS (
-         INSERT INTO salon_miembros (salon_id, user_id, sub_rol, estatus)
-         VALUES ($1, $2, $3, 'ACTIVO')
-         ON CONFLICT (salon_id, user_id) DO UPDATE
-           SET sub_rol = EXCLUDED.sub_rol, estatus = 'ACTIVO'
-         RETURNING 1
-       ), perfil AS (
+      `WITH perfil AS (
          SELECT id FROM business_profiles WHERE id = left('salon-' || $1::text, 36)
        ), membresia AS (
          -- E-02b (D-GL-027): la membership canónica se escribe en la MISMA
@@ -367,18 +362,13 @@ exports.updateMemberRole = async (req, res) => {
       return res.status(400).json({ error: `El sub-rol '${sub_rol}' no es válido.` });
     }
 
-    // E-02b: pertenencia sobre `memberships`; la tabla heredada se mantiene en
-    // sincronía para los caminos que aún la leen (ownerGuard).
+    // E-02b: pertenencia sobre `memberships`, que es la única fuente.
+    // T-127: ya no se escribe el espejo en `salon_miembros`.
     const actual = await getMemberRole(pool, salonId, targetUserId);
 
     if (!actual) {
       return res.status(404).json({ error: 'El colaborador no pertenece a este salón.' });
     }
-
-    await pool.query(
-      `UPDATE salon_miembros SET sub_rol = $1 WHERE salon_id = $2 AND user_id = $3`,
-      [cleanSubRol, salonId, targetUserId]
-    );
 
     await ensureMembership(pool, {
       salonId,
@@ -413,11 +403,6 @@ exports.removeMember = async (req, res) => {
     if (!actual) {
       return res.status(404).json({ error: 'El colaborador no existe o ya está inactivo en este salón.' });
     }
-
-    await pool.query(
-      `UPDATE salon_miembros SET estatus = 'INACTIVO' WHERE salon_id = $1 AND user_id = $2`,
-      [salonId, targetUserId]
-    );
 
     // E-02b: la baja se refleja en la fuente canónica.
     await ensureMembership(pool, {

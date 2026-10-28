@@ -25,6 +25,8 @@ import '../../services/auth_service.dart';
 import '../provider_services_screen.dart';
 import '../../widgets/locked_feature_card.dart';
 import 'caja_screen.dart';
+import 'inventario_screen.dart';
+import 'alquileres_screen.dart';
 
 class SalonShell extends StatefulWidget {
   /// Pestaña inicial (0 = Agenda). Útil para deep-links internos.
@@ -110,6 +112,14 @@ class _SalonShellState extends State<SalonShell> {
 
   bool _tiene(String capacidad) => _entitlements.contains(capacidad);
 
+  /// Estas pantallas necesitan el salón en la ruta: se abren como página, no
+  /// como nombre, porque `salonId` no está en la URL global.
+  void _abrir(Widget Function(int salonId) constructor) {
+    final id = _salonId;
+    if (id == null) return;
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => constructor(id)));
+  }
+
   Token get _t => Token.of(context);
 
   @override
@@ -173,7 +183,11 @@ class _SalonShellState extends State<SalonShell> {
       case 3:
         return _cargarDatos ? const ProviderServicesScreen() : const _ServiciosPlaceholder();
       default:
-        return const _MasTab();
+        return _MasTab(
+          onInventario: () => _abrir((id) => InventarioScreen(salonId: id)),
+          onAlquileres: () => _abrir((id) => AlquileresScreen(salonId: id)),
+          apiKeysHabilitadas: _tiene('CUSTOM_BRANDING'),
+        );
     }
   }
 
@@ -486,7 +500,15 @@ class _ServiciosPlaceholder extends StatelessWidget {
 // ── Más ──────────────────────────────────────────────────────────────────────
 
 class _MasTab extends StatelessWidget {
-  const _MasTab();
+  final VoidCallback? onInventario;
+  final VoidCallback? onAlquileres;
+  /// El plan incluye `CUSTOM_BRANDING`, que es lo que habilita las API keys.
+  final bool apiKeysHabilitadas;
+  const _MasTab({
+    this.onInventario,
+    this.onAlquileres,
+    this.apiKeysHabilitadas = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -532,6 +554,45 @@ class _MasTab extends StatelessWidget {
           ),
         );
 
+    Widget accion(String titulo, String detalle, VoidCallback onTap) => Container(
+          margin: const EdgeInsets.only(bottom: Spacing.sm),
+          decoration: BoxDecoration(
+            color: t.surfaceLevel1,
+            borderRadius: BorderRadius.circular(Radii.md),
+            border: Border.all(color: t.borderSubtle),
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(Radii.md),
+              onTap: onTap,
+              child: Padding(
+                padding: const EdgeInsets.all(Spacing.lg),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            titulo,
+                            style: TypographyTokens.body(t).copyWith(fontWeight: FontWeight.w600),
+                          ),
+                          Text(
+                            detalle,
+                            style: TypographyTokens.bodySmall(t).copyWith(color: t.textSecondary),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(Icons.chevron_right, color: t.textSecondary),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+
     Widget bloqueado(String titulo, String motivo) => Container(
           margin: const EdgeInsets.only(bottom: Spacing.sm),
           padding: const EdgeInsets.all(Spacing.lg),
@@ -563,9 +624,29 @@ class _MasTab extends StatelessWidget {
         enlace('Resumen del salón', '/salon/resumen', detalle: 'KPIs, equipo y ajustes'),
         enlace('Facturación del plan', '/saas/billing'),
         enlace('Uso del plan', '/saas/usage'),
-        enlace('API keys', '/saas/api-keys'),
+        if (apiKeysHabilitadas)
+          enlace('API keys', '/saas/api-keys')
+        else
+          enlace('API keys', '/saas/billing',
+              detalle: 'Requiere un plan con integraciones (CUSTOM_BRANDING)'),
         enlace('Configuración', '/settings'),
         enlace('Ayuda y soporte', '/support'),
+        const SizedBox(height: Spacing.lg),
+        Text(
+          'Operación del salón',
+          style: TypographyTokens.bodySmall(t).copyWith(
+            color: t.textSecondary,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.4,
+          ),
+        ),
+        const SizedBox(height: Spacing.sm),
+        if (onInventario != null)
+          accion('Inventario', 'Stock de insumos y producto, con entradas y salidas',
+              onInventario!),
+        if (onAlquileres != null)
+          accion('Recursos y alquileres', 'Sillas, mesas y puestos alquilados',
+              onAlquileres!),
         const SizedBox(height: Spacing.lg),
         Text(
           'No incluido en esta etapa',
@@ -576,8 +657,8 @@ class _MasTab extends StatelessWidget {
           ),
         ),
         const SizedBox(height: Spacing.sm),
-        bloqueado('Inventario', 'Llega con E-06'),
-        bloqueado('Recursos alquilables', 'Llega con E-06'),
+        // E-06 ya entregó inventario y alquileres: aquí sólo queda lo que de
+        // verdad no existe todavía.
         bloqueado('Analytics', 'Se consulta por Aura'),
       ],
     );
