@@ -115,10 +115,13 @@ async function provisionDatasources() {
 
 async function provisionDashboard() {
   console.log('📈 Provisioning System Health dashboard...');
-  
+
   const dashboardPath = path.join(__dirname, '../monitoring/grafana/dashboards/system-health.json');
-  const dashboard = JSON.parse(fs.readFileSync(dashboardPath, 'utf8'));
-  
+  const fileContent = JSON.parse(fs.readFileSync(dashboardPath, 'utf8'));
+
+  // File has { dashboard: {...}, overwrite: true } — extract the inner dashboard object
+  const dashboard = fileContent.dashboard || fileContent;
+
   // Ensure dashboard has required fields for API
   const payload = {
     dashboard: {
@@ -130,7 +133,7 @@ async function provisionDashboard() {
     overwrite: true,
     message: 'Provisioned via script',
   };
-  
+
   await request('POST', '/api/dashboards/db', payload);
   console.log('  ✅ System Health dashboard created/updated');
 }
