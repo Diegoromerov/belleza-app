@@ -127,16 +127,20 @@ jobs:
     needs: validate
     if: always()
     steps:
-      - name: Slack Notification
-        if: success()
+      - name: Slack Notification (Success)
+        if: success() && secrets.SLACK_WEBHOOK_URL != ''
         run: |
           curl -X POST -H 'Content-type: application/json' \
             --data '{"text":"✅ Observability stack deployed successfully to ${{ github.event.inputs.environment }}","blocks":[{"type":"section","text":{"type":"mrkdwn","text":"✅ *Observability stack deployed successfully*\n*Environment:* ${{ github.event.inputs.environment }}\n*Stack:* ${{ github.event.inputs.stack }}\n*Commit:* ${{ github.sha }}\n*Dashboards:* <https://${{ secrets.GRAFANA_CLOUD_STACK }}.grafana.net/d/glowapp-system-health|System Health>"}}]}' \
             ${{ secrets.SLACK_WEBHOOK_URL }}
 
       - name: Slack Notification (Failure)
-        if: failure()
+        if: failure() && secrets.SLACK_WEBHOOK_URL != ''
         run: |
           curl -X POST -H 'Content-type: application/json' \
             --data '{"text":"❌ Observability stack deployment failed","blocks":[{"type":"section","text":{"type":"mrkdwn","text":"❌ *Observability stack deployment FAILED*\n*Environment:* ${{ github.event.inputs.environment }}\n*Stack:* ${{ github.event.inputs.stack }}\n*Run:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Logs>"}}]}' \
             ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Skip Slack (no webhook configured)
+        if: secrets.SLACK_WEBHOOK_URL == ''
+        run: echo "SLACK_WEBHOOK_URL not configured — skipping notification"
