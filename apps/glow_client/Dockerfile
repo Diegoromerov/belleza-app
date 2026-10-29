@@ -1,12 +1,5 @@
-# Dockerfile - para glowapp-client (Flutter Web)
-FROM debian:bookworm-slim AS build
-
-# Instalar Flutter
-ENV FLUTTER_VERSION=3.29.2
-ENV PATH="/flutter/bin:${PATH}"
-RUN apt-get update && apt-get install -y curl git unzip xz-utils libglu1-mesa && \
-    curl -fsSL "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_${FLUTTER_VERSION}-stable.tar.xz" | tar -xJ -C / && \
-    flutter config --enable-web
+# Dockerfile - para glowapp-client (Flutter Web) - versión ligera
+FROM ghcr.io/cirruslabs/flutter:3.29.2 AS build
 
 WORKDIR /app
 COPY pubspec.* ./
