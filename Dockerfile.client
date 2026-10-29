@@ -1,0 +1,23 @@
+# Dockerfile.client - para glowapp-client (Flutter Web)
+FROM debian:bookworm-slim AS build
+
+# Instalar Flutter
+ENV FLUTTER_VERSION=3.29.2
+ENV PATH="/flutter/bin:${PATH}"
+RUN apt-get update && apt-get install -y curl git unzip xz-utils libglu1-mesa && \
+    curl -fsSL "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_${FLUTTER_VERSION}-stable.tar.xz" | tar -xJ -C / && \
+    flutter config --enable-web
+
+WORKDIR /app
+COPY apps/glow_client/pubspec.* ./apps/glow_client/
+RUN cd apps/glow_client && flutter pub get
+
+COPY apps/glow_client ./apps/glow_client
+RUN cd apps/glow_client && flutter build web --release
+
+# Stage 2: nginx para servir estáticos
+FROM nginx:alpine
+COPY --from=build /app/apps/glow_client/build/web /usr/share/nginx/html
+COPY apps/glow_client/nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 8080
+CMD ["nginx", "-g", "daemon off;"]
