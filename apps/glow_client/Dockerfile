@@ -10,7 +10,7 @@ COPY packages/glow_core ./packages/glow_core/
 RUN cd apps/glow_client && flutter pub get
 
 COPY apps/glow_client ./apps/glow_client
-RUN cd apps/glow_client && flutter build web --release
+RUN cd apps/glow_client && flutter build web --release --verbose
 
 # Stage 2: nginx para servir estáticos
 FROM nginx:alpine
