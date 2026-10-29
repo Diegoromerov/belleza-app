@@ -44,6 +44,13 @@ jobs:
         with: { node-version: '22.x', cache: 'npm', cache-dependency-path: backend/package-lock.json }
       - name: Install Backend Dependencies
         run: cd backend && npm ci --legacy-peer-deps
+      - name: Wait for PostgreSQL
+        run: |
+          for i in {1..30}; do
+            pg_isready -h localhost -U postgres && echo "PostgreSQL ready" && break
+            echo "Waiting for PostgreSQL... ($i/30)"
+            sleep 2
+          done
       - name: Compuerta anti-marcadores de conflicto
         run: cd backend && node scripts/checkNoConflictMarkers.js
       - name: Escaneo de credenciales versionadas
