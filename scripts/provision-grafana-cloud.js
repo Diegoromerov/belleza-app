@@ -57,11 +57,27 @@ async function request(method, endpoint, body = null) {
   return text ? JSON.parse(text) : {};
 }
 
+async function upsertDatasource(ds) {
+  try {
+    await request('POST', '/api/datasources', ds);
+    console.log(`  ✅ ${ds.name} datasource created`);
+  } catch (err) {
+    if (err.message.includes('409') || err.message.includes('already exists')) {
+      // Get existing and update
+      const existing = await request('GET', `/api/datasources/name/${encodeURIComponent(ds.name)}`);
+      await request('PUT', `/api/datasources/${existing.id}`, { ...ds, id: existing.id, uid: existing.uid, version: existing.version });
+      console.log(`  ♻️ ${ds.name} datasource updated`);
+    } else {
+      throw err;
+    }
+  }
+}
+
 async function provisionDatasources() {
   console.log('📊 Provisioning datasources...');
-  
+
   // Prometheus datasource
-  await request('POST', '/api/datasources', {
+  await upsertDatasource({
     name: 'Prometheus',
     type: 'prometheus',
     url: PROMETHEUS_URL,
@@ -72,10 +88,9 @@ async function provisionDatasources() {
       httpHeaderValue1: `Basic ${PROM_AUTH}`,
     },
   });
-  console.log('  ✅ Prometheus datasource created');
-  
+
   // Loki datasource with traceID derived field
-  await request('POST', '/api/datasources', {
+  await upsertDatasource({
     name: 'Loki',
     type: 'loki',
     url: LOKI_URL,
@@ -91,10 +106,9 @@ async function provisionDatasources() {
       httpHeaderValue1: `Basic ${PROM_AUTH}`,
     },
   });
-  console.log('  ✅ Loki datasource created (with traceID → Tempo link)');
-  
+
   // Tempo datasource with tracesToLogs
-  await request('POST', '/api/datasources', {
+  await upsertDatasource({
     name: 'Tempo',
     type: 'tempo',
     url: TEMPO_URL,
@@ -110,7 +124,6 @@ async function provisionDatasources() {
       httpHeaderValue1: `Basic ${PROM_AUTH}`,
     },
   });
-  console.log('  ✅ Tempo datasource created (with tracesToLogs → Loki link)');
 }
 
 async function provisionDashboard() {
