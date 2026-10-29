@@ -1,0 +1,172 @@
+groups:
+  # ─────────────────────────────────────────────────────────────────
+  # Backend Alerts
+  # ─────────────────────────────────────────────────────────────────
+  - name: glowapp-backend-alerts
+    interval: 30s
+    rules:
+      # High error rate (5xx > 1% over 5m)
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(http_requests_total{status_code=~"5.."}[5m])) by (app_audience)
+          /
+          sum(rate(http_requests_total[5m])) by (app_audience)
+          > 0.01
+        for: 2m
+        labels:
+          severity: critical
+          component: backend
+        annotations:
+          summary: "High error rate on {{ $labels.app_audience }}"
+          description: "Error rate (5xx) is {{ $value | humanizePercentage }} for {{ $labels.app_audience }} (threshold: 1%)"
+          runbook_url: "https://github.com/Diegoromerov/belleza-app/blob/main/docs/runbooks/high-error-rate.md"
+
+      # High latency (p95 > 2s over 5m)
+      - alert: HighLatency
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(http_request_duration_seconds_bucket[5m])) by (le, method, route, app_audience)
+          ) > 2
+        for: 5m
+        labels:
+          severity: warning
+          component: backend
+        annotations:
+          summary: "High latency on {{ $labels.app_audience }}"
+          description: "P95 latency is {{ $value | humanizeDuration }} for {{ $labels.app_audience }} (threshold: 2s)"
+          runbook_url: "https://github.com/Diegoromerov/belleza-app/blob/main/docs/runbooks/high-latency.md"
+
+      # Database pool exhaustion
+      - alert: DBPoolExhausted
+        expr: |
+          db_pool_connections{state="active"} / db_pool_max_connections > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "Database pool near exhaustion"
+          description: "DB pool usage is {{ $value | humanizePercentage }} (threshold: 80%)"
+          runbook_url: "https://github.com/Diegoromerov/belleza-app/blob/main/docs/runbooks/db-pool-exhausted.md"
+
+      # Database errors spike
+      - alert: DBErrorsSpike
+        expr: |
+          rate(db_errors_total[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+          component: database
+        annotations:
+          summary: "Database errors spike"
+          description: "DB error rate is {{ $value }}/s"
+
+      # High memory usage
+      - alert: HighMemoryUsage
+        expr: |
+          (nodejs_heap_used_bytes / nodejs_heap_size_limit_bytes) > 0.85
+        for: 10m
+        labels:
+          severity: warning
+          component: backend
+        annotations:
+          summary: "High memory usage"
+          description: "Heap usage is {{ $value | humanizePercentage }} of limit"
+
+      # Event loop lag
+      - alert: EventLoopLag
+        expr: |
+          nodejs_eventloop_lag_seconds > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: backend
+        annotations:
+          summary: "Event loop lag detected"
+          description: "Event loop lag is {{ $value }}s"
+
+  # ─────────────────────────────────────────────────────────────────
+  # Business Alerts
+  # ─────────────────────────────────────────────────────────────────
+  - name: glowapp-business-alerts
+    interval: 60s
+    rules:
+      # No bookings created in last hour (business hours)
+      - alert: NoBookingsCreated
+        expr: |
+          increase(bookings_created_total[1h]) == 0
+          and hour() >= 9
+          and hour() <= 21
+        for: 30m
+        labels:
+          severity: warning
+          component: business
+        annotations:
+          summary: "No bookings created in last hour"
+          description: "Zero bookings created during business hours"
+
+      # Revenue drop (compare to same time yesterday)
+      - alert: RevenueDrop
+        expr: |
+          increase(revenue_total_cents[1h]) < (increase(revenue_total_cents[1h] offset 24h) * 0.5)
+        for: 30m
+        labels:
+          severity: warning
+          component: business
+        annotations:
+          summary: "Revenue dropped >50% vs yesterday"
+          description: "Current hour revenue: {{ $value }} cents"
+
+      # RAG query errors spike
+      - alert: RAGErrorsSpike
+        expr: |
+          rate(rag_queries_total{result="error"}[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          component: rag
+        annotations:
+          summary: "RAG query error rate high"
+          description: "RAG error rate is {{ $value }}/s"
+
+  # ─────────────────────────────────────────────────────────────────
+  # Infrastructure Alerts
+  # ─────────────────────────────────────────────────────────────────
+  - name: glowapp-infra-alerts
+    interval: 30s
+    rules:
+      # Target down
+      - alert: TargetDown
+        expr: |
+          up == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: infrastructure
+        annotations:
+          summary: "Target {{ $labels.job }} is down"
+          description: "{{ $labels.job }} has been down for > 1 minute"
+
+      # Disk space
+      - alert: DiskSpaceLow
+        expr: |
+          (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) < 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: "Disk space low"
+          description: "Root filesystem has {{ $value | humanizePercentage }} free"
+
+      # CPU saturation
+      - alert: CPUSaturation
+        expr: |
+          (1 - avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m]))) > 0.9
+        for: 10m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: "CPU saturation"
+          description: "CPU usage > 90% for 10 minutes"

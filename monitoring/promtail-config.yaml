@@ -1,0 +1,40 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  # Backend application logs
+  - job_name: glowapp-backend
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          app: glowapp-backend
+          env: development
+          __path__: /app/backend/*.log
+
+  # Docker container logs
+  - job_name: docker-containers
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          app: docker
+          env: development
+          __path__: /var/lib/docker/containers/*/*-json.log
+
+  # Railway backend logs (when running in Railway)
+  - job_name: railway-backend
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          app: glowapp-backend
+          env: production
+          __path__: /var/log/railway/*.log
