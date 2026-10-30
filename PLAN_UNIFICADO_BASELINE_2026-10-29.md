@@ -182,13 +182,13 @@
 - [x] **Test deploy real staging** ✅ **VALIDADO**:
   - Client: `https://glowapp-client--staging-dxkv99y1.web.app` (200 OK)
   - Provider: `https://glowapp-provider--staging-srdlyu0q.web.app` (200 OK)
-- [ ] **DNS Records Cloudflare** (`app.glowapp.com`, `pro.glowapp.com`, `admin.glowapp.com`, `api.glowapp.com`) — requiere agregar `glowapp.com` a Cloudflare
+- [ ] **Custom domains en Firebase Console** (`app.glowapp.com`, `pro.glowapp.com`, `admin.glowapp.com`, `api.glowapp.com`) — se configuran **100% en Firebase**, no requieren Cloudflare
+- [ ] **DNS A records en registrar** — Firebase provee IPs (A records); se agregan en el proveedor donde compraste `glowapp.com` (GoDaddy, Namecheap, Porkbun, etc.)
 - [ ] **Variables Railway** backend mantenidas (22/servicio ✅) — backend sigue en Railway
-- [ ] **Custom domains en Firebase Console** (`app.glowapp.com`, `pro.glowapp.com`)
 
 **Autorización consumida:** `AUTORIZACIÓN EXPLÍCITA DEL DIRECTOR — GLOWAPP-F006-RAILWAY`
 
-**Próximo:** Agregar `glowapp.com` a Cloudflare → configurar custom domains en Firebase → DNS A/CNAME records
+**Próximo:** En Firebase Console → Hosting → Add custom domain para `app.glowapp.com` (client), `pro.glowapp.com` (provider) → copiar A records → pegar en DNS de tu registrar → validar SSL automático
 
 ---
 
