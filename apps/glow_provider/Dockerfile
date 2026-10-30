@@ -1,6 +1,6 @@
 # Dockerfile for glowapp-provider (Flutter web)
-# Uses ghcr.io/cirruslabs/flutter:stable (or specific version from GitHub Container Registry)
-FROM ghcr.io/cirruslabs/flutter:stable AS builder
+# Uses pinned Flutter 3.29.3 from GitHub Container Registry
+FROM ghcr.io/cirruslabs/flutter:3.29.3 AS builder
 
 WORKDIR /app
 
