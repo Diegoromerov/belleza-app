@@ -332,6 +332,8 @@ jobs:
           projectId: glowapp-client
           target: client
           entryPoint: apps/glow_client
+          channelId: ${{ github.ref == 'refs/heads/main' && 'live' || 'staging' }}
+          expires: 7d
 
   deploy-provider-firebase:
     name: Deploy Provider to Firebase Hosting
@@ -357,3 +359,5 @@ jobs:
           projectId: glowapp-provider
           target: provider
           entryPoint: apps/glow_provider
+          channelId: ${{ github.ref == 'refs/heads/main' && 'live' || 'staging' }}
+          expires: 7d
