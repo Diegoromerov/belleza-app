@@ -2,10 +2,13 @@
 nixPkgs = ["flutter", "nodejs"]
 
 [phases.install]
-cmds = ["flutter pub get"]
+cmds = [
+  "cp -r ../../packages/glow_core ./packages/",
+  "flutter pub get"
+]
 
 [phases.build]
 cmds = ["flutter build web --release"]
 
 [phases.start]
-cmd = "npx serve -s -l $PORT"
+cmd = "cd build/web && npx serve -s -l $PORT"
