@@ -27,9 +27,19 @@ const TEMPO_URL = process.env.TEMPO_URL;
 const PROMETHEUS_USER = process.env.PROMETHEUS_USER;
 const PROMETHEUS_PASSWORD = process.env.PROMETHEUS_PASSWORD; // Requerido: configurar en entorno
 
-if (!STACK || !API_KEY || !PROMETHEUS_URL || !LOKI_URL || !TEMPO_URL || !PROMETHEUS_USER) {
+const requiredVars = [
+  'GRAFANA_CLOUD_STACK',
+  'GRAFANA_CLOUD_API_KEY',
+  'PROMETHEUS_URL',
+  'LOKI_URL',
+  'TEMPO_URL',
+  'PROMETHEUS_USER'
+];
+
+const missing = requiredVars.filter(v => !process.env[v]);
+if (missing.length > 0) {
   console.error('❌ Missing required environment variables:');
-  console.error('  GRAFANA_CLOUD_STACK, GRAFANA_CLOUD_API_KEY, PROMETHEUS_URL, LOKI_URL, TEMPO_URL, PROMETHEUS_USER');
+  console.error('  ' + missing.join(', '));
   process.exit(1);
 }
 
