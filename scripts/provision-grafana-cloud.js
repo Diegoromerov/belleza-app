@@ -25,7 +25,7 @@ const PROMETHEUS_URL = process.env.PROMETHEUS_URL;
 const LOKI_URL = process.env.LOKI_URL;
 const TEMPO_URL = process.env.TEMPO_URL;
 const PROMETHEUS_USER = process.env.PROMETHEUS_USER;
-const PROMETHEUS_PASSWORD = process.env.PROMETHEUS_PASSWORD || API_KEY;
+const PROMETHEUS_PASSWORD = process.env.PROMETHEUS_PASSWORD; // Requerido: configurar en entorno
 
 if (!STACK || !API_KEY || !PROMETHEUS_URL || !LOKI_URL || !TEMPO_URL || !PROMETHEUS_USER) {
   console.error('❌ Missing required environment variables:');
