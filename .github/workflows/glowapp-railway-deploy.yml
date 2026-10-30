@@ -292,7 +292,7 @@ jobs:
         run: |
           cd apps/glow_client
           railway link --project ${{ secrets.RAILWAY_PROJECT_ID }} --service glowapp-client
-          railway up --service glowapp-client --wait --timeout 300
+          railway up --service glowapp-client
 
   deploy-provider-railway:
     name: Deploy Provider to Railway
@@ -317,4 +317,4 @@ jobs:
         run: |
           cd apps/glow_provider
           railway link --project ${{ secrets.RAILWAY_PROJECT_ID }} --service glowapp-provider
-          railway up --service glowapp-provider --wait --timeout 300
+          railway up --service glowapp-provider
