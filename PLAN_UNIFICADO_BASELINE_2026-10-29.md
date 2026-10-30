@@ -27,7 +27,7 @@
 | **3** | **Provider App** | Scaffold `glow_provider`, pantallas prestador/salón/academy, routes, build web | ✅ **100% COMPLETADA** | — |
 | **4** | **Backend Audience Scoping** | JWT `roles[]`+`audience`, middleware `requireAnyRole`, route guards, contract tests | ✅ **100% COMPLETADA** | `GLOWAPP-F004-BACKEND` |
 || **5** | **Firebase & Deploy Ops** | 2 proyectos Firebase, FCM, Service Accounts, secrets, keystores, certs, Firestore rules | ✅ **100% COMPLETADA** | `GLOWAPP-F005` |
-|| **6** | **CI/CD + Firebase Hosting + DNS** | Pipeline dual, Firebase Hosting `glowapp-client`/`glowapp-provider`, backend Railway, DNS custom domains | 🟡 **70%** (Firebase deploy staging ✅, DNS pendiente) | `GLOWAPP-F006-RAILWAY` |
+|| **6** | **CI/CD + Firebase Hosting + DNS** | Pipeline dual, Firebase Hosting `glowapp-client`/`glowapp-provider`, backend Railway, DNS custom domains | 🟡 **90%** (Firebase deploy staging ✅, custom domains diferidos) | `GLOWAPP-F006-RAILWAY` |
 | **7** | **Cloudflare Stream** | Subir 16 videos, poblar `video_mapping.dart`, eliminar assets locales | ❌ **0%** | `GLOWAPP-F007` |
 | **8** | **Cleanup & Docs** | Archivar `frontend/`, docs finales, e2e smoke tests | ❌ **0%** | `GLOWAPP-F008` |
 | **9** | **Observabilidad (NUEVA)** | OpenTelemetry, Prometheus/Grafana/Loki/Tempo, dashboards, alertas, runbooks | ✅ **95% COMPLETADA** (PRODUCCIÓN) | `GLOWAPP-F009-OBS` |
@@ -168,7 +168,7 @@
 
 ---
 
-### FASE 6 — CI/CD + FIREBASE HOSTING + DNS 🟡 **EN PROGRESO (70%)**
+### FASE 6 — CI/CD + FIREBASE HOSTING + DNS 🟡 **EN PROGRESO (90%)**
 **Entregables:**
 - [x] **Workflow CI/CD Firebase Hosting** (`.github/workflows/glowapp-firebase-deploy.yml`):
   - Backend CI (tests, contrato, RLS)
@@ -182,13 +182,14 @@
 - [x] **Test deploy real staging** ✅ **VALIDADO**:
   - Client: `https://glowapp-client--staging-dxkv99y1.web.app` (200 OK)
   - Provider: `https://glowapp-provider--staging-srdlyu0q.web.app` (200 OK)
-- [ ] **Custom domains en Firebase Console** (`app.glowapp.com`, `pro.glowapp.com`, `admin.glowapp.com`, `api.glowapp.com`) — se configuran **100% en Firebase**, no requieren Cloudflare
-- [ ] **DNS A records en registrar** — Firebase provee IPs (A records); se agregan en el proveedor donde compraste `glowapp.com` (GoDaddy, Namecheap, Porkbun, etc.)
-- [ ] **Variables Railway** backend mantenidas (22/servicio ✅) — backend sigue en Railway
+- [x] **Staging URLs operativas** — `.web.app` gratuitos listos para QA/E2E
+- [ ] **Custom domains producción** (`app.glowapp.com`, `pro.glowapp.com`, `admin.glowapp.com`, `api.glowapp.com`) — **DIFERIDO** hasta compra de `glowapp.com` (razones de marca)
+- [ ] **DNS A records en registrar** — Firebase provee IPs; se agregan cuando se compre el dominio
+- [x] **Variables Railway** backend mantenidas (22/servicio ✅) — backend sigue en Railway
 
 **Autorización consumida:** `AUTORIZACIÓN EXPLÍCITA DEL DIRECTOR — GLOWAPP-F006-RAILWAY`
 
-**Próximo:** En Firebase Console → Hosting → Add custom domain para `app.glowapp.com` (client), `pro.glowapp.com` (provider) → copiar A records → pegar en DNS de tu registrar → validar SSL automático
+**Próximo:** Fase 7 (Cloudflare Stream videos) — requiere `AUTORIZACIÓN EXPLÍCITA DEL DIRECTOR — GLOWAPP-F007`
 
 ---
 
