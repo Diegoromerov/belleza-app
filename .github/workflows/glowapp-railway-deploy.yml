@@ -291,6 +291,7 @@ jobs:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
           cd apps/glow_client
+          railway login --token "$RAILWAY_TOKEN"
           railway link --project ${{ secrets.RAILWAY_PROJECT_ID }} --service glowapp-client
           railway up --service glowapp-client
 
@@ -316,5 +317,6 @@ jobs:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
           cd apps/glow_provider
+          railway login --token "$RAILWAY_TOKEN"
           railway link --project ${{ secrets.RAILWAY_PROJECT_ID }} --service glowapp-provider
           railway up --service glowapp-provider
