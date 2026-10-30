@@ -1,6 +1,6 @@
 # Dockerfile for glowapp-client (Flutter web)
-# Uses cirrusci/flutter from Docker Hub (reliable for Railway)
-FROM cirrusci/flutter:3.29.2 AS builder
+# Uses ghcr.io/cirruslabs/flutter:stable from GitHub Packages
+FROM ghcr.io/cirruslabs/flutter:stable AS builder
 
 WORKDIR /app
 
