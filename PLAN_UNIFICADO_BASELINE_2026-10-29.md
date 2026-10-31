@@ -28,7 +28,7 @@
 | **4** | **Backend Audience Scoping** | JWT `roles[]`+`audience`, middleware `requireAnyRole`, route guards, contract tests | ✅ **100% COMPLETADA** | `GLOWAPP-F004-BACKEND` |
 || **5** | **Firebase & Deploy Ops** | 2 proyectos Firebase, FCM, Service Accounts, secrets, keystores, certs, Firestore rules | ✅ **100% COMPLETADA** | `GLOWAPP-F005` |
 || **6** | **CI/CD + Firebase Hosting + DNS** | Pipeline dual, Firebase Hosting `glowapp-client`/`glowapp-provider`, backend Railway, DNS custom domains | 🟡 **90%** (Firebase deploy staging ✅, custom domains diferidos) | `GLOWAPP-F006-RAILWAY` |
-|| **7** | **Cloudflare Stream** | Subir 16 videos, poblar `video_mapping.dart`, eliminar assets locales, iframe player HLS | 🟡 **35%** (Firebase Storage ✅, Cloudflare bloqueado) | `GLOWAPP-F007` ||
+|| **7** | **Cloudflare Stream** | Subir 16 videos, poblar `video_mapping.dart`, eliminar assets locales, iframe player HLS | 🟡 **45%** (Firebase Storage ✅, assets eliminados, Cloudflare bloqueado) | `GLOWAPP-F007` ||
 | **8** | **Cleanup & Docs** | Archivar `frontend/`, docs finales, e2e smoke tests | ❌ **0%** | `GLOWAPP-F008` |
 | **9** | **Observabilidad (NUEVA)** | OpenTelemetry, Prometheus/Grafana/Loki/Tempo, dashboards, alertas, runbooks | ✅ **95% COMPLETADA** (PRODUCCIÓN) | `GLOWAPP-F009-OBS` |
 
@@ -204,10 +204,10 @@
   - **Proveedor (7):** step_01_inicio → step_07_perfil
   - **Onboarding intro** (1)
 - [ ] **Poblar `video_mapping.dart`** con UIDs reales de Cloudflare Stream: `https://iframe.videodelivery.net/UID_XXX` (reemplazar URLs Firebase Storage)
-- [ ] **Eliminar assets videos locales**:
-  - `apps/glow_client/assets/videos/`
-  - `apps/glow_provider/assets/videos/`
-  - `backend/public/assets/assets/glowguide/videos/`
+- [x] **Eliminar assets videos locales** ✅ **COMPLETADO**:
+  - `apps/glow_client/assets/videos/` (eliminado)
+  - `apps/glow_provider/assets/videos/` (eliminado)
+  - `backend/public/assets/assets/glowguide/videos/` (eliminado)
 - [ ] **Actualizar `GlowGuidePresenter`** para usar iframe Player de Stream (HLS adaptativo)
 - [ ] **Test onboarding reproducción en staging**
 
@@ -222,9 +222,9 @@
    - `step_01_inicio.mp4/.webm` ... `step_07_perfil.mp4/.webm` (proveedor, raíz del bucket)
 2. **`video_mapping.dart` actualizado** con 30 URLs `mediaLink` firmadas (generation token) — listo para producción
 3. **`GlowGuidePresenter` ya usa** `VideoPlayerController.networkUrl()` con detección de formato por user-agent (Safari → MP4, resto → WebM)
-4. **Eliminación de assets locales** pendiente (paso final tras validar reproducción en staging)
+4. **Eliminación de assets locales** ✅ **COMPLETADA** — 22 archivos borrados del repo (~33 MB)
 
-**Evidencia:** `packages/glow_core/lib/src/glowguide/config/video_mapping.dart` (30 URLs pobladas), `flutter analyze` clean en `glowguide/`
+**Evidencia:** `packages/glow_core/lib/src/glowguide/config/video_mapping.dart` (30 URLs pobladas), `flutter analyze` clean en `glowguide/`, commit `abaa1421`
 
 ---
 
