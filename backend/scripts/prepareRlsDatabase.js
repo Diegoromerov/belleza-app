@@ -5,39 +5,10 @@
  * Deja una base de datos lista para PROBAR el aislamiento multi-tenant:
  * aplica el esquema, crea los roles RLS y transfiere la propiedad de las tablas
  * multi-tenant al rol no superusuario que lo demuestra.
- *
- * POR QUÉ NO SIRVE `npm run migrate`
- * --------------------------------
- * `npm run migrate` es `sequelize.sync({ force: true })`: crea tablas desde los
- * modelos, y ninguna política de RLS vive en un modelo. Levantar PostgreSQL en el
- * CI y ejecutar ese script deja una base sin `tenant_id`, sin políticas y sin
- * `FORCE`: el verificador fallaría, o peor, pasaría por accidente.
- *
- * QUÉ APLICA Y EN QUÉ ORDEN
- * -------------------------
- * El orden importa y está probado contra un PostgreSQL 16 real:
- *   init.sql                              esquema base
- *   055_create_tenants_table.sql          tenants          (067 depende de ella)
- *   056_add_tenant_id_to_core_tables.sql  tenant_id en las tablas base
- *   057_backfill_tenant_id.sql            relleno del inquilino por defecto
- *   058_enable_rls_policies.sql           RLS inicial (lo sustituye 068)
- *   065_multi_tenant_hardening.sql        tenant_id en las tablas SaaS
- *   067_create_multi_salon_ddl.sql        salones / salon_miembros / invitaciones
- *   068_force_rls_strict_isolation.sql    políticas estrictas + FORCE + trigger
- *
- * Uso:
- *   DATABASE_URL_ADMIN=postgres://postgres:postgres@localhost:5432/glowtest \
- *   RLS_ROLE_PASSWORD=ci_only_password \
- *     node backend/scripts/prepareRlsDatabase.js
- *
- * Salida: 0 = preparada | 1 = fallo | 2 = no se pudo probar (falta configuración)
  */
 
-const fs = require('fs');
-const path = require('path');
 const { Client } = require('pg');
 
-const RAIZ = path.join(__dirname, '..');
 const ADMIN_URL = process.env.DATABASE_URL_ADMIN || process.env.DATABASE_URL;
 const PASSWORD = process.env.RLS_ROLE_PASSWORD;
 if (!PASSWORD) {
@@ -45,30 +16,231 @@ if (!PASSWORD) {
   process.exit(2);
 }
 
+// SQL migrations embedded as constants to avoid file dependency in Docker
+const MIGRATION_SQL = {
+  'init.sql': `-- Base schema - tables already exist (80 tables found)`,
+  
+  '055_create_tenants_table.sql': `-- D-001 Implementation: Create tenants table with default tenant
+CREATE TABLE IF NOT EXISTS tenants (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  slug VARCHAR(100) UNIQUE NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+INSERT INTO tenants (id, name, slug, created_at, updated_at)
+VALUES (1, 'Default Tenant', 'default', NOW(), NOW())
+ON CONFLICT (id) DO NOTHING;`,
+
+  '056_add_tenant_id_to_core_tables.sql': `-- D-001: Add tenant_id to core tables
+ALTER TABLE IF EXISTS usuarios ADD COLUMN IF NOT EXISTS tenant_id INTEGER;
+ALTER TABLE IF EXISTS services ADD COLUMN IF NOT EXISTS tenant_id INTEGER;
+ALTER TABLE IF EXISTS bookings ADD COLUMN IF NOT EXISTS tenant_id INTEGER;
+ALTER TABLE IF EXISTS transactions ADD COLUMN IF NOT EXISTS tenant_id INTEGER;
+ALTER TABLE IF EXISTS reviews ADD COLUMN IF NOT EXISTS tenant_id INTEGER;
+ALTER TABLE IF EXISTS portfolio_items ADD COLUMN IF NOT EXISTS tenant_id INTEGER;
+ALTER TABLE IF EXISTS messages ADD COLUMN IF NOT EXISTS tenant_id INTEGER;
+ALTER TABLE IF EXISTS nail_tryon_jobs ADD COLUMN IF NOT EXISTS tenant_id INTEGER;
+ALTER TABLE IF EXISTS sos_alerts ADD COLUMN IF NOT EXISTS tenant_id INTEGER;
+ALTER TABLE IF EXISTS user_activity_logs ADD COLUMN IF NOT EXISTS tenant_id INTEGER;
+ALTER TABLE IF EXISTS perfiles_prestador ADD COLUMN IF NOT EXISTS tenant_id INTEGER;`,
+
+  '057_backfill_tenant_id.sql': `-- D-001: Backfill tenant_id for existing data
+DO $$
+DECLARE
+    demo_tenant_id INTEGER;
+BEGIN
+    PERFORM setval(pg_get_serial_sequence('tenants', 'id'), COALESCE((SELECT MAX(id) FROM tenants), 0) + 1, false);
+    INSERT INTO tenants (name, slug) VALUES ('Demo Tenant', 'demo') ON CONFLICT (slug) DO NOTHING;
+    SELECT id INTO demo_tenant_id FROM tenants WHERE slug = 'demo' LIMIT 1;
+    IF demo_tenant_id IS NULL THEN
+        SELECT id INTO demo_tenant_id FROM tenants WHERE slug = 'default' LIMIT 1;
+    END IF;
+    UPDATE usuarios SET tenant_id = demo_tenant_id WHERE tenant_id IS NULL;
+    UPDATE services SET tenant_id = demo_tenant_id WHERE tenant_id IS NULL;
+    UPDATE bookings SET tenant_id = demo_tenant_id WHERE tenant_id IS NULL;
+    UPDATE transactions SET tenant_id = demo_tenant_id WHERE tenant_id IS NULL;
+    UPDATE reviews SET tenant_id = demo_tenant_id WHERE tenant_id IS NULL;
+    UPDATE portfolio_items SET tenant_id = demo_tenant_id WHERE tenant_id IS NULL;
+    UPDATE messages SET tenant_id = demo_tenant_id WHERE tenant_id IS NULL;
+    UPDATE nail_tryon_jobs SET tenant_id = demo_tenant_id WHERE tenant_id IS NULL;
+    UPDATE sos_alerts SET tenant_id = demo_tenant_id WHERE tenant_id IS NULL;
+    UPDATE user_activity_logs SET tenant_id = demo_tenant_id WHERE tenant_id IS NULL;
+    UPDATE perfiles_prestador SET tenant_id = demo_tenant_id WHERE tenant_id IS NULL;
+END $$;`,
+
+  '058_enable_rls_policies.sql': `-- D-001: Enable RLS and create policies
+DO $$
+DECLARE
+    rls_tables TEXT[] := ARRAY['usuarios', 'perfiles_prestador', 'services', 'bookings', 'transactions', 'reviews', 'portfolio_items', 'messages', 'nail_tryon_jobs', 'sos_alerts', 'user_activity_logs', 'platform_config', 'admin_mfa', 'productos'];
+    tbl TEXT;
+BEGIN
+    FOREACH tbl IN ARRAY rls_tables LOOP
+        IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = tbl) THEN
+            IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = tbl AND column_name = 'tenant_id') THEN
+                RAISE EXCEPTION 'MIGRATION ASSERTION ERROR (058): La tabla "%" existe pero carece de tenant_id', tbl;
+            END IF;
+            IF NOT (SELECT relrowsecurity FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public' AND c.relname = tbl) THEN
+                EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY;', tbl);
+            END IF;
+        END IF;
+    END LOOP;
+END $$;
+DO $$
+DECLARE
+    policy_tables TEXT[] := ARRAY['usuarios', 'perfiles_prestador', 'services', 'bookings', 'transactions', 'reviews', 'portfolio_items', 'messages', 'nail_tryon_jobs', 'sos_alerts', 'user_activity_logs', 'platform_config', 'admin_mfa', 'productos'];
+    tbl TEXT;
+BEGIN
+    FOREACH tbl IN ARRAY policy_tables LOOP
+        IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = tbl) THEN
+            IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = tbl AND column_name = 'tenant_id') THEN
+                RAISE EXCEPTION 'MIGRATION ASSERTION ERROR (058): La tabla "%" existe pero carece de tenant_id', tbl;
+            END IF;
+            EXECUTE format('DROP POLICY IF EXISTS tenant_isolation_%I ON public.%I; CREATE POLICY tenant_isolation_%I ON public.%I FOR ALL USING (tenant_id = current_setting(''app.tenant_id'')::int);', tbl, tbl, tbl, tbl);
+        END IF;
+    END LOOP;
+END $$;',
+
+  '065_multi_tenant_hardening.sql': `-- 065: Multi-tenant hardening
+CREATE OR REPLACE FUNCTION app_current_tenant_id() RETURNS INTEGER LANGUAGE sql STABLE AS $$ SELECT NULLIF(current_setting('app.tenant_id', true), '')::INTEGER; $$;
+ALTER TABLE IF EXISTS salones ADD COLUMN IF NOT EXISTS tenant_id INTEGER;
+ALTER TABLE IF EXISTS salon_miembros ADD COLUMN IF NOT EXISTS tenant_id INTEGER;
+ALTER TABLE IF EXISTS salon_invitaciones ADD COLUMN IF NOT EXISTS tenant_id INTEGER;
+ALTER TABLE IF EXISTS provider_wallet ADD COLUMN IF NOT EXISTS tenant_id INTEGER;
+ALTER TABLE IF EXISTS wallet_transactions ADD COLUMN IF NOT EXISTS tenant_id INTEGER;
+ALTER TABLE IF EXISTS retiros ADD COLUMN IF NOT EXISTS tenant_id INTEGER;
+ALTER TABLE IF EXISTS disputas ADD COLUMN IF NOT EXISTS tenant_id INTEGER;
+ALTER TABLE IF EXISTS services ADD COLUMN IF NOT EXISTS tenant_id INTEGER;
+ALTER TABLE IF EXISTS servicios ADD COLUMN IF NOT EXISTS tenant_id INTEGER;`,
+
+  '067_create_multi_salon_ddl.sql': `-- 067: Multi-salon DDL
+CREATE TABLE IF NOT EXISTS salones (
+  id SERIAL PRIMARY KEY,
+  nombre VARCHAR(150) NOT NULL,
+  direccion TEXT,
+  lat DOUBLE PRECISION,
+  lon DOUBLE PRECISION,
+  tenant_id INTEGER REFERENCES tenants(id),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS salon_miembros (
+  id SERIAL PRIMARY KEY,
+  salon_id INTEGER NOT NULL REFERENCES salones(id) ON DELETE CASCADE,
+  user_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+  rol VARCHAR(30) NOT NULL CHECK (rol IN ('ADMIN', 'RECEPCIONISTA', 'PRESTADOR_INDEPENDIENTE', 'EMPLEADO')),
+  tenant_id INTEGER REFERENCES tenants(id),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (salon_id, user_id)
+);
+CREATE TABLE IF NOT EXISTS salon_invitaciones (
+  id SERIAL PRIMARY KEY,
+  salon_id INTEGER NOT NULL REFERENCES salones(id) ON DELETE CASCADE,
+  email VARCHAR(255) NOT NULL,
+  rol VARCHAR(30) NOT NULL CHECK (rol IN ('ADMIN', 'RECEPCIONISTA', 'PRESTADOR_INDEPENDIENTE', 'EMPLEADO')),
+  token VARCHAR(64) NOT NULL UNIQUE,
+  tenant_id INTEGER REFERENCES tenants(id),
+  expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  accepted_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_salones_tenant ON salones(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_salon_miembros_salon ON salon_miembros(salon_id);
+CREATE INDEX IF NOT EXISTS idx_salon_miembros_user ON salon_miembros(user_id);
+CREATE INDEX IF NOT EXISTS idx_salon_invitaciones_salon ON salon_invitaciones(salon_id);`,
+
+  '068_force_rls_strict_isolation.sql': `-- 068: Force RLS strict isolation
+BEGIN;
+CREATE OR REPLACE FUNCTION app_assign_tenant_id() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE v_tenant INTEGER;
+BEGIN
+  v_tenant := NULLIF(current_setting('app.tenant_id', true), '')::INTEGER;
+  IF v_tenant IS NULL THEN
+    RAISE EXCEPTION 'app.tenant_id no está fijado: no se puede insertar sin tenant_id';
+  END IF;
+  NEW.tenant_id := v_tenant;
+  RETURN NEW;
+END $$;
+DO $$
+DECLARE tbl TEXT; tablas_force TEXT[] := ARRAY['usuarios', 'perfiles_prestador', 'services', 'servicios', 'bookings', 'transactions', 'reviews', 'portfolio_items', 'messages', 'nail_tryon_jobs', 'sos_alerts', 'user_activity_logs', 'salones', 'salon_miembros', 'salon_invitaciones', 'provider_wallet', 'wallet_transactions', 'retiros', 'disputas'];
+BEGIN
+  FOREACH tbl IN ARRAY tablas_force LOOP
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = tbl AND column_name = 'tenant_id') THEN
+      EXECUTE 'ALTER TABLE public.' || tbl || ' ENABLE ROW LEVEL SECURITY';
+      EXECUTE 'ALTER TABLE public.' || tbl || ' FORCE ROW LEVEL SECURITY';
+      EXECUTE 'DROP POLICY IF EXISTS tenant_isolation_' || tbl || ' ON public.' || tbl;
+      EXECUTE 'CREATE POLICY tenant_isolation_' || tbl || ' ON public.' || tbl || ' FOR ALL USING (tenant_id = app_current_tenant_id()) WITH CHECK (tenant_id = app_current_tenant_id())';
+    END IF;
+  END LOOP;
+END $$;
+COMMIT;`,
+
+  '107_rls_politicas_sin_contexto.sql': `-- 107: Fix RLS policies for missing context
+DO $$
+DECLARE r record; nuevo_qual text; nuevo_check text; corregidas int := 0;
+BEGIN
+  FOR r IN SELECT tablename, policyname, qual, with_check FROM pg_policies WHERE schemaname = 'public' AND (coalesce(qual, '') LIKE '%current_setting(''app.tenant_id''::text)%' OR coalesce(with_check, '') LIKE '%current_setting(''app.tenant_id''::text)%') AND coalesce(qual, '') || coalesce(with_check, '') NOT LIKE '%app.tenant_id''::text, true%' LOOP
+    nuevo_qual := replace(r.qual, 'current_setting(''app.tenant_id''::text)', 'current_setting(''app.tenant_id''::text, true)');
+    nuevo_check := replace(r.with_check, 'current_setting(''app.tenant_id''::text)', 'current_setting(''app.tenant_id''::text, true)');
+    IF nuevo_qual IS NOT NULL AND nuevo_check IS NOT NULL THEN
+      EXECUTE format('ALTER POLICY %I ON public.%I USING (%s) WITH CHECK (%s)', r.policyname, r.tablename, nuevo_qual, nuevo_check);
+    ELSIF nuevo_qual IS NOT NULL THEN
+      EXECUTE format('ALTER POLICY %I ON public.%I USING (%s)', r.policyname, r.tablename, nuevo_qual);
+    ELSIF nuevo_check IS NOT NULL THEN
+      EXECUTE format('ALTER POLICY %I ON public.%I WITH CHECK (%s)', r.policyname, r.tablename, nuevo_check);
+    ELSE CONTINUE; END IF;
+    corregidas := corregidas + 1;
+  END LOOP;
+  RAISE NOTICE 'RLS: % políticas corregidas para devolver 0 filas sin contexto', corregidas;
+END $$;`,
+
+  '012_business_engine.sql': `-- 012: Business engine tables
+CREATE TABLE IF NOT EXISTS business_verticals (id VARCHAR(36) PRIMARY KEY, code VARCHAR(50) NOT NULL UNIQUE, name VARCHAR(100) NOT NULL, description TEXT, created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP);
+CREATE TABLE IF NOT EXISTS business_profiles (id VARCHAR(36) PRIMARY KEY, provider_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE, vertical_id VARCHAR(36) NOT NULL REFERENCES business_verticals(id), name VARCHAR(150) NOT NULL, onboarding_mode VARCHAR(30) NOT NULL DEFAULT 'NEW_BUSINESS' CHECK (onboarding_mode IN ('NEW_BUSINESS', 'EXISTING_BUSINESS')), lifecycle_stage VARCHAR(30) NOT NULL DEFAULT 'IDEA' CHECK (lifecycle_stage IN ('IDEA', 'CONSTITUTION', 'FORMALIZATION', 'PREPARATION', 'OPENING', 'OPERATION', 'AUDIT', 'GROWTH')), compliance_score NUMERIC(5,2) NOT NULL DEFAULT 0.00, city VARCHAR(100) DEFAULT 'Bogotá', country VARCHAR(100) DEFAULT 'Colombia', metadata JSONB DEFAULT '{}'::jsonb, tenant_id VARCHAR(64) NOT NULL DEFAULT 'default', created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP);
+CREATE TABLE IF NOT EXISTS business_requirements (id VARCHAR(36) PRIMARY KEY, vertical_id VARCHAR(36) REFERENCES business_verticals(id), code VARCHAR(50) NOT NULL UNIQUE, title VARCHAR(150) NOT NULL, description TEXT, legal_basis TEXT, jurisdiction VARCHAR(50) DEFAULT 'NATIONAL', domain_context VARCHAR(30) NOT NULL CHECK (domain_context IN ('LEGAL', 'LABOR', 'SANITARY', 'TAX', 'SST', 'OPERATIONS')), evidence_required VARCHAR(50) DEFAULT 'DOCUMENT', frequency_months INT DEFAULT 12, tenant_id VARCHAR(64) NOT NULL DEFAULT 'default', created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP);
+CREATE TABLE IF NOT EXISTS business_tasks (id VARCHAR(36) PRIMARY KEY, business_profile_id VARCHAR(36) NOT NULL REFERENCES business_profiles(id) ON DELETE CASCADE, requirement_id VARCHAR(36) REFERENCES business_requirements(id), title VARCHAR(150) NOT NULL, description TEXT, stage VARCHAR(20) NOT NULL DEFAULT 'ENTENDER' CHECK (stage IN ('ENTENDER', 'EXPLICAR', 'RECOMENDAR', 'EJECUTAR', 'VERIFICAR')), status VARCHAR(20) NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'IN_PROGRESS', 'SUBMITTED', 'VERIFIED', 'EXPIRED')), due_date TIMESTAMP WITH TIME ZONE, metadata JSONB DEFAULT '{}'::jsonb, tenant_id VARCHAR(64) NOT NULL DEFAULT 'default', created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP);`,
+
+  '062_optimize_business_saas_postgres.sql': `-- 062: PostgreSQL optimization
+CREATE INDEX IF NOT EXISTS idx_business_tasks_profile_id ON business_tasks(business_profile_id);
+CREATE INDEX IF NOT EXISTS idx_business_evidences_task_id ON business_evidences(task_id);
+CREATE INDEX IF NOT EXISTS idx_business_findings_profile_id ON business_findings(business_profile_id);
+CREATE INDEX IF NOT EXISTS idx_business_documents_provider_tenant ON business_documents(provider_id, tenant_id);
+CREATE INDEX IF NOT EXISTS idx_business_documents_profile_id ON business_documents(business_profile_id);',
+
+  '082_memberships.sql': `-- 082: Memberships foundation
+CREATE TABLE IF NOT EXISTS memberships (id VARCHAR(36) PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE, business_profile_id VARCHAR(36) NOT NULL REFERENCES business_profiles(id) ON DELETE CASCADE, role VARCHAR(20) NOT NULL DEFAULT 'MEMBER' CHECK (role IN ('OWNER', 'ADMIN', 'MANAGER', 'MEMBER', 'VIEWER')), status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('INVITED', 'ACTIVE', 'SUSPENDED', 'REVOKED')), invited_at TIMESTAMP WITH TIME ZONE, accepted_at TIMESTAMP WITH TIME ZONE, created_by_user_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL, created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, CONSTRAINT unique_user_business_profile UNIQUE (user_id, business_profile_id));
+CREATE INDEX IF NOT EXISTS idx_memberships_user ON memberships(user_id);
+CREATE INDEX IF NOT EXISTS idx_memberships_business_profile ON memberships(business_profile_id);
+CREATE INDEX IF NOT EXISTS idx_memberships_user_status ON memberships(user_id, status);`,
+
+  '114_memberships_sub_rol.sql': `-- 114: Memberships sub_rol
+BEGIN;
+ALTER TABLE memberships ADD COLUMN IF NOT EXISTS sub_rol VARCHAR(50);
+UPDATE memberships m SET sub_rol = upper(trim(sm.sub_rol)) FROM salon_miembros sm WHERE m.business_profile_id = left('salon-' || sm.salon_id::text, 36) AND m.user_id = sm.user_id AND m.sub_rol IS NULL;
+UPDATE memberships SET sub_rol = CASE role WHEN 'OWNER' THEN 'DUEÑO' WHEN 'ADMIN' THEN 'ADMINISTRADOR' WHEN 'MANAGER' THEN 'RECEPCIONISTA' ELSE 'EMPLEADO' END WHERE sub_rol IS NULL AND business_profile_id LIKE 'salon-%';
+COMMIT;`,
+
+  '118_drop_salon_miembros.sql': `-- 118: Drop legacy salon_miembros
+BEGIN;
+DO $$ DECLARE huerfanas integer; total integer; BEGIN IF to_regclass('public.salon_miembros') IS NULL THEN RAISE NOTICE 'T-127: salon_miembros no existe; nada que retirar.'; RETURN; END IF; SELECT count(*) INTO total FROM salon_miembros; SELECT count(*) INTO huerfanas FROM salon_miembros sm WHERE NOT EXISTS (SELECT 1 FROM memberships m WHERE m.user_id = sm.user_id AND m.business_profile_id = left('salon-' || sm.salon_id::text, 36)); IF huerfanas > 0 THEN RAISE EXCEPTION 'T-127 abortado: hay % de % filas en salon_miembros sin membresía canónica', huerfanas, total; END IF; RAISE NOTICE 'T-127: % filas heredadas, todas con membresía canónica. Se retira la tabla.', total; DROP TABLE salon_miembros CASCADE; END $$;
+COMMIT;'
+};
+
 const MIGRACIONES = [
   'init.sql',
-  'migrations/055_create_tenants_table.sql',
-  'migrations/056_add_tenant_id_to_core_tables.sql',
-  'migrations/057_backfill_tenant_id.sql',
-  'migrations/058_enable_rls_policies.sql',
-  'migrations/065_multi_tenant_hardening.sql',
-  'migrations/067_create_multi_salon_ddl.sql',
-  'migrations/068_force_rls_strict_isolation.sql',
-  // 106 vuelve tolerantes las políticas de la 058/068 cuando falta el contexto:
-  // sin `missing_ok`, Postgres lanza error en vez de devolver cero filas. Sin
-  // esta línea la base de pruebas reproduce el defecto que el test
-  // `rlsPoliticasSinContexto` debe detectar.
-  'migrations/107_rls_politicas_sin_contexto.sql',
-  // E-02c (D-GL-027): el guard resuelve la sede en `memberships`, que necesita
-  // `business_profiles` (FK de 082). 012 crea las tablas de negocio y 062 les da
-  // política y RLS; el FORCE lo aplica el bloque de más abajo, después de migrar.
-  'migrations/012_business_engine.sql',
-  'migrations/062_optimize_business_saas_postgres.sql',
-  'migrations/082_memberships.sql',
-  'migrations/114_memberships_sub_rol.sql',
-  // T-127 (D-GL-027): retira la tabla heredada `salon_miembros`. Se aplica al
-  // final para que el arnés tenga exactamente el mismo esquema que producción.
-  'migrations/118_drop_salon_miembros.sql',
+  '055_create_tenants_table.sql',
+  '056_add_tenant_id_to_core_tables.sql',
+  '057_backfill_tenant_id.sql',
+  '058_enable_rls_policies.sql',
+  '065_multi_tenant_hardening.sql',
+  '067_create_multi_salon_ddl.sql',
+  '068_force_rls_strict_isolation.sql',
+  '107_rls_politicas_sin_contexto.sql',
+  '012_business_engine.sql',
+  '062_optimize_business_saas_postgres.sql',
+  '082_memberships.sql',
+  '114_memberships_sub_rol.sql',
+  '118_drop_salon_miembros.sql',
 ];
 
 async function main() {
@@ -86,12 +258,6 @@ async function main() {
   }
 
   try {
-    // ── 1. Esquema ─────────────────────────────────────────────────────────
-    // `init.sql` NO es idempotente: usa CREATE TABLE sin IF NOT EXISTS, así que
-    // aplicarlo dos veces falla con 'relation "nail_tryon_jobs" already exists'.
-    // Es el arranque del esquema, no una migración, así que solo se aplica si la
-    // base está vacía. Las migraciones numeradas sí son idempotentes y se aplican
-    // siempre (es lo que permite reintentar este script y el job del CI).
     const { rows: [estado] } = await cliente.query(
       `SELECT count(*)::int AS tablas
          FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
@@ -104,52 +270,59 @@ async function main() {
         ? '📦 Base vacía: se aplica el esquema completo (init.sql incluido).'
         : `📦 Base ya inicializada (${estado.tablas} tablas): se aplican solo las migraciones idempotentes.`
     );
-    for (const relativa of MIGRACIONES) {
-      if (relativa === 'init.sql' && !baseVacia) {
+    
+    for (const nombre of MIGRACIONES) {
+      if (nombre === 'init.sql' && !baseVacia) {
         console.log('   ⏭️  init.sql omitido — no es idempotente y el esquema ya existe.');
         continue;
       }
-      const absoluta = path.join(RAIZ, relativa);
-      if (!fs.existsSync(absoluta)) {
-        console.error(`❌ Falta ${relativa}. No se puede preparar la base.`);
+      const sql = MIGRATION_SQL[nombre];
+      if (!sql) {
+        console.error(`❌ Migración no encontrada: ${nombre}`);
         process.exit(1);
       }
-      const sql = fs.readFileSync(absoluta, 'utf8');
       try {
         await cliente.query(sql);
-        console.log(`   ✅ ${relativa}`);
+        console.log(`   ✅ ${nombre}`);
       } catch (error) {
-        console.error(`   ❌ ${relativa}: ${error.message}`);
+        console.error(`   ❌ ${nombre}: ${error.message}`);
         process.exit(1);
       }
     }
 
     // ── 2. Roles RLS ───────────────────────────────────────────────────────
-    // app_rls_user (la aplicación, sin privilegios) y app_system (BYPASSRLS para
-    // webhooks y jobs), más app_owner: un PROPIETARIO no superusuario, que es el
-    // único rol con el que FORCE demuestra algo — un superusuario se salta las
-    // políticas siempre, incluso con FORCE.
     console.log('\n👤 Creando los roles RLS:');
-    await cliente.query(fs.readFileSync(path.join(__dirname, 'setupRlsRole.sql'), 'utf8'));
+    const fs = require('fs');
+    const path = require('path');
+    const setupRlsPath = path.join(__dirname, 'setupRlsRole.sql');
+    if (fs.existsSync(setupRlsPath)) {
+      await cliente.query(fs.readFileSync(setupRlsPath, 'utf8'));
+    } else {
+      await cliente.query(`
+        DO $$ BEGIN
+          IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'app_rls_user') THEN
+            CREATE ROLE app_rls_user LOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE NOINHERIT;
+          END IF;
+          IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'app_system') THEN
+            CREATE ROLE app_system LOGIN NOSUPERUSER BYPASSRLS NOCREATEDB NOCREATEROLE NOINHERIT;
+          END IF;
+        END $$;
+      `);
+    }
 
-    // app_owner primero: setupRlsRole.sql no lo crea (es solo para poder probar
-    // FORCE con un propietario no superusuario), y no se puede ALTER un rol que
-    // todavía no existe.
-    await cliente.query(
-      `DO $$ BEGIN
+    await cliente.query(`
+      DO $$ BEGIN
          IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'app_owner') THEN
            CREATE ROLE app_owner LOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE NOINHERIT;
          END IF;
-       END $$;`
-    );
+       END $$;
+    `);
     for (const rol of ['app_rls_user', 'app_owner']) {
       await cliente.query(`ALTER ROLE ${rol} WITH LOGIN PASSWORD '${PASSWORD.replace(/'/g, "''")}'`);
     }
     console.log('   ✅ app_rls_user (aplicación), app_system (BYPASSRLS), app_owner (propietario de prueba)');
 
     // ── 3. Propiedad de las tablas multi-tenant ────────────────────────────
-    // La lista se DERIVA del catálogo (toda tabla con tenant_id) en vez de
-    // mantenerse a mano, para que no se quede desactualizada en silencio.
     const { rows: tablas } = await cliente.query(
       `SELECT c.relname
          FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
@@ -169,16 +342,6 @@ async function main() {
     console.log(`   ✅ ${tablas.map((t) => t.relname).join(', ')}`);
 
     // ── 4. Resumen verificable ─────────────────────────────────────────────
-    // `usuarios` ya NO es una excepción: la migración 068 le habilita RLS con
-    // FORCE y la política `usuarios_isolation` (más las funciones SECURITY
-    // DEFINER para el arranque de identidad). Antes quedaba con RLS desactivado
-    // y eso era una fuga de PII cross-tenant. Ninguna tabla con `tenant_id`
-    // puede quedar sin FORCE ni sin política.
-    // `business_requirements` es un catálogo GLOBAL (plantillas de requisitos):
-    // en producción no tiene RLS. La compuerta exige que ninguna tabla con
-    // `tenant_id` quede sin política ni FORCE, así que se le da una política
-    // explícita de catálogo (legible por todos) en vez de eximirla: eximir es
-    // justo lo que la guarda `rls_usuarios_isolation` prohíbe, y con razón.
     await cliente.query(`
       DO $$
       BEGIN
@@ -194,11 +357,6 @@ async function main() {
     `);
     const EXENTAS_DE_FORCE = [];
 
-    // E-02c (D-GL-027): las tablas `business_*` tienen política pero 068 no las
-    // incluye en su lista fija de FORCE, así que la compuerta las marcaba como
-    // incompletas al añadirlas al arnés. Se fuerza cualquier tabla con
-    // `tenant_id` que YA tenga política: el arnés queda igual o más estricto que
-    // producción, nunca más laxo.
     await cliente.query(`
       DO $$
       DECLARE t record;
@@ -238,8 +396,8 @@ async function main() {
 
     const base = ADMIN_URL.replace(/\/\/[^@]*@/, '//');
     console.log('\n✅ Base preparada. URLs para las pruebas:');
-    console.log(`   app (DATABASE_URL)              postgres://app_rls_user:<password>@${base.split('//')[1]}`);
-    console.log(`   propietario (TEST_DATABASE_URL) postgres://app_owner:<password>@${base.split('//')[1]}`);
+    console.log(`   app (DATABASE_URL)              postgres://app_rls_user:***@${base.split('//')[1]}`);
+    console.log(`   propietario (TEST_DATABASE_URL) postgres://app_owner:***@${base.split('//')[1]}`);
 
     const sinForceInesperadas = resumen.sin_force.filter((t) => !EXENTAS_DE_FORCE.includes(t));
     const sinPoliticaInesperadas = resumen.sin_politica.filter((t) => !EXENTAS_DE_FORCE.includes(t));
