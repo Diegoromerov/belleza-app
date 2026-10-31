@@ -12,6 +12,7 @@ Thumbs.db
 *~
 
 # Frontend build artifacts
+frontend-archive/
 frontend/build/
 frontend/.dart_tool/
 frontend/.packages
