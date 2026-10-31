@@ -37,11 +37,52 @@ const MIGRACIONES = [
   '118_drop_salon_miembros.sql',
 ];
 
-const MIGRATIONS_DIR = require('path').join(__dirname, '..', 'migrations');
+const path = require('path');
+const fs = require('fs');
+
+let MIGRATIONS_DIR = null;
+
+// The build context differs between local builds and Railway's remote build,
+// so resolve the migrations directory by probing candidate locations.
+const CANDIDATOS_MIGRACIONES = [
+  path.join(__dirname, '..', 'migrations'),
+  path.join(process.cwd(), 'migrations'),
+  path.join(process.cwd(), 'backend', 'migrations'),
+  '/app/backend/migrations',
+  '/app/migrations',
+];
+
+function resolverDirMigraciones() {
+  for (const dir of CANDIDATOS_MIGRACIONES) {
+    try {
+      const sqls = fs.readdirSync(dir).filter((f) => f.endsWith('.sql'));
+      if (sqls.length > 0) {
+        console.log(`   📁 Migraciones: ${dir} (${sqls.length} archivos)`);
+        return dir;
+      }
+    } catch (error) {
+      /* candidato inexistente: se prueba el siguiente */
+    }
+  }
+  return null;
+}
 
 function leerMigracion(nombre) {
-  const archivo = require('path').join(MIGRATIONS_DIR, nombre);
-  return require('fs').readFileSync(archivo, 'utf8');
+  const candidatos = [path.join(MIGRATIONS_DIR, nombre)];
+  if (nombre === 'init.sql') {
+    candidatos.push(path.join(__dirname, '..', 'init.sql'));
+    candidatos.push(path.join(process.cwd(), 'init.sql'));
+    candidatos.push(path.join(process.cwd(), 'backend', 'init.sql'));
+  }
+  let ultimoError = null;
+  for (const archivo of candidatos) {
+    try {
+      return fs.readFileSync(archivo, 'utf8');
+    } catch (error) {
+      ultimoError = error;
+    }
+  }
+  throw ultimoError || new Error('no encontrado');
 }
 
 async function main() {
@@ -71,6 +112,15 @@ async function main() {
         ? '📦 Base vacía: se aplica el esquema completo (init.sql incluido).'
         : `📦 Base ya inicializada (${estado.tablas} tablas): se aplican solo las migraciones idempotentes.`
     );
+
+    MIGRATIONS_DIR = resolverDirMigraciones();
+    if (!MIGRATIONS_DIR) {
+      console.error(
+        '[ERROR] No se encontró el directorio de migraciones. Candidatos probados: ' +
+          CANDIDATOS_MIGRACIONES.join(' | ')
+      );
+      process.exit(1);
+    }
 
     for (const nombre of MIGRACIONES) {
       if (nombre === 'init.sql' && !baseVacia) {
