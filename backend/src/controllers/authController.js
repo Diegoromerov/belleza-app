@@ -249,9 +249,19 @@ exports.login = async (req, res) => {
     }
     
     // 🏢 Resolución de Contexto SaaS / Memberships
-    let activeContext = null;
-    let availableContexts = [];
-    let jwtPayload = { id: user.id, email: user.email, role: toApiRole(user.rol), rol: user.rol };
+        let activeContext = null;
+        let availableContexts = [];
+    
+        // Determinar audience basada en rol para JWT claim (Fase 4)
+        const roleToAudience = {
+          'CLIENTE': 'client',
+          'PRESTADOR': 'provider',
+          'SALON': 'provider', // salón usa app de prestador
+          'ADMIN': 'admin'
+        };
+        const audience = roleToAudience[user.rol] || 'client';
+    
+        let jwtPayload = { id: user.id, email: user.email, role: toApiRole(user.rol), rol: user.rol, audience };
 
     try {
       const activeMemberships = await Membership.findAll({
@@ -283,7 +293,7 @@ exports.login = async (req, res) => {
     }
 
     // Generación del Token JWT
-    const token = jwt.sign(jwtPayload, getJwtSecret(), { expiresIn: '7d' });
+        const token = jwt.sign(jwtPayload, getJwtSecret(), { expiresIn: '7d', audience });
     
     console.log('✅ LOGIN LOCAL EXITOSO para:', user.email, 'Rol:', user.rol, 'OnboardingCompleto:', user.onboarding_completo);
 
@@ -368,11 +378,19 @@ exports.oauth = async (req, res) => {
     }
 
     // Firmar Token JWT
-    const token = jwt.sign(
-      { id: user.id, email: user.email, role: toApiRole(user.rol), rol: user.rol }, 
-      getJwtSecret(), 
-      { expiresIn: '7d' }
-    );
+            const roleToAudience = {
+              'CLIENTE': 'client',
+              'PRESTADOR': 'provider',
+              'SALON': 'provider',
+              'ADMIN': 'admin'
+            };
+            const audience = roleToAudience[user.rol] || 'client';
+    
+            const token = jwt.sign(
+              { id: user.id, email: user.email, role: toApiRole(user.rol), rol: user.rol, audience },
+              getJwtSecret(),
+              { expiresIn: '7d', audience }
+            );
 
     res.json({
       success: true,
@@ -516,14 +534,22 @@ exports.saveFcmToken = async (req, res) => {
 
     const { fcm_token, device_os } = data;
 
+    // Obtener roles del usuario para propagar en notificaciones push
+    const userRolesRes = await pool.query(
+      `SELECT rol, roles FROM usuarios WHERE id = $1`,
+      [userId]
+    );
+    const userRoles = userRolesRes.rows[0];
+    const rolesArray = userRoles.roles || (userRoles.rol ? [userRoles.rol] : []);
+
     await pool.query(
       `UPDATE usuarios 
-       SET fcm_token = $1, last_active_at = NOW() 
-       WHERE id = $2`,
-      [fcm_token, userId]
+       SET fcm_token = $1, last_active_at = NOW(), roles = $2
+       WHERE id = $3`,
+      [fcm_token, rolesArray, userId]
     );
 
-    console.log(`🔔 Token FCM registrado para usuario ID ${userId} (${device_os || 'web/mobile'})`);
+    console.log(`🔔 Token FCM registrado para usuario ID ${userId} (${device_os || 'web/mobile'}) roles: ${JSON.stringify(rolesArray)}`);
 
     res.json({
       success: true,
@@ -880,6 +906,14 @@ exports.switchContext = async (req, res) => {
 
     const userId = req.user.id;
 
+    // Determinar audience basada en rol para JWT claim (Fase 4)
+    const roleToAudience = {
+      'CLIENTE': 'client',
+      'PRESTADOR': 'provider',
+      'SALON': 'provider',
+      'ADMIN': 'admin'
+    };
+
     const membership = await Membership.findOne({
       where: {
         user_id: userId,
@@ -901,16 +935,17 @@ exports.switchContext = async (req, res) => {
     }
 
     const token = jwt.sign(
-      {
-        id: req.user.id,
-        email: req.user.email,
-        role: req.user.role,
-        rol: req.user.rol || req.user.role,
-        businessProfileId: membership.business_profile_id
-      },
-      getJwtSecret(),
-      { expiresIn: '7d' }
-    );
+              {
+                id: req.user.id,
+                email: req.user.email,
+                role: req.user.role,
+                rol: req.user.rol || req.user.role,
+                businessProfileId: membership.business_profile_id,
+                audience: roleToAudience[req.user.rol] || 'client'
+              },
+              getJwtSecret(),
+              { expiresIn: '7d', audience: roleToAudience[req.user.rol] || 'client' }
+            );
 
     console.log(`🔄 [CONTEXT SWITCH] Usuario ID ${userId} cambió a BusinessProfile ${business_profile_id} con rol ${membership.role}`);
 

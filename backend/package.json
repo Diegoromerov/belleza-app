@@ -58,6 +58,7 @@
     "stripe": "^18.0.0",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.0",
+    "web-push": "^3.6.7",
     "winston": "^3.13.0",
     "ws": "^8.17.0",
     "xmldsigjs": "^2.8.0",

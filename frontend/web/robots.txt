@@ -1,6 +1,0 @@
-User-agent: *
-Allow: /
-Disallow: /#/admin
-Disallow: /#/checkout
-
-Sitemap: https://glowapp-frontend-production.up.railway.app/sitemap.xml
