@@ -14,7 +14,10 @@ if [ -n "$DATABASE_URL" ]; then
   
   # Use the admin URL for migrations (same as DATABASE_URL for Railway)
   export DATABASE_URL_ADMIN="$DATABASE_URL"
-  export RLS_ROLE_PASSWORD="${RLS_ROLE_PASSWORD:-test_rls_password_2026}"
+  if [ -z "$RLS_ROLE_PASSWORD" ]; then
+    echo "❌ RLS_ROLE_PASSWORD is required but not set"
+    exit 1
+  fi
   
   # Run the migration script
   if node scripts/prepareRlsDatabase.js; then
