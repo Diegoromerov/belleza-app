@@ -14,6 +14,10 @@ WORKDIR /app
 COPY --from=builder --chown=node:node /app/node_modules ./node_modules
 COPY --chown=node:node . .
 
+# Copiar explícitamente las migraciones (por si el COPY anterior no las incluye)
+COPY --chown=node:node migrations ./migrations
+COPY --chown=node:node scripts ./scripts
+
 # Entrypoint script para migraciones
 COPY --chown=node:node entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
