@@ -149,7 +149,7 @@ jobs:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
           cd backend
-          railway login --token "$RAILWAY_TOKEN"
+          railway login --browserless --token "$RAILWAY_TOKEN"
           railway link --project ${{ secrets.RAILWAY_PROJECT_ID }} --service glowapp-api
           railway up --service glowapp-api
 
