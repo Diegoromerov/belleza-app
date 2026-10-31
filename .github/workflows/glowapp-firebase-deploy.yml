@@ -141,19 +141,13 @@ jobs:
         uses: actions/setup-node@v4
         with: { node-version: '22.x' }
 
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli@2
-
       - name: Deploy Backend to Railway
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
         run: |
           cd backend
-          echo "$RAILWAY_TOKEN" | railway login --browserless --stdin
-          railway link
-          railway service glowapp-api
-          railway up
+          npm install -g @railway/cli@latest
+          railway up --service glowapp-api
 
   # ─────────────────────────────────────────────────────────────────
   # MONOREPO SETUP (shared for frontend jobs)
