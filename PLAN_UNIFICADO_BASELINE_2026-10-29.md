@@ -193,12 +193,12 @@
 
 ---
 
-### FASE 7 — CLOUDFLARE STREAM 🟡 **EN PROGRESO (15%)**
+### FASE 7 — CLOUDFLARE STREAM 🟡 **EN PROGRESO (15%) — PARCIALMENTE BLOQUEADA (pago Cloudflare)**
 **Entregables:**
 - [x] **ClientGuide creado** (`packages/glow_core/lib/src/glowguide/config/client_guide.dart`) — 8 pasos cliente con `videoAssetId` local
 - [x] **ProviderGuide existente** (`packages/glow_core/lib/src/glowguide/config/provider_guide.dart`) — 7 pasos proveedor
 - [x] **video_mapping.dart stubs** listos para poblar con UIDs de Cloudflare Stream
-- [ ] **Subir 16 videos a Cloudflare Stream** (manual en dashboard Cloudflare):
+- [ ] **Subir 16 videos a Cloudflare Stream** (manual en dashboard Cloudflare) — **BLOQUEADO: tarjeta**
   - **Cliente (8):** step_01_welcome → step_08_despedida
   - **Proveedor (7):** step_01_inicio → step_07_perfil
   - **Onboarding intro** (1)
@@ -210,11 +210,28 @@
 - [ ] **Actualizar `GlowGuidePresenter`** para usar iframe Player de Stream (HLS adaptativo)
 - [ ] **Test onboarding reproducción en staging**
 
-**Impacto:** -33 MB/build (gzipped ~6-8 MB client, ~8-10 MB provider)
+---
+
+### 📋 TRABAJO TEMPORAL / PENDIENTE — CONVERSIÓN + FIREBASE STORAGE
+**Objetivo:** Quitar 33 MB del build y servir videos desde Firebase Storage (compatibilidad universal MP4 + WebM)
+
+**Pasos a ejecutar cuando se desbloquee:**
+1. **Convertir 16 `.webm` → `.mp4` (H.264, 720p, ~2-3 Mbps)** — batch ffmpeg
+2. **Subir AMBOS formatos a Firebase Storage** (estructura: `glowguide/videos/client/`, `glowguide/videos/provider/`, `glowguide/videos/intro/`)
+3. **Actualizar `video_mapping.dart`** para usar URLs de Firebase Storage con fallback:
+   ```dart
+   'step_01_welcome': 'https://firebasestorage.googleapis.com/.../step_01_welcome.mp4',
+   // El presenter elige .mp4 (iOS/Safari) o .webm (Chrome/Android) según user-agent
+   ```
+4. **Migrar `GlowGuidePresenter`** de `VideoPlayerController.asset()` a `VideoPlayerController.networkUrl()` con detección de formato
+5. **Eliminar assets locales** → build -33 MB
+6. **Test en staging** (Chrome, Android, Safari si disponible)
+
+**Estado:** ⏳ **PENDIENTE** — Requiere acceso a Firebase Storage (ya configurado) + conversión local
 
 **Autorización consumida:** `AUTORIZACIÓN EXPLÍCITA DEL DIRECTOR — GLOWAPP-F007`
 
-**Próximo:** Subir videos a Cloudflare Stream Dashboard → poblar UIDs en video_mapping.dart → migrar presenter a iframe
+**Próximo:** Cuando tengas tarjeta Cloudflare → subir a Stream → poblar UIDs → migrar presenter a iframe HLS
 
 ---
 
