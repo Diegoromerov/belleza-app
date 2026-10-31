@@ -145,7 +145,6 @@ jobs:
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
-          cd backend
           npm install -g @railway/cli@latest
           railway up --service glowapp-api
 
