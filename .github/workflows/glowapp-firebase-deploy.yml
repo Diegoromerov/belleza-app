@@ -1,4 +1,4 @@
-name: GlowApp Build and Deploy
+name: GlowApp Firebase Deploy
 
 on:
   push:
