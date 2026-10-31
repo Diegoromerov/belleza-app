@@ -228,13 +228,13 @@
 
 ---
 
-### FASE 8 — CLEANUP & DOCS ❌ 0% (NO INICIADA)
+### FASE 8 — CLEANUP & DOCS 🟡 **EN PROGRESO (40%)**
 **Entregables:**
-- [ ] Archivar `frontend/` (monolito original) → `frontend-archive/` o eliminar
-- [ ] Documentación final:
-  - `docs/SPLIT_ARCHITECTURE_FINAL.md`
-  - `docs/DEPLOY_RUNBOOK.md`
-  - `docs/VIDEO_MAPPING_REGISTRY.md`
+- [x] Archivar `frontend/` (monolito original) → `frontend-archive/` ✅ **COMPLETADO** (309 MB)
+- [x] Documentación final ✅ **COMPLETADA**:
+  - `docs/SPLIT_ARCHITECTURE_FINAL.md` — arquitectura completa split client/provider
+  - `docs/DEPLOY_RUNBOOK.md` — procedimientos deploy staging/prod, rollback, secrets
+  - `docs/VIDEO_MAPPING_REGISTRY.md` — registro 30 URLs Firebase + migración Cloudflare
 - [ ] E2E smoke tests: login → mapa → reserva → pago → chat (ambas apps)
 - [ ] Verificación RLS multi-tenant en staging con usuarios reales
 - [ ] Limpieza branches feature antiguas (`feat/e02-*`, `feat/e03-*`, etc.)
