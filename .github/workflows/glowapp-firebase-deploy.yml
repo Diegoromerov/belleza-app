@@ -142,13 +142,14 @@ jobs:
         with: { node-version: '22.x' }
 
       - name: Install Railway CLI
-        run: npm install -g @railway/cli
+        run: npm install -g @railway/cli@3
 
       - name: Deploy Backend to Railway
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
           cd backend
+          railway login --token "$RAILWAY_TOKEN"
           railway link --project ${{ secrets.RAILWAY_PROJECT_ID }} --service glowapp-api
           railway up --service glowapp-api
 
