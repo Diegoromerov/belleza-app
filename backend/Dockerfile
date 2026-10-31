@@ -14,8 +14,12 @@ WORKDIR /app
 COPY --from=builder --chown=node:node /app/node_modules ./node_modules
 COPY --chown=node:node . .
 
+# Entrypoint script para migraciones
+COPY --chown=node:node entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
 # Usar el usuario sin privilegios que provee la imagen node
 USER node
 
 EXPOSE 8080
-CMD ["node", "index.js"]
+ENTRYPOINT ["/app/entrypoint.sh"]
