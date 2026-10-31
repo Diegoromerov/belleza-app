@@ -35,6 +35,7 @@ const MIGRACIONES = [
   '082_memberships.sql',
   '114_memberships_sub_rol.sql',
   '118_drop_salon_miembros.sql',
+  '119_force_rls_retention_policies.sql',
 ];
 
 const path = require('path');
