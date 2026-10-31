@@ -149,8 +149,9 @@ jobs:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
           cd backend
-          railway link --project ${{ secrets.RAILWAY_PROJECT_ID }} --service glowapp-api
-          railway up --service glowapp-api
+          railway link ${{ secrets.RAILWAY_PROJECT_ID }}
+          railway service glowapp-api
+          railway up
 
   # ─────────────────────────────────────────────────────────────────
   # MONOREPO SETUP (shared for frontend jobs)
