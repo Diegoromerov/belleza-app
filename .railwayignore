@@ -63,9 +63,11 @@ Thumbs.db
 
 # Large data files
 *.csv
-*.sql
 *.dump
 *.bak
+# NOTE: *.sql was excluded here and that silently shipped images WITHOUT
+# backend/migrations and backend/init.sql, so the entrypoint could never run
+# the schema. SQL is small (117 migrations < 1 MB): keep it in the image.
 
 # Local development
 *.local
