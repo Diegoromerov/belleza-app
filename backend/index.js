@@ -37,6 +37,7 @@ const adminPreciosRoutes = require('./src/routes/adminPreciosRoutes');
 const adminAuthRoutes = require('./src/routes/adminAuthRoutes');
 const { authMiddleware } = require('./src/middleware/auth');
 const traceIdMiddleware = require('./src/middleware/traceId');
+const { validateAppAudience } = require('./src/middleware/appAudience');
 const glowProRoutes = require('./src/routes/glowProRoutes');
 const analyticsRoutes = require('./src/routes/analyticsRoutes');
 const metricsRoutes = require('./src/routes/metricsRoutes');
@@ -244,6 +245,11 @@ app.use((req, res, next) => {
 const { metricsMiddleware, metricsHandler } = require('./src/metrics/prometheus');
 app.use(metricsMiddleware);
 app.get('/metrics', metricsHandler);
+
+// 🔹 GLOBAL APP AUDIENCE MIDDLEWARE (Fase 4)
+// Valida header X-App-Audience en TODAS las rutas /api/*
+// Debe ir ANTES de authMiddleware para que req.appAudience esté disponible
+app.use('/api', validateAppAudience({ required: true }));
 
 const { degradedLockMiddleware, clasificarSalud, asegurarEstadoComprobado } = require('./src/middleware/degradedLock');
 app.use('/api', degradedLockMiddleware);

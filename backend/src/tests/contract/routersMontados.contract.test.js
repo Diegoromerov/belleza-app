@@ -22,6 +22,9 @@ process.env.NODE_ENV = 'test';
 const request = require('supertest');
 const app = require('../../../index');
 
+// Header requerido por validateAppAudience global (Fase 4)
+const PROVIDER_AUDIENCE_HEADER = { 'X-App-Audience': 'provider' };
+
 describe('E-01 — routers publicados en la app real (D-GL-027)', () => {
   const rutas = [
     ['get', '/api/owner/salones'],
@@ -32,17 +35,17 @@ describe('E-01 — routers publicados en la app real (D-GL-027)', () => {
   ];
 
   test.each(rutas)('%s %s responde 401 (montado y protegido, no 404)', async (method, ruta) => {
-    const res = await request(app)[method](ruta);
+    const res = await request(app)[method](ruta).set(PROVIDER_AUDIENCE_HEADER);
     expect(res.status).toBe(401);
   });
 
   test('el slug viejo /api/inventory/consignacion no queda publicado', async () => {
-    const res = await request(app).get('/api/inventory/consignacion');
+    const res = await request(app).get('/api/inventory/consignacion').set(PROVIDER_AUDIENCE_HEADER);
     expect(res.status).toBe(404);
   });
 
   test('el prefijo versionado /api/v1/owner no se publica por accidente', async () => {
-    const res = await request(app).get('/api/v1/owner/salones');
+    const res = await request(app).get('/api/v1/owner/salones').set(PROVIDER_AUDIENCE_HEADER);
     expect(res.status).toBe(404);
   });
 });

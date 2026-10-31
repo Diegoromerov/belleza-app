@@ -1,19 +1,23 @@
 {
   "$schema": "https://railway.app/railway.schema.json",
   "services": {
-    "backend": {
+    "glowapp-api": {
       "source": "backend",
       "build": {
         "dockerfilePath": "Dockerfile"
       }
     },
-    "admin-dashboard": {
-      "source": "admin-dashboard",
+    "glowapp-client": {
+      "source": "apps/glow_client",
       "build": {
-        "dockerfilePath": "Dockerfile"
-      },
-      "healthcheckPath": "/",
-      "healthcheckTimeout": 100
+        "dockerfilePath": "Dockerfile.prod"
+      }
+    },
+    "glowapp-provider": {
+      "source": "apps/glow_provider",
+      "build": {
+        "dockerfilePath": "Dockerfile.prod"
+      }
     }
   }
 }
