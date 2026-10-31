@@ -28,7 +28,7 @@
 | **4** | **Backend Audience Scoping** | JWT `roles[]`+`audience`, middleware `requireAnyRole`, route guards, contract tests | ✅ **100% COMPLETADA** | `GLOWAPP-F004-BACKEND` |
 || **5** | **Firebase & Deploy Ops** | 2 proyectos Firebase, FCM, Service Accounts, secrets, keystores, certs, Firestore rules | ✅ **100% COMPLETADA** | `GLOWAPP-F005` |
 || **6** | **CI/CD + Firebase Hosting + DNS** | Pipeline dual, Firebase Hosting `glowapp-client`/`glowapp-provider`, backend Railway, DNS custom domains | 🟡 **90%** (Firebase deploy staging ✅, custom domains diferidos) | `GLOWAPP-F006-RAILWAY` |
-| **7** | **Cloudflare Stream** | Subir 16 videos, poblar `video_mapping.dart`, eliminar assets locales | ❌ **0%** | `GLOWAPP-F007` |
+|| **7** | **Cloudflare Stream** | Subir 16 videos, poblar `video_mapping.dart`, eliminar assets locales, iframe player HLS | 🟡 **15%** (ClientGuide, ProviderGuide, stubs listos) | `GLOWAPP-F007` |
 | **8** | **Cleanup & Docs** | Archivar `frontend/`, docs finales, e2e smoke tests | ❌ **0%** | `GLOWAPP-F008` |
 | **9** | **Observabilidad (NUEVA)** | OpenTelemetry, Prometheus/Grafana/Loki/Tempo, dashboards, alertas, runbooks | ✅ **95% COMPLETADA** (PRODUCCIÓN) | `GLOWAPP-F009-OBS` |
 
@@ -193,23 +193,28 @@
 
 ---
 
-### FASE 7 — CLOUDFLARE STREAM ❌ 0% (NO INICIADA)
+### FASE 7 — CLOUDFLARE STREAM 🟡 **EN PROGRESO (15%)**
 **Entregables:**
-- [ ] Subir 16 videos a Cloudflare Stream:
+- [x] **ClientGuide creado** (`packages/glow_core/lib/src/glowguide/config/client_guide.dart`) — 8 pasos cliente con `videoAssetId` local
+- [x] **ProviderGuide existente** (`packages/glow_core/lib/src/glowguide/config/provider_guide.dart`) — 7 pasos proveedor
+- [x] **video_mapping.dart stubs** listos para poblar con UIDs de Cloudflare Stream
+- [ ] **Subir 16 videos a Cloudflare Stream** (manual en dashboard Cloudflare):
   - **Cliente (8):** step_01_welcome → step_08_despedida
   - **Proveedor (7):** step_01_inicio → step_07_perfil
   - **Onboarding intro** (1)
-- [ ] Poblar `packages/glow_core/lib/src/glowguide/config/video_mapping.dart` con UIDs reales
-- [ ] Eliminar assets videos locales:
+- [ ] **Poblar `video_mapping.dart`** con UIDs reales: `https://iframe.videodelivery.net/UID_XXX`
+- [ ] **Eliminar assets videos locales**:
   - `apps/glow_client/assets/videos/`
   - `apps/glow_provider/assets/videos/`
   - `backend/public/assets/assets/glowguide/videos/`
-- [ ] Actualizar `GlowGuidePresenter` para usar iframe Player de Stream (HLS adaptativo)
-- [ ] Test onboarding reproducción en staging
+- [ ] **Actualizar `GlowGuidePresenter`** para usar iframe Player de Stream (HLS adaptativo)
+- [ ] **Test onboarding reproducción en staging**
 
 **Impacto:** -33 MB/build (gzipped ~6-8 MB client, ~8-10 MB provider)
 
-**Autorización:** `AUTORIZACIÓN EXPLÍCITA DEL DIRECTOR — GLOWAPP-F007`
+**Autorización consumida:** `AUTORIZACIÓN EXPLÍCITA DEL DIRECTOR — GLOWAPP-F007`
+
+**Próximo:** Subir videos a Cloudflare Stream Dashboard → poblar UIDs en video_mapping.dart → migrar presenter a iframe
 
 ---
 
