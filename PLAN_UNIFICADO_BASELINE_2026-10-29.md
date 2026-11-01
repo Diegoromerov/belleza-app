@@ -1,7 +1,9 @@
 # GLOWAPP — PLAN DE TRABAJO UNIFICADO (BASELINE AUDITABLE)
-**Versión:** 1.0 — 2026-10-29  
+**Versión:** 1.1 — 2026-11-01 (revisión con evidencia E1 verificada)  
 **Propósito:** Unificar plan split-architecture + observabilidad en una sola ruta auditable fase a fase  
 **Estado:** Baseline consolidado — sin desviaciones a partir de esta versión
+
+**Snapshot verificado 2026-11-01:** backend operativo en **staging y producción** (`/api/health` 200, `/api/providers` 200, PostGIS 3.4.3, RLS 37/37 en producción). Fase en curso: **8 (Cleanup & Docs, 60%)**.
 
 ---
 
@@ -27,9 +29,9 @@
 | **3** | **Provider App** | Scaffold `glow_provider`, pantallas prestador/salón/academy, routes, build web | ✅ **100% COMPLETADA** | — |
 | **4** | **Backend Audience Scoping** | JWT `roles[]`+`audience`, middleware `requireAnyRole`, route guards, contract tests | ✅ **100% COMPLETADA** | `GLOWAPP-F004-BACKEND` |
 || **5** | **Firebase & Deploy Ops** | 2 proyectos Firebase, FCM, Service Accounts, secrets, keystores, certs, Firestore rules | ✅ **100% COMPLETADA** | `GLOWAPP-F005` |
-|| **6** | **CI/CD + Firebase Hosting + DNS** | Pipeline dual, Firebase Hosting `glowapp-client`/`glowapp-provider`, backend Railway, DNS custom domains | 🟡 **90%** (Firebase deploy staging ✅, custom domains diferidos) | `GLOWAPP-F006-RAILWAY` |
-|| **7** | **Cloudflare Stream** | Subir 16 videos, poblar `video_mapping.dart`, eliminar assets locales, iframe player HLS | 🟡 **45%** (Firebase Storage ✅, assets eliminados, Cloudflare bloqueado) | `GLOWAPP-F007` ||
-| **8** | **Cleanup & Docs** | Archivar `frontend/`, docs finales, e2e smoke tests | ❌ **0%** | `GLOWAPP-F008` |
+|| **6** | **CI/CD + Firebase Hosting + DNS** | Pipeline dual, Firebase Hosting `glowapp-client`/`glowapp-provider`, backend Railway, DNS custom domains | 🟡 **95%** (deploy backend staging ✅ **y producción ✅**, Firebase Hosting staging ✅; solo faltan custom domains) | `GLOWAPP-F006-RAILWAY` |
+|| **7** | **Cloudflare Stream** | Subir 16 videos, poblar `video_mapping.dart`, eliminar assets locales, iframe player HLS | 🟡 **45%** (Firebase Storage ✅, assets eliminados, Cloudflare bloqueado) | `GLOWAPP-F007` |
+|| **8** | **Cleanup & Docs** | Archivar `frontend/`, docs finales, e2e smoke tests, **esquema BD reproducible + RLS verificado** | 🟡 **60%** (archivo ✅, docs ✅, infra BD/RLS ✅; faltan E2E y RLS con datos reales) | `GLOWAPP-F008` |
 | **9** | **Observabilidad (NUEVA)** | OpenTelemetry, Prometheus/Grafana/Loki/Tempo, dashboards, alertas, runbooks | ✅ **95% COMPLETADA** (PRODUCCIÓN) | `GLOWAPP-F009-OBS` |
 
 ---
@@ -168,7 +170,7 @@
 
 ---
 
-### FASE 6 — CI/CD + FIREBASE HOSTING + DNS 🟡 **EN PROGRESO (90%)**
+### FASE 6 — CI/CD + FIREBASE HOSTING + DNS 🟡 **EN PROGRESO (95%)**
 **Entregables:**
 - [x] **Workflow CI/CD Firebase Hosting** (`.github/workflows/glowapp-firebase-deploy.yml`):
   - Backend CI (tests, contrato, RLS)
@@ -186,10 +188,11 @@
 - [ ] **Custom domains producción** (`app.glowapp.com`, `pro.glowapp.com`, `admin.glowapp.com`, `api.glowapp.com`) — **DIFERIDO** hasta compra de `glowapp.com` (razones de marca)
 - [ ] **DNS A records en registrar** — Firebase provee IPs; se agregan cuando se compre el dominio
 - [x] **Variables Railway** backend mantenidas (22/servicio ✅) — backend sigue en Railway
+- [x] **Deploy backend a producción por CI** ✅ **VALIDADO (2026-11-01)**: push a `main` → job `Deploy Backend to Railway` success → deployment `01095a07` `● Online`, `/api/health` 200
 
 **Autorización consumida:** `AUTORIZACIÓN EXPLÍCITA DEL DIRECTOR — GLOWAPP-F006-RAILWAY`
 
-**Próximo:** Fase 7 (Cloudflare Stream videos) — requiere `AUTORIZACIÓN EXPLÍCITA DEL DIRECTOR — GLOWAPP-F007`
+**Próximo:** solo custom domains (bloqueado por compra de `glowapp.com`). Fase 7 (Cloudflare Stream) queda pendiente de método de pago.
 
 ---
 
@@ -228,18 +231,48 @@
 
 ---
 
-### FASE 8 — CLEANUP & DOCS 🟡 **EN PROGRESO (40%)**
+### FASE 8 — CLEANUP & DOCS 🟡 **EN PROGRESO (60%)**
 **Entregables:**
 - [x] Archivar `frontend/` (monolito original) → `frontend-archive/` ✅ **COMPLETADO** (309 MB)
 - [x] Documentación final ✅ **COMPLETADA**:
   - `docs/SPLIT_ARCHITECTURE_FINAL.md` — arquitectura completa split client/provider
   - `docs/DEPLOY_RUNBOOK.md` — procedimientos deploy staging/prod, rollback, secrets
   - `docs/VIDEO_MAPPING_REGISTRY.md` — registro 30 URLs Firebase + migración Cloudflare
+- [x] **Esquema de BD reproducible en contenedor** ✅ **COMPLETADO (2026-11-01)** — ver bloque siguiente
+- [x] **RLS estructural verificado en staging y producción** ✅ (37/37 tablas con FORCE y política)
+- [x] **Postgres legacy apagado** en ambos entornos, con respaldo de sus 9 filas (`.backups/`)
 - [ ] E2E smoke tests: login → mapa → reserva → pago → chat (ambas apps)
-- [ ] Verificación RLS multi-tenant en staging con usuarios reales
+- [ ] Verificación RLS multi-tenant **con usuarios/tenants reales** (estructural sí, funcional no)
 - [ ] Limpieza branches feature antiguas (`feat/e02-*`, `feat/e03-*`, etc.)
 
-**Autorización:** `AUTORIZACIÓN EXPLÍCITA DEL DIRECTOR — GLOWAPP-F008`
+#### Trabajo ejecutado 2026-11-01 — cadena de fallos del backend
+
+Cinco causas encadenadas mantenían `glowapp-api` caída y sin esquema:
+
+| # | Causa | Fix |
+|---|-------|-----|
+| 1 | `.railwayignore` excluía `*.sql` → la imagen se construía sin `migrations/` ni `init.sql` | Exclusión eliminada; el build ya sube 128 archivos SQL |
+| 2 | SQL embebido como constantes JS; `058_enable_rls_policies.sql` evaluaba a `NaN` | `prepareRlsDatabase.js` lee migraciones desde disco |
+| 3 | Imagen `postgres-ssl` de Railway sin PostGIS | Servicios `postgres-postgis` (staging) y `postgres-postgis-prod` con `postgis/postgis:16-3.4` |
+| 4 | `068` forzaba RLS sobre lista fija; `api_keys`, `invoices`, `subscriptions`, `usage_metrics` quedaban sin política → crash loop | Migración `120` genérica, type-aware (INTEGER/VARCHAR), sin pisar políticas de `062` |
+| 5 | `frontend-archive/` (309 MB) no excluido del upload → `railway up` timeout | Excluido en `.railwayignore` |
+
+**Evidencia verificada (E1):**
+
+| Métrica | Producción | Staging |
+|---|---|---|
+| `/api/health` | 200 · `pgAvailable: true` | 200 |
+| `/api/providers` (X-App-Audience: client) | 200 | 200 |
+| PostGIS | 3.4.3 | 3.4.3 |
+| Tablas | 122 | 107 |
+| Roles RLS | `app_owner`, `app_rls_user`, `app_system` | ídem |
+| Tablas con `tenant_id` con FORCE + política | 37/37 · 0 sin política | 30/30 |
+
+**PRs fusionados:** #91 (migraciones desde disco + `.railwayignore`), #93 (migración `120`).
+
+**Deuda conocida:** la base de producción se recreó vacía; el Postgres legacy (80 tablas, 1 usuario semilla, 8 productos) quedó **Offline** con respaldo en `.backups/legacy_*.json`, sin migrar.
+
+**Autorización consumida:** `AUTORIZACIÓN EXPLÍCITA DEL DIRECTOR — GLOWAPP-F008`
 
 ---
 
@@ -294,31 +327,35 @@
 | Fase 3 | Fase 3 | ✅ |
 || Fase 4 | Fase 4 | ✅ 100% ||
 | Fase 5 | Fase 5 | ✅ 100% ||
-| Fase 6 (CI/CD Railway) | Fase 6 | ❌ 0% |
-| Fase 7 (Cloudflare Stream) | Fase 7 | ❌ 0% |
-| Fase 8 (Cleanup) | Fase 8 | ❌ 0% |
+| Fase 6 (CI/CD Railway) | Fase 6 | 🟡 95% (backend staging + producción ✅; custom domains pendientes) |
+| Fase 7 (Cloudflare Stream) | Fase 7 | 🟡 45% (Firebase Storage ✅, Cloudflare bloqueado por pago) |
+| Fase 8 (Cleanup) | Fase 8 | 🟡 60% (docs + infra BD/RLS ✅; E2E pendiente) |
 | — (no existía) | **Fase 9 (Observabilidad)** | ✅ 95% |
 
 ---
 
 ## PRÓXIMAS AUTORIZACIONES EN ORDEN SECUENCIAL
 
+**Consumidas:** F004-BACKEND ✅ · F005 ✅ · F006-RAILWAY ✅ · F007 ✅ (parcial, bloqueada por pago Cloudflare) · F008 ✅ (en curso)
+
 ```bash
-# 1. Completar backend audience scoping (15% restante)
-AUTORIZACIÓN EXPLÍCITA DEL DIRECTOR — GLOWAPP-F004-BACKEND
+# 1. Cerrar Fase 8: E2E smoke tests + RLS con tenants reales + limpieza de branches
+AUTORIZACIÓN EXPLÍCITA DEL DIRECTOR — GLOWAPP-F008   # ya otorgada, trabajo restante
 
-# 2. CI/CD Railway + DNS (nueva - 0%)
-AUTORIZACIÓN EXPLÍCITA DEL DIRECTOR — GLOWAPP-F006-RAILWAY
-
-# 3. Cloudflare Stream videos (0%)
+# 2. Fase 7 restante (requiere tarjeta en Cloudflare)
 AUTORIZACIÓN EXPLÍCITA DEL DIRECTOR — GLOWAPP-F007
-
-# 4. Cleanup + docs (0%)
-AUTORIZACIÓN EXPLÍCITA DEL DIRECTOR — GLOWAPP-F008
 ```
 
 **Fase 5 (Firebase & Deploy Ops) completada — autorización F005 consumida.**  
 **Fase 9 (Observabilidad) ya completada — no requiere autorización adicional.**
+
+### Bloqueos externos (no dependen de código)
+
+| Bloqueo | Fase afectada | Desbloqueo |
+|---|---|---|
+| Dominio `glowapp.com` no comprado | Fase 6 (custom domains) | Compra del dominio |
+| Tarjeta en Cloudflare | Fase 7 (Stream / HLS) | Método de pago |
+| Sin Apple Developer Program | Fase 5 (certs iOS) | Suscripción Apple |
 
 ---
 
