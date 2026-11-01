@@ -121,3 +121,41 @@ Notas de operación aprendidas en la prueba:
   `pg_isready` + unos segundos antes de restaurar.
 - Con el esquema de producción restaurado, `031` necesita `tenants` y el resto del esquema:
   el orden correcto es **restore → 030 → 031 → rag/***.
+
+## Ejecutado en staging (2026-11-01) ✅ — sin registry
+
+**`railway up` puede construir el Dockerfile del lado de Railway**, así que no hace falta
+publicar la imagen en ningún registry:
+
+```bash
+railway environment staging && railway service <svc>
+railway up infra/database --path-as-root -s <svc> -c
+```
+
+Resultado real en `postgres-postgis` (staging):
+
+| Paso | Resultado |
+|---|---|
+| Deploy de la imagen nueva sobre el volumen existente | ✅ las **126 tablas se conservaron** (no hizo falta volumen nuevo) |
+| `ALTER EXTENSION postgis UPDATE TO '3.6.4'` (+ topology, tiger) | ✅ de 3.4.3 a **3.6.4** |
+| Aviso de collation | ⚠️ `database "railway" has a collation version mismatch` (glibc **2.31 → 2.41**) |
+| Corrección | `ALTER DATABASE railway REFRESH COLLATION VERSION` + `REINDEX DATABASE railway` |
+| `030` → `031` → `runRagMigrations.js` | ✅ pgvector **0.8.7**, `beauty_knowledge_embeddings`, **8/8** migraciones RAG |
+| Esquema final | `embedding = halfvec(2048)`, índice `idx_beauty_knowledge_embedding_hnsw`, **129 tablas**, **8 extensiones** |
+| Regresión | E2E del backend **25/25** ✅ |
+
+### Lección que corrige la hipótesis anterior
+
+El incidente del 2026-11-01 **no** fue causado por reutilizar el volumen, sino por dos cosas
+distintas: (a) el volumen que se intentó montar era un clúster de **PostgreSQL 18**, y (b) la raíz
+del montaje tiene `lost+found`, así que `PGDATA` debe apuntar a `pgdata/`.
+
+Con la imagen correcta y `PGDATA=/var/lib/postgresql/data/pgdata`, **reutilizar el volumen
+funciona** y conserva los datos. Solo hay que refrescar la collation y reindexar cuando cambia la
+base de Debian (bookworm → trixie).
+
+### Lo que falta para producción
+
+Producción sigue en `postgis/postgis:16-3.4` (122 tablas, sin pgvector). El mismo procedimiento
+aplica, pero producción **no** es territorio de pruebas: requiere autorización explícita y una
+ventana, porque el paso de `REINDEX DATABASE` bloquea escrituras.

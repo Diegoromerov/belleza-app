@@ -430,7 +430,7 @@ Comparación de `frontend-archive/lib` (201 archivos `.dart`) contra las tres ra
 | `salon_dashboard_screen` | 1.230 | **Portar solo el Overview** | 4 tabs: Overview, Equipo, Servicios, Ajustes. **No usa `salon_miembros`** (verificado). El shell nuevo ya cubre Equipo, Servicios y Caja con `memberships`; falta el bloque de KPIs |
 | `evolution_dashboard_screen` | 575 | Decidir alcance | Pendiente (fase 0) |
 | Superadmin (5 screens + providers) | 1.352 | Reconstruir en `admin-dashboard` | Pendiente (fase 4) |
-| RAG de Aura (`beauty_knowledge_embeddings`) | — | Infra | ✅ **Validado en local**: esquema completo aplicado sobre la imagen nueva (8/8 migraciones, `halfvec(2048)`, HNSW). Pendiente: registry + swap |
+| RAG de Aura (`beauty_knowledge_embeddings`) | — | Infra | ✅ **ACTIVO EN STAGING**: tabla creada, `halfvec(2048)`, índice HNSW, 8/8 migraciones RAG aplicadas |
 
 ### Fases del plan
 
@@ -440,7 +440,7 @@ Comparación de `frontend-archive/lib` (201 archivos `.dart`) contra las tres ra
 | 2 | Inventario y alquileres al provider, expuestos en el tab «Más» | ✅ **COMPLETADA** |
 | 3 | Dashboard de salón: portar KPIs del Overview al shell | 🟡 Alcance reducido por auditoría: **no son 1.230 líneas**, es el bloque Citas Hoy / Equipo Activo / salud del negocio (~150-200 líneas) |
 | 4 | Superadmin en `admin-dashboard` (Next.js) | 🟢 **Decidido** (ver D-4); pendiente de implementación |
-| 5 | Imagen PostGIS + pgvector, `031` y `migrations/rag/*` | 🟡 **Imagen construida y validada end-to-end en local**: restore del esquema de producción (122 tablas), extensiones idénticas, `030` → `031` → **8/8** migraciones RAG, columna `halfvec(2048)` e índice HNSW. Falta **publicar en un registry** y hacer el swap del servicio |
+| 5 | Imagen PostGIS + pgvector, `031` y `migrations/rag/*` | ✅ **COMPLETADA EN STAGING**: imagen construida y desplegada vía `railway up --path-as-root` (sin registry). PostGIS 3.4.3→**3.6.4**, pgvector **0.8.7**, `031` + **8/8** migraciones RAG, `halfvec(2048)` + HNSW, **129 tablas**, E2E **25/25**. Producción sigue pendiente de autorización |
 
 ### Hallazgo del backend
 
