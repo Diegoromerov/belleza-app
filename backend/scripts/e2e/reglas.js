@@ -70,10 +70,31 @@ const omitir = (nombre, motivo) => {
   console.log(`SKIP  ${nombre}  ::  ${motivo}`);
 };
 
+/**
+ * Fase 4 exige X-App-Audience en toda ruta /api/*. El arnés es anterior a ese
+ * contrato, así que derivamos la audiencia del propio token: primero el claim
+ * `aud`, y si no viene, del rol del usuario. Sin esto, login y todo lo demás
+ * responden 400 "Header X-App-Audience requerido".
+ */
+function audienciaDeToken(token) {
+  if (!token) return 'client';
+  try {
+    const payload = JSON.parse(Buffer.from(String(token).split('.')[1], 'base64url').toString('utf8'));
+    const aud = payload.aud || payload.audience;
+    if (aud) return Array.isArray(aud) ? String(aud[0]) : String(aud);
+    const rol = String(payload.rol || payload.role || '').toLowerCase();
+    if (rol.includes('prestador') || rol.includes('provider') || rol.includes('salon')) return 'provider';
+    if (rol.includes('admin')) return 'admin';
+    return 'client';
+  } catch (_) {
+    return 'client';
+  }
+}
+
 async function llamar(metodo, ruta, cuerpo, token) {
   const res = await fetch(API + ruta, {
     method: metodo,
-    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    headers: { 'Content-Type': 'application/json', 'X-App-Audience': audienciaDeToken(token), ...(token ? { Authorization: `Bearer ${token}` } : {}) },
     body: cuerpo ? JSON.stringify(cuerpo) : undefined
   });
   let json = null;
