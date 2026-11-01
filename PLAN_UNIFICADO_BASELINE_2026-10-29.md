@@ -404,3 +404,46 @@ AUTORIZACIÓN EXPLÍCITA DEL DIRECTOR — GLOWAPP-F007
 ---
 
 **Baseline establecido. Próxima fase sujeta a autorización.**
+
+---
+
+## AUDITORÍA DEL FALTANTE — MONOLITO vs SPLIT (2026-11-01)
+
+Comparación de `frontend-archive/lib` (201 archivos `.dart`) contra las tres raíces del split
+(`glow_core` 209, `glow_client` 54, `glow_provider` 68), por nombre, hash byte a byte y tamaño.
+
+| Métrica | Valor |
+|---|---|
+| Con contraparte en el split | **187/201 (93 %)** — 94 idénticos, 93 reescritos, 0 stubs |
+| Sin contraparte | **14 archivos / 4.416 líneas** |
+
+### Faltante y veredicto
+
+| Pieza | Líneas | Veredicto | Estado |
+|---|---|---|---|
+| `l10n.yaml` + `app_en.arb` + `app_es.arb` | — | Migrar | ✅ **HECHO** — restaurados en `glow_core`; `flutter gen-l10n` exit 0 |
+| `design/icons.dart` (barrel) | 20 | Migrar | ✅ **HECHO** — barrel creado en `glow_core/lib/src/design/icons/icons.dart` |
+| `photography_repository` | 34 | Descartar | Código huérfano en el original (cero usos) |
+| `glow_welcome_guide` | 229 | Descartar | Sustituido por `client_guide` + `provider_guide`; sin referencias |
+| `inventario_screen` | 609 | Migrar + adaptar | ✅ **HECHO** — en `apps/glow_provider`, compila limpio |
+| `alquileres_screen` | 481 | Migrar + adaptar | ✅ **HECHO** — en `apps/glow_provider`, compila limpio |
+| `salon_dashboard_screen` | 1.230 | Reconstruir | Pendiente (fase 3) |
+| `evolution_dashboard_screen` | 575 | Decidir alcance | Pendiente (fase 0) |
+| Superadmin (5 screens + providers) | 1.352 | Reconstruir en `admin-dashboard` | Pendiente (fase 4) |
+| RAG de Aura (`beauty_knowledge_embeddings`) | — | Infra | Artefactos listos en `infra/database/`; bloqueado por registry |
+
+### Fases del plan
+
+| Fase | Contenido | Estado |
+|---|---|---|
+| 1 | l10n, iconos, descartes justificados | ✅ **COMPLETADA** |
+| 2 | Inventario y alquileres al provider, expuestos en el tab «Más» | ✅ **COMPLETADA** |
+| 3 | Reconstruir dashboard de salón sobre `memberships` | ⏳ Pendiente |
+| 4 | Superadmin en `admin-dashboard` (Next.js) | ⏳ Pendiente |
+| 5 | Imagen PostGIS + pgvector, `031` y `migrations/rag/*` | 🟡 Artefactos listos (`infra/database/Dockerfile` + runbook); falta registry |
+
+### Hallazgo del backend
+
+Inventario y alquileres **sí tenían API**: `GET/POST /api/salon/:salonId/inventario`,
+`/inventario/:itemId/movimientos`, `/recursos` y `/alquileres` existen en `salonRoutes.js`
+y las tablas están en el esquema. Solo faltaba la UI, que es lo que se migró en fase 2.
