@@ -427,7 +427,7 @@ Comparación de `frontend-archive/lib` (201 archivos `.dart`) contra las tres ra
 | `glow_welcome_guide` | 229 | Descartar | Sustituido por `client_guide` + `provider_guide`; sin referencias |
 | `inventario_screen` | 609 | Migrar + adaptar | ✅ **HECHO** — en `apps/glow_provider`, compila limpio |
 | `alquileres_screen` | 481 | Migrar + adaptar | ✅ **HECHO** — en `apps/glow_provider`, compila limpio |
-| `salon_dashboard_screen` | 1.230 | Reconstruir | Pendiente (fase 3) |
+| `salon_dashboard_screen` | 1.230 | **Portar solo el Overview** | 4 tabs: Overview, Equipo, Servicios, Ajustes. **No usa `salon_miembros`** (verificado). El shell nuevo ya cubre Equipo, Servicios y Caja con `memberships`; falta el bloque de KPIs |
 | `evolution_dashboard_screen` | 575 | Decidir alcance | Pendiente (fase 0) |
 | Superadmin (5 screens + providers) | 1.352 | Reconstruir en `admin-dashboard` | Pendiente (fase 4) |
 | RAG de Aura (`beauty_knowledge_embeddings`) | — | Infra | ✅ **Validado en local**: esquema completo aplicado sobre la imagen nueva (8/8 migraciones, `halfvec(2048)`, HNSW). Pendiente: registry + swap |
@@ -438,8 +438,8 @@ Comparación de `frontend-archive/lib` (201 archivos `.dart`) contra las tres ra
 |---|---|---|
 | 1 | l10n, iconos, descartes justificados | ✅ **COMPLETADA** |
 | 2 | Inventario y alquileres al provider, expuestos en el tab «Más» | ✅ **COMPLETADA** |
-| 3 | Reconstruir dashboard de salón sobre `memberships` | ⏳ Pendiente |
-| 4 | Superadmin en `admin-dashboard` (Next.js) | ⏳ Pendiente |
+| 3 | Dashboard de salón: portar KPIs del Overview al shell | 🟡 Alcance reducido por auditoría: **no son 1.230 líneas**, es el bloque Citas Hoy / Equipo Activo / salud del negocio (~150-200 líneas) |
+| 4 | Superadmin en `admin-dashboard` (Next.js) | 🟢 **Decidido** (ver D-4); pendiente de implementación |
 | 5 | Imagen PostGIS + pgvector, `031` y `migrations/rag/*` | 🟡 **Imagen construida y validada end-to-end en local**: restore del esquema de producción (122 tablas), extensiones idénticas, `030` → `031` → **8/8** migraciones RAG, columna `halfvec(2048)` e índice HNSW. Falta **publicar en un registry** y hacer el swap del servicio |
 
 ### Hallazgo del backend
@@ -447,3 +447,49 @@ Comparación de `frontend-archive/lib` (201 archivos `.dart`) contra las tres ra
 Inventario y alquileres **sí tenían API**: `GET/POST /api/salon/:salonId/inventario`,
 `/inventario/:itemId/movimientos`, `/recursos` y `/alquileres` existen en `salonRoutes.js`
 y las tablas están en el esquema. Solo faltaba la UI, que es lo que se migró en fase 2.
+
+---
+
+## DECISIONES TÉCNICAS — FASE 0 RESUELTA (2026-11-01)
+
+Tomadas con el antecedente del proyecto original, no por preferencia.
+
+### D-1 · Superadmin se construye en `admin-dashboard` (Next.js)
+
+Evidencia:
+- `admin-dashboard` ya es una app Next.js **funcional con 22 páginas** (`/admin/academia`, `/admin/business`,
+  `/admin/precios`, `/admin/prestadores`, `/admin/productos`, `/admin/pqrsf`, `/admin/sos`,
+  `/admin/store/orders`, `/admin/vto`, …), con su propio layout y auth.
+- El backend ya expone `superAdminRoutes` montado en **`/api/superadmin`**: `GET /tenants`,
+  `GET /tenants/:tenantId`, `PATCH /tenants/:tenantId/plan`, `POST /tenants/:tenantId/suspend`,
+  `GET /revenue`. Y `adminAuthRoutes` con login/refresh/logout/session.
+- La arquitectura del baseline manda ADMIN → `admin.glowapp.com` → `admin-dashboard`.
+
+Descartado: meter las 5 pantallas Flutter en `glow_provider`. Eso pondría gestión de tenants dentro
+de una app de audiencia `provider`, contradiciendo el split y el JWT por audiencia.
+
+### D-2 · El dashboard de salón NO se reconstruye: se porta solo el Overview
+
+Hipótesis inicial (1.230 líneas a reconstruir sobre `memberships`) **era falsa**: verificado que
+`salon_dashboard_screen.dart` no menciona `salon_miembros` ni `memberships` en ninguna línea.
+Sus 4 tabs son Overview, Equipo, Servicios y Ajustes, alimentados por `/api/salon/*`.
+
+El shell nuevo (`salon_shell.dart`) ya tiene: Agenda, Caja, Equipo, Servicios y «Más»
+(configuración, facturación, soporte). Es decir, **3 de las 4 tabs del original ya existen** con el
+modelo nuevo, y Caja es nueva.
+
+Lo único que falta del original es el bloque de KPIs del Overview:
+`Citas Hoy` (= `_bookings.length`), `Equipo Activo` (= `_members.length`) y la tarjeta de salud del
+negocio. Eso se porta como encabezado de la pestaña Agenda: **~150-200 líneas, no 1.230**.
+
+### D-3 · La imagen se publica en GHCR, no en Docker Hub
+
+El proyecto ya vive en GitHub y el CI ya se autentica con `GITHUB_TOKEN` (`Diegoromerov/belleza-app`).
+Usar GHCR evita una cuenta y un secreto nuevos:
+
+```
+ghcr.io/diegoromerov/glowapp-db:pg16-postgis-pgvector
+```
+
+Descartado Docker Hub: no hay sesión configurada (`docker info` sin usuario) y exigiría crear
+credenciales nuevas para una imagen que solo consumen los servicios de Railway de este proyecto.
