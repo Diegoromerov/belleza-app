@@ -178,7 +178,14 @@ const defaultOrigins = [
   'http://127.0.0.1:3001',
   'https://belleza-app-production.up.railway.app',
   'https://glowapp-frontend-production.up.railway.app',
-  'https://admin-dashboard-production-4183.up.railway.app'
+  'https://admin-dashboard-production-4183.up.railway.app',
+  // Apps del split servidas por Firebase Hosting (glowapp-firebase). Sin estas
+  // entradas el navegador bloquea toda llamada a /api: el build web corre en
+  // https://glowapp-client.web.app y https://glowapp-provider.web.app.
+  'https://glowapp-client.web.app',
+  'https://glowapp-client.firebaseapp.com',
+  'https://glowapp-provider.web.app',
+  'https://glowapp-provider.firebaseapp.com'
 ];
 
 const envOrigins = process.env.ALLOWED_ORIGINS
