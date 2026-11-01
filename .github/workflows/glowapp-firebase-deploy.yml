@@ -9,7 +9,10 @@ on:
 env:
   FLUTTER_CHANNEL: stable
   FLUTTER_VERSION: '3.29.2'
-  RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
+  # RAILWAY_PROJECT_ID NO va aquí: como variable global se filtra a los jobs de
+  # test, donde isStrictEnvironment() (backend/src/config/db.js) la interpreta
+  # como entorno protegido y prohíbe el modo memoria hermético de las suites,
+  # haciendo que los endpoints respondan 500. Se declara solo en el job de deploy.
 
 jobs:
   # ─────────────────────────────────────────────────────────────────
@@ -144,6 +147,7 @@ jobs:
       - name: Deploy Backend to Railway
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
         run: |
           npm install -g @railway/cli@latest
           railway up --service glowapp-api
