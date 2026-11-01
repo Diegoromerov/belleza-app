@@ -3,7 +3,7 @@
 **Propósito:** Unificar plan split-architecture + observabilidad en una sola ruta auditable fase a fase  
 **Estado:** Baseline consolidado — sin desviaciones a partir de esta versión
 
-**Snapshot verificado 2026-11-01:** backend operativo en **staging y producción** (`/api/health` 200, `/api/providers` 200, PostGIS 3.4.3, RLS 37/37 en producción). Fase en curso: **8 (Cleanup & Docs, 60%)**.
+**Snapshot verificado 2026-11-01:** backend operativo en **staging y producción** (`/api/health` 200, `/api/providers` 200, PostGIS 3.4.3, RLS 37/37 en producción). Fase en curso: **8 (Cleanup & Docs, 90%)**.
 
 ---
 
@@ -231,7 +231,7 @@
 
 ---
 
-### FASE 8 — CLEANUP & DOCS 🟡 **EN PROGRESO (75%)**
+### FASE 8 — CLEANUP & DOCS 🟡 **EN PROGRESO (90%)**
 **Entregables:**
 - [x] Archivar `frontend/` (monolito original) → `frontend-archive/` ✅ **COMPLETADO** (309 MB)
 - [x] Documentación final ✅ **COMPLETADA**:
@@ -246,6 +246,7 @@
 - [x] **Limpieza de branches** ✅ **COMPLETADO**: 2 remotas y 13 locales sin commits fuera de `main` borradas, con tag `archive/*-20261101`
 - [x] **Drift de esquema staging ↔ producción** ✅ **RESUELTO (2026-11-01)**: clonado el esquema de producción hacia staging (`pg_dump --schema-only --no-owner --no-privileges`, restore con `ON_ERROR_STOP`, `prepareRlsDatabase.js` posterior). Resultado **122 = 122**, `comm` vacío en ambas direcciones, RLS 37/37, ambas APIs 200. Respaldo previo en `.backups/staging_pre_drift_20261101.sql`
 - [x] **Redis de staging con credencial caducada** ✅ **CORREGIDO**: `WRONGPASS` en `AUTH` → el middleware `auth.js` (fail-closed) devolvía 503 en todo `/api`. `REDIS_URL` pasó de copia literal a referencia `${{Redis.REDIS_URL}}`
+- [x] **Incidente de imagen en staging y recuperación** ✅ **RESUELTO (2026-11-01)**: el servicio se cambió a `pgvector/pgvector:pg16`, que no trae PostGIS y dejó la base vacía (0 tablas). Al volver a `postgis/postgis:16-3.4` el contenedor abortaba con `initdb: directory exists but is not empty` (el volumen rescatable era un clúster de **PostgreSQL 18**, incompatible, y la raíz del montaje tiene `lost+found`). Solución: volumen nuevo `postgres-postgis-volume`, `PGDATA=/var/lib/postgresql/data/pgdata`, restore del dump y `prepareRlsDatabase.js`. Resultado: 122 tablas, RLS 37/37, ambas APIs 200. **Regla: no cambiar la imagen a `pgvector` sola; haría falta una imagen con PostGIS + pgvector.**
 - [~] **E2E smoke tests** 🟡 **18/19**: login cliente y prestador, contrato, reserva con split 20/0/80, propina (rechazo/aceptación/duplicado), reprogramación (200/409 + contador), cancelación 100 %/50 %/0 % y umbrales D-GL-011 **en verde**. Falla el bloque **G**: `relation "listas_precios" does not exist`. La tabla la crea `071_glowshop_niveles_a0`, que depende de `scan_product_matches` (migración `029`), y esa exige la extensión **`pgvector`**, no disponible en la imagen `postgis/postgis:16-3.4`. **Producción tampoco tiene esas tablas**: el vacío es del repositorio, no del entorno. Desbloquear exige una imagen con `postgis` + `pgvector`.
 
 #### Trabajo ejecutado 2026-11-01 — cadena de fallos del backend
