@@ -24,7 +24,7 @@ describe('Cargo 1 / C6 — Comportamiento de Bloqueo por Degradación en la Capa
       memoryFallbackAllowed: false
     });
 
-    const res = await request(app).get('/api/products');
+    const res = await request(app).get('/api/products').set('X-App-Audience', 'client');
 
     expect(res.status).toBe(503);
     expect(res.headers['x-glowapp-degraded']).toBe('memory-fallback');
@@ -51,7 +51,7 @@ describe('Cargo 1 / C6 — Comportamiento de Bloqueo por Degradación en la Capa
       memoryFallbackAllowed: true
     });
 
-    const res = await request(app).get('/api/providers');
+    const res = await request(app).get('/api/providers').set('X-App-Audience', 'client');
 
     expect(res.status).toBe(503);
     expect(res.body).toHaveProperty('error', 'PROVIDER_SEARCH_DEGRADED');
@@ -64,7 +64,7 @@ describe('Cargo 1 / C6 — Comportamiento de Bloqueo por Degradación en la Capa
       memoryFallbackAllowed: false
     });
 
-    const res = await request(app).get('/api/products');
+    const res = await request(app).get('/api/products').set('X-App-Audience', 'client');
 
     // Antes esta aserción se satisfacía con CUALQUIER cosa que no fuera 503: mientras el
     // emulador estuvo incompleto el controlador devolvía 500 y el test pasaba igual, sin medir

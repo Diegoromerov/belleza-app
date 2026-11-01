@@ -39,7 +39,12 @@ const FACE_SCORES = {
 
 describe('Cierre — versión del consentimiento sin divergencia', () => {
   test('la constante Dart coincide con BIOMETRIC_CONSENT_VERSION', () => {
-    const dartPath = path.join(__dirname, '..', '..', '..', 'frontend', 'lib', 'services', 'biometric_service.dart');
+    // El monolito `frontend/` se archivó en Fase 8; la copia canónica del servicio
+    // vive ahora en el paquete compartido del split.
+    const dartPath = path.join(
+      __dirname, '..', '..', '..',
+      'packages', 'glow_core', 'lib', 'src', 'services', 'biometric_service.dart'
+    );
     const source = fs.readFileSync(dartPath, 'utf8');
     const match = source.match(/consentVersion\s*=\s*'([^']+)'/);
 
