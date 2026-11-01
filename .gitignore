@@ -112,3 +112,4 @@ frontend/web/firebase-messaging-sw.js
 
 # Montaje local de skills; estaba como gitlink sin .gitmodules y rompia actions/checkout
 .agent/
+.backups/
