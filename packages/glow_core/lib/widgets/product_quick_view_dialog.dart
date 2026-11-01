@@ -1,1 +1,0 @@
-export '../src/widgets/product_quick_view_dialog.dart';

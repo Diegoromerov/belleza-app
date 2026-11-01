@@ -6,18 +6,6 @@
       "build": {
         "dockerfilePath": "Dockerfile"
       }
-    },
-    "glowapp-client": {
-      "source": "apps/glow_client",
-      "build": {
-        "dockerfilePath": "Dockerfile.prod"
-      }
-    },
-    "glowapp-provider": {
-      "source": "apps/glow_provider",
-      "build": {
-        "dockerfilePath": "Dockerfile.prod"
-      }
     }
   }
 }

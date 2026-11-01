@@ -1,1 +1,0 @@
-export '../src/widgets/provider_detail_screen.dart';
