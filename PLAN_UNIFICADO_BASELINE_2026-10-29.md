@@ -231,7 +231,7 @@
 
 ---
 
-### FASE 8 — CLEANUP & DOCS 🟡 **EN PROGRESO (60%)**
+### FASE 8 — CLEANUP & DOCS 🟡 **EN PROGRESO (75%)**
 **Entregables:**
 - [x] Archivar `frontend/` (monolito original) → `frontend-archive/` ✅ **COMPLETADO** (309 MB)
 - [x] Documentación final ✅ **COMPLETADA**:
@@ -243,7 +243,9 @@
 - [x] **Postgres legacy apagado** en ambos entornos, con respaldo de sus 9 filas (`.backups/`)
 - [ ] E2E smoke tests: login → mapa → reserva → pago → chat (ambas apps)
 - [ ] Verificación RLS multi-tenant **con usuarios/tenants reales** (estructural sí, funcional no)
-- [ ] Limpieza branches feature antiguas (`feat/e02-*`, `feat/e03-*`, etc.)
+- [x] **CI en verde en los dos jobs de backend** ✅ **COMPLETADO (2026-11-01)**: `Monorepo Setup & Analyze` y `Backend Tests & Lint` en `success` (run `41281016747`)
+- [x] **Limpieza de branches** ✅ **COMPLETADO**: 2 remotas y 13 locales sin commits fuera de `main` borradas, con tag `archive/*-20261101`
+- [ ] **Drift de esquema staging ↔ producción** ⛔ **BLOQUEADO — requiere decisión**: 15 tablas existen solo en producción (`api_keys`, `audit_log`, `audit_logs`, `detalles_pedido_tienda`, `envios`, `invoices`, `otp_validaciones`, `pedidos_tienda`, `provider_wallet`, `retiros`, `subscriptions`, `usage_metrics`, `wallet_ledger_events`, `wallet_transactions`, `webhook_events`). Provienen de `001_payment_system`, `010_implement_glowstore_schema`, `108_saas_usage_schema`, `110_saas_schema_fix_and_complete` y `111_saas_billing_schema`, que staging nunca ejecutó. Aplicarlas falla: `001` inserta en `platform_config` con columnas que el esquema actual ya no tiene. Están vacías en producción. Alinear exige **recrear la base de staging** desde el historial completo de migraciones, no parchear.
 
 #### Trabajo ejecutado 2026-11-01 — cadena de fallos del backend
 
