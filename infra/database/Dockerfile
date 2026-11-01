@@ -8,36 +8,32 @@
 #                 del chat de Aura (migraciones 031 y migrations/rag/*).
 #   · PG 16     → versión mayor de los volúmenes actuales.
 #
-# POR QUÉ PARTIMOS DE `postgres:16-bookworm` Y NO DE `postgis/postgis`
-# El tag `postgis/postgis:16-3.4` está construido sobre Debian **bullseye**, y
-# PGDG ya no publica `bullseye-pgdg`:
-#     E: The repository 'http://apt.postgresql.org/pub/repos/apt bullseye-pgdg
-#        Release' does not have a Release file.
-# La imagen oficial `postgres:16-bookworm` ya trae el repositorio PGDG de
-# bookworm (vigente) y de ahí se instalan los dos paquetes. Mismo PostgreSQL 16,
-# misma familia de paquetes, base soportada.
+# POR QUÉ ESTA BASE Y NO OTRA (probado, no supuesto)
+# 1) `postgis/postgis:16-3.4` → Debian bullseye. PGDG ya no publica `bullseye-pgdg`:
+#        E: The repository '... bullseye-pgdg Release' does not have a Release file.
+# 2) `postgres:16-bookworm` + postgis → funciona, pero el paquete
+#    `postgresql-16-postgis-3` NO incluye `postgis_tiger_geocoder`, que el esquema
+#    de producción sí tiene (falla al restaurar: control file not found).
+# 3) `postgis/postgis:16-3.6` → Debian **trixie**, repo `trixie-pgdg` vigente,
+#    incluye postgis, postgis_topology y postgis_tiger_geocoder, y su PGDG
+#    ofrece `postgresql-16-pgvector` (0.8.7-1.pgdg13+1).
 #
-# Alternativa descartada: `pgvector/pgvector:pg16` + instalar PostGIS encima.
-# Funciona igual, pero así PostGIS —lo más crítico del esquema— queda como
-# paquete de primera clase y no como añadido.
-#
-# No se usan imágenes de terceros: procedencia dudosa y sin garantía de versión.
+# Esa es la base: se hereda TODO PostGIS de la imagen oficial y se añade SOLO
+# el paquete de pgvector del mismo repositorio. Nada de imágenes de terceros.
 
-FROM postgres:16-bookworm
+FROM postgis/postgis:16-3.6
 
 RUN apt-get update \
- && apt-get install -y --no-install-recommends \
-      postgresql-16-postgis-3 \
-      postgresql-16-postgis-3-scripts \
-      postgresql-16-pgvector \
+ && apt-get install -y --no-install-recommends postgresql-16-pgvector \
  && rm -rf /var/lib/apt/lists/*
 
 # Compuerta de build: si el paquete no deja la extensión disponible, el build
 # falla aquí y no en producción a las 3 de la mañana.
 RUN test -f /usr/share/postgresql/16/extension/postgis.control \
  && test -f /usr/share/postgresql/16/extension/postgis_topology.control \
+ && test -f /usr/share/postgresql/16/extension/postgis_tiger_geocoder.control \
  && test -f /usr/share/postgresql/16/extension/vector.control
 
-# Comprobación explícita de ambas versiones en el log de build.
+# Comprobación explícita de versiones en el log de build.
 RUN postgres --version \
- && ls /usr/share/postgresql/16/extension/ | grep -E '^(postgis|postgis_topology|vector)\.control$'
+ && ls /usr/share/postgresql/16/extension/ | grep -E '^(postgis|postgis_topology|postgis_tiger_geocoder|vector)\.control$'

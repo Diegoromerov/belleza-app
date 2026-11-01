@@ -97,3 +97,27 @@ railway variables set PGDATA=/var/lib/postgresql/data/pgdata   # obligatorio: lo
 railway ssh -s prueba-pgvector "psql -U postgres -d railway -At -c \
   \"select extname||'='||extversion from pg_extension where extname in ('postgis','vector')\""
 ```
+
+## Verificación end-to-end en local (2026-11-01) ✅
+
+Sobre la imagen construida (`glowapp-db:pg16-postgis-pgvector`), con PostgreSQL 16 y el
+contenedor arrancado en limpio:
+
+| Paso | Resultado |
+|---|---|
+| Restore del esquema de producción (`prod_schema_20261101.sql`) | ✅ 122 tablas, 49 políticas |
+| Extensiones tras el restore | `btree_gist, fuzzystrmatch, pgcrypto, plpgsql, postgis, postgis_tiger_geocoder, postgis_topology` — idénticas a producción |
+| `030_enable_pgvector.sql` | ✅ `pgvector version: 0.8.7` |
+| `031_aura_pgvector_and_knowledge_table.sql` | ✅ crea `beauty_knowledge_embeddings` |
+| `scripts/runRagMigrations.js` | ✅ **8/8** migraciones: 035, 046, 048, 054, 076, 113, 114, 115 · ledger `schema_migrations` con 8 filas |
+| Tipo de la columna | **`halfvec(2048)`** — ojo: no es `vector(2048)`; 035/076 usan `halfvec` para la mitad de memoria |
+| Índice vectorial | ✅ `idx_beauty_knowledge_embedding_hnsw` (HNSW) |
+| Columnas del RAG | 23, incluidas `tenant_id`, `search_vector`, `chunk_id`, `content_hash`, `fuente`, `seccion` |
+
+Notas de operación aprendidas en la prueba:
+- El entrypoint de la imagen PostGIS **carga extensiones al arrancar**; si se restaura el
+  esquema mientras termina, choca (`duplicate key value violates unique constraint
+  "pg_extension_name_index"` en `postgis`) y el contenedor sale con código 3. Hay que esperar
+  `pg_isready` + unos segundos antes de restaurar.
+- Con el esquema de producción restaurado, `031` necesita `tenants` y el resto del esquema:
+  el orden correcto es **restore → 030 → 031 → rag/***.

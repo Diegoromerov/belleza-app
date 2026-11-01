@@ -430,7 +430,7 @@ Comparación de `frontend-archive/lib` (201 archivos `.dart`) contra las tres ra
 | `salon_dashboard_screen` | 1.230 | Reconstruir | Pendiente (fase 3) |
 | `evolution_dashboard_screen` | 575 | Decidir alcance | Pendiente (fase 0) |
 | Superadmin (5 screens + providers) | 1.352 | Reconstruir en `admin-dashboard` | Pendiente (fase 4) |
-| RAG de Aura (`beauty_knowledge_embeddings`) | — | Infra | Artefactos listos en `infra/database/`; bloqueado por registry |
+| RAG de Aura (`beauty_knowledge_embeddings`) | — | Infra | ✅ **Validado en local**: esquema completo aplicado sobre la imagen nueva (8/8 migraciones, `halfvec(2048)`, HNSW). Pendiente: registry + swap |
 
 ### Fases del plan
 
@@ -440,7 +440,7 @@ Comparación de `frontend-archive/lib` (201 archivos `.dart`) contra las tres ra
 | 2 | Inventario y alquileres al provider, expuestos en el tab «Más» | ✅ **COMPLETADA** |
 | 3 | Reconstruir dashboard de salón sobre `memberships` | ⏳ Pendiente |
 | 4 | Superadmin en `admin-dashboard` (Next.js) | ⏳ Pendiente |
-| 5 | Imagen PostGIS + pgvector, `031` y `migrations/rag/*` | 🟡 Artefactos listos (`infra/database/Dockerfile` + runbook); falta registry |
+| 5 | Imagen PostGIS + pgvector, `031` y `migrations/rag/*` | 🟡 **Imagen construida y validada end-to-end en local**: restore del esquema de producción (122 tablas), extensiones idénticas, `030` → `031` → **8/8** migraciones RAG, columna `halfvec(2048)` e índice HNSW. Falta **publicar en un registry** y hacer el swap del servicio |
 
 ### Hallazgo del backend
 
