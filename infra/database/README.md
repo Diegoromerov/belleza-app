@@ -1,6 +1,16 @@
 # Base de datos con PostGIS + pgvector — procedimiento de cambio
 
-Imagen objetivo: `postgis/postgis:16-3.4` + `postgresql-16-pgvector` (ver `Dockerfile`).
+Imagen objetivo: `postgres:16-bookworm` + `postgresql-16-postgis-3` + `postgresql-16-pgvector`
+(ver `Dockerfile`). **Construida y verificada localmente el 2026-11-01**: PostGIS **3.7.0** +
+pgvector **0.8.7**, con una fila `geography(POINT,4326)` + `vector(2048)` insertada en la misma tabla.
+
+> Nota sobre la base: se intentó primero `postgis/postgis:16-3.4`, pero está construida sobre
+> Debian **bullseye** y PGDG ya no publica ese repo
+> (`bullseye-pgdg Release does not have a Release file`). Por eso se parte de
+> `postgres:16-bookworm`, que ya trae el repo PGDG vigente. Efecto colateral: PostGIS sube de
+> **3.4.3** (lo que usan hoy staging y producción) a **3.7.0**. Es compatible al restaurar
+> (`pg_dump` no serializa el interior de PostGIS; el `CREATE EXTENSION` crea la versión nueva),
+> pero conviene saberlo antes de cambiar.
 
 ## Por qué no basta cambiar la imagen
 
@@ -66,5 +76,24 @@ railway ssh -s glowapp-api "cd /app && RAG_DATABASE_URL=\"\$DATABASE_URL\" node 
 
 - **Producción y staging** siguen en `postgis/postgis:16-3.4`: tienen PostGIS, **no** tienen pgvector.
 - `beauty_knowledge_embeddings` **no existe en ningún entorno** → el RAG de Aura está inactivo.
-- Bloqueo para ejecutar este procedimiento: hace falta un registry donde publicar la imagen
-  (o un runner con Docker). Sin eso no hay imagen que desplegar.
+- **La imagen ya está construida y verificada en local** (`glowapp-db:pg16-postgis-pgvector`, 949 MB).
+  Falta **publicarla en un registry** para que Railway pueda consumirla: sin credenciales de
+  Docker Hub (u otro registry) o un job de CI que la construya y publique, no hay forma de
+  desplegarla.
+
+### Comandos exactos para publicar y probar
+
+```bash
+# 1. Etiquetar y publicar (requiere haber hecho docker login)
+docker tag glowapp-db:pg16-postgis-pgvector <registry>/glowapp-db:pg16-postgis-pgvector
+docker push <registry>/glowapp-db:pg16-postgis-pgvector
+
+# 2. Servicio desechable en Railway con esa imagen y volumen NUEVO
+railway add -i <registry>/glowapp-db:pg16-postgis-pgvector -s prueba-pgvector \
+  -v POSTGRES_USER=postgres -v POSTGRES_PASSWORD=<aleatoria> -v POSTGRES_DB=railway
+railway variables set PGDATA=/var/lib/postgresql/data/pgdata   # obligatorio: lost+found
+
+# 3. Verificar extensiones
+railway ssh -s prueba-pgvector "psql -U postgres -d railway -At -c \
+  \"select extname||'='||extversion from pg_extension where extname in ('postgis','vector')\""
+```
