@@ -249,7 +249,18 @@ app.get('/metrics', metricsHandler);
 // 🔹 GLOBAL APP AUDIENCE MIDDLEWARE (Fase 4)
 // Valida header X-App-Audience en TODAS las rutas /api/*
 // Debe ir ANTES de authMiddleware para que req.appAudience esté disponible
-app.use('/api', validateAppAudience({ required: true }));
+// Las rutas de sonda (/api/health, /api/metrics) quedan exentas: un health check
+// de la plataforma, del monitor o del orquestador no tiene identidad de app. Si
+// se les exige X-App-Audience responden 400 y la sonda se lee como caída.
+const audienciaObligatoria = validateAppAudience({ required: true });
+const RUTAS_SONDA_SIN_AUDIENCIA = ['/health', '/metrics'];
+app.use('/api', (req, res, next) => {
+  const esSonda = RUTAS_SONDA_SIN_AUDIENCIA.some(
+    (ruta) => req.path === ruta || req.path.startsWith(`${ruta}/`)
+  );
+  if (esSonda) return next();
+  return audienciaObligatoria(req, res, next);
+});
 
 const { degradedLockMiddleware, clasificarSalud, asegurarEstadoComprobado } = require('./src/middleware/degradedLock');
 app.use('/api', degradedLockMiddleware);
