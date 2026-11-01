@@ -3,7 +3,7 @@
 **Propósito:** Unificar plan split-architecture + observabilidad en una sola ruta auditable fase a fase  
 **Estado:** Baseline consolidado — sin desviaciones a partir de esta versión
 
-**Snapshot verificado 2026-11-01:** backend operativo en **staging y producción** (`/api/health` 200, `/api/providers` 200, PostGIS 3.4.3, RLS 37/37 en producción). Fase en curso: **8 (Cleanup & Docs, 90%)**.
+**Snapshot verificado 2026-11-01:** backend operativo en **staging y producción** (`/api/health` 200, `/api/providers` 200, PostGIS 3.4.3, RLS 37/37 en producción). Fase 8 (Cleanup & Docs) **COMPLETADA** — siguiente: 7 (Cloudflare) y 6 (custom domains), ambas bloqueadas por factores externos.
 
 ---
 
@@ -31,7 +31,7 @@
 || **5** | **Firebase & Deploy Ops** | 2 proyectos Firebase, FCM, Service Accounts, secrets, keystores, certs, Firestore rules | ✅ **100% COMPLETADA** | `GLOWAPP-F005` |
 || **6** | **CI/CD + Firebase Hosting + DNS** | Pipeline dual, Firebase Hosting `glowapp-client`/`glowapp-provider`, backend Railway, DNS custom domains | 🟡 **95%** (deploy backend staging ✅ **y producción ✅**, Firebase Hosting staging ✅; solo faltan custom domains) | `GLOWAPP-F006-RAILWAY` |
 || **7** | **Cloudflare Stream** | Subir 16 videos, poblar `video_mapping.dart`, eliminar assets locales, iframe player HLS | 🟡 **45%** (Firebase Storage ✅, assets eliminados, Cloudflare bloqueado) | `GLOWAPP-F007` |
-|| **8** | **Cleanup & Docs** | Archivar `frontend/`, docs finales, e2e smoke tests, **esquema BD reproducible + RLS verificado** | 🟡 **60%** (archivo ✅, docs ✅, infra BD/RLS ✅; faltan E2E y RLS con datos reales) | `GLOWAPP-F008` |
+|| **8** | **Cleanup & Docs** | Archivar `frontend/`, docs finales, e2e smoke tests, **esquema BD reproducible + RLS verificado** | ✅ **100% COMPLETADA** (E2E 25/25) | `GLOWAPP-F008` |
 | **9** | **Observabilidad (NUEVA)** | OpenTelemetry, Prometheus/Grafana/Loki/Tempo, dashboards, alertas, runbooks | ✅ **95% COMPLETADA** (PRODUCCIÓN) | `GLOWAPP-F009-OBS` |
 
 ---
@@ -231,7 +231,7 @@
 
 ---
 
-### FASE 8 — CLEANUP & DOCS 🟡 **EN PROGRESO (90%)**
+### FASE 8 — CLEANUP & DOCS ✅ **COMPLETADA (100%)**
 **Entregables:**
 - [x] Archivar `frontend/` (monolito original) → `frontend-archive/` ✅ **COMPLETADO** (309 MB)
 - [x] Documentación final ✅ **COMPLETADA**:
@@ -247,7 +247,8 @@
 - [x] **Drift de esquema staging ↔ producción** ✅ **RESUELTO (2026-11-01)**: clonado el esquema de producción hacia staging (`pg_dump --schema-only --no-owner --no-privileges`, restore con `ON_ERROR_STOP`, `prepareRlsDatabase.js` posterior). Resultado **122 = 122**, `comm` vacío en ambas direcciones, RLS 37/37, ambas APIs 200. Respaldo previo en `.backups/staging_pre_drift_20261101.sql`
 - [x] **Redis de staging con credencial caducada** ✅ **CORREGIDO**: `WRONGPASS` en `AUTH` → el middleware `auth.js` (fail-closed) devolvía 503 en todo `/api`. `REDIS_URL` pasó de copia literal a referencia `${{Redis.REDIS_URL}}`
 - [x] **Incidente de imagen en staging y recuperación** ✅ **RESUELTO (2026-11-01)**: el servicio se cambió a `pgvector/pgvector:pg16`, que no trae PostGIS y dejó la base vacía (0 tablas). Al volver a `postgis/postgis:16-3.4` el contenedor abortaba con `initdb: directory exists but is not empty` (el volumen rescatable era un clúster de **PostgreSQL 18**, incompatible, y la raíz del montaje tiene `lost+found`). Solución: volumen nuevo `postgres-postgis-volume`, `PGDATA=/var/lib/postgresql/data/pgdata`, restore del dump y `prepareRlsDatabase.js`. Resultado: 122 tablas, RLS 37/37, ambas APIs 200. **Regla: no cambiar la imagen a `pgvector` sola; haría falta una imagen con PostGIS + pgvector.**
-- [~] **E2E smoke tests** 🟡 **18/19**: login cliente y prestador, contrato, reserva con split 20/0/80, propina (rechazo/aceptación/duplicado), reprogramación (200/409 + contador), cancelación 100 %/50 %/0 % y umbrales D-GL-011 **en verde**. Falla el bloque **G**: `relation "listas_precios" does not exist`. La tabla la crea `071_glowshop_niveles_a0`, que depende de `scan_product_matches` (migración `029`), y esa exige la extensión **`pgvector`**, no disponible en la imagen `postgis/postgis:16-3.4`. **Producción tampoco tiene esas tablas**: el vacío es del repositorio, no del entorno. Desbloquear exige una imagen con `postgis` + `pgvector`.
+- [x] **E2E smoke tests** ✅ **COMPLETADO (2026-11-01)**: **25/25, cero fallos** — login cliente y prestador, contrato (GET 200, aceptación y persistencia), reserva con split 20/0/80, propina (rechazo/aceptación/duplicado), reprogramación (200 → 409, contador), cancelación 100 %/50 %/0 %, umbrales D-GL-011, envío Bogotá/Cali (con y sin cobro), IVA incluido (base 75630 + iva 14370 = 100200), retención de 1.000 y estado de cuenta del prestador (bloque I). Desbloqueado con la migración **`121_scan_product_matches.sql`** (DDL de 029 sin `pgvector`) + `071 → 072 → 103`
+- [!] **Deuda abierta**: staging quedó con **126 tablas** y producción con **122**. La diferencia son las 4 tablas de precios/tienda que solo se aplicaron en staging (`scan_product_matches`, `listas_precios`, `precios_historial`, `precios_producto`). Llevarlas a producción exige decisión del Director: es cambio de esquema en prod. Mientras no se haga, un E2E contra producción fallaría el bloque G
 
 #### Trabajo ejecutado 2026-11-01 — cadena de fallos del backend
 
@@ -333,7 +334,7 @@ Cinco causas encadenadas mantenían `glowapp-api` caída y sin esquema:
 | Fase 5 | Fase 5 | ✅ 100% ||
 | Fase 6 (CI/CD Railway) | Fase 6 | 🟡 95% (backend staging + producción ✅; custom domains pendientes) |
 | Fase 7 (Cloudflare Stream) | Fase 7 | 🟡 45% (Firebase Storage ✅, Cloudflare bloqueado por pago) |
-| Fase 8 (Cleanup) | Fase 8 | 🟡 60% (docs + infra BD/RLS ✅; E2E pendiente) |
+| Fase 8 (Cleanup) | Fase 8 | ✅ 100% (docs, infra BD/RLS, CI, branches y E2E 25/25) |
 | — (no existía) | **Fase 9 (Observabilidad)** | ✅ 95% |
 
 ---
