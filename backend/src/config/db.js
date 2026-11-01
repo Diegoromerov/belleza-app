@@ -640,6 +640,12 @@ function clienteEnMemoria() {
 }
 
 function isStrictEnvironment() {
+  // Un proceso de test nunca es producción/staging. Sin este corte, cualquier
+  // variable RAILWAY_* heredada del runner (p. ej. RAILWAY_PROJECT_ID exportada
+  // a nivel de workflow) marca el entorno como protegido y hace que el modo
+  // hermético de las suites —que a propósito no abre base de datos— lance
+  // "Database memory fallback is strictly prohibited" y devuelva 500.
+  if (process.env.NODE_ENV === 'test') return false;
   return (
     process.env.NODE_ENV === 'production' ||
     process.env.NODE_ENV === 'staging' ||
