@@ -9,7 +9,10 @@ on:
 env:
   FLUTTER_CHANNEL: stable
   FLUTTER_VERSION: '3.29.2'
-  RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
+  # RAILWAY_PROJECT_ID NO va a nivel de workflow: backend-ci lo heredaria y
+  # isStrictEnvironment() (backend/src/config/db.js:642) devolveria true, lo que
+  # convierte cualquier hipo de conexion a la BD en error duro en vez de fallback
+  # controlado. Va solo en el job de deploy, que es el unico que lo necesita.
 
 jobs:
   # ─────────────────────────────────────────────────────────────────
@@ -144,6 +147,7 @@ jobs:
       - name: Deploy Backend to Railway
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
         run: |
           npm install -g @railway/cli@latest
           railway up --service glowapp-api
