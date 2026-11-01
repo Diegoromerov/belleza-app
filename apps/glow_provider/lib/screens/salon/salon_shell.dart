@@ -25,6 +25,8 @@ import 'package:glow_core/services/auth_service.dart';
 import 'package:glow_core/widgets/provider_services_screen.dart';
 import 'package:glow_core/widgets/locked_feature_card.dart';
 import 'caja_screen.dart';
+import 'inventario_screen.dart';
+import 'alquileres_screen.dart';
 
 class SalonShell extends StatefulWidget {
   /// Pestaña inicial (0 = Agenda). Útil para deep-links internos.
@@ -173,7 +175,7 @@ class _SalonShellState extends State<SalonShell> {
       case 3:
         return _cargarDatos ? const ProviderServicesScreen() : const _ServiciosPlaceholder();
       default:
-        return const _MasTab();
+        return _MasTab(salonId: _salonId);
     }
   }
 
@@ -486,7 +488,9 @@ class _ServiciosPlaceholder extends StatelessWidget {
 // ── Más ──────────────────────────────────────────────────────────────────────
 
 class _MasTab extends StatelessWidget {
-  const _MasTab();
+  const _MasTab({this.salonId});
+
+  final int? salonId;
 
   @override
   Widget build(BuildContext context) {
@@ -557,6 +561,41 @@ class _MasTab extends StatelessWidget {
           ),
         );
 
+    // Enlace que abre una pantalla local (las de inventario y alquileres viven
+    // en esta carpeta y necesitan el salonId, así que no van por ruta nombrada).
+    Widget enlacePantalla(String titulo, String detalle, Widget Function() destino) => Container(
+          margin: const EdgeInsets.only(bottom: Spacing.sm),
+          decoration: BoxDecoration(
+            color: t.surfaceLevel1,
+            borderRadius: BorderRadius.circular(Radii.md),
+            border: Border.all(color: t.borderSubtle),
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(Radii.md),
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => destino())),
+              child: Padding(
+                padding: const EdgeInsets.all(Spacing.lg),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(titulo, style: TypographyTokens.body(t).copyWith(fontWeight: FontWeight.w600)),
+                          Text(detalle, style: TypographyTokens.bodySmall(t).copyWith(color: t.textSecondary)),
+                        ],
+                      ),
+                    ),
+                    Icon(Icons.chevron_right, color: t.textSecondary),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+
     return ListView(
       padding: const EdgeInsets.all(Spacing.lg),
       children: [
@@ -576,8 +615,21 @@ class _MasTab extends StatelessWidget {
           ),
         ),
         const SizedBox(height: Spacing.sm),
-        bloqueado('Inventario', 'Llega con E-06'),
-        bloqueado('Recursos alquilables', 'Llega con E-06'),
+        if (salonId != null) ...[
+          enlacePantalla(
+            'Inventario',
+            'Productos, consumos y movimientos del salón',
+            () => InventarioScreen(salonId: salonId!),
+          ),
+          enlacePantalla(
+            'Recursos alquilables',
+            'Sillas y espacios: contratos y alquileres',
+            () => AlquileresScreen(salonId: salonId!),
+          ),
+        ] else ...[
+          bloqueado('Inventario', 'Abre el salón operativo para gestionarlo'),
+          bloqueado('Recursos alquilables', 'Abre el salón operativo para gestionarlo'),
+        ],
         bloqueado('Analytics', 'Se consulta por Aura'),
       ],
     );
