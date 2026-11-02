@@ -47,6 +47,10 @@ const MIGRACIONES = [
   // GET /api/products. Va al final a propósito: después de 120, para que el
   // forzado de RLS de esa migración la cubra en el siguiente arranque.
   '121_glowshop_precios_minimas.sql',
+  // Catálogo: `createProduct`/`updateProduct` exigen costo y sku (L21), columnas
+  // que introduce la 071 y que nunca se aplicaron. Sin ellas el panel de
+  // productos responde 500 al crear o editar.
+  '122_catalogo_costo_sku.sql',
 ];
 
 const path = require('path');
