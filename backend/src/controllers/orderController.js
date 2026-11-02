@@ -2,6 +2,7 @@ const { pool } = require('../config/db');
 const { resolverPrecio } = require('../services/precioService');
 const { calcularEnvio } = require('../services/envioService');
 const { insertPendingTransaction } = require('../services/transactionStore');
+const { recordWebhookEvent } = require('../services/webhookEventLog');
 const wompiClient = require('../services/wompiClient');
 const { discriminarIva } = require('../utils/iva');
 
@@ -805,12 +806,33 @@ exports.storeWebhook = async (req, res) => {
       : (event?.event?.type || event?.type);
     const data = event?.data?.transaction || event?.data || event;
 
+    // Registro en `webhook_events`: un evento de pasarela sin fila es un pago que
+    // no se puede auditar. Se usa el pool (no la conexión de la transacción de
+    // dinero) para que el registro sobreviva a un ROLLBACK, y nunca tumba la
+    // petición: si falla, se avisa y se sigue.
+    // `event_id` es el id de la transacción en Wompi: el mismo en todos los
+    // reintentos, así el UNIQUE(provider, event_id) mantiene una sola fila.
+    const eventIdWompi = event?.data?.transaction?.id || (event?.data && event.data.id) || null;
+    const registrarEvento = (resultado, errorMessage = null) =>
+      recordWebhookEvent(pool, {
+        provider: 'wompi',
+        eventId: eventIdWompi,
+        eventType: eventType || 'desconocido',
+        payload: event,
+        result: resultado,
+        errorMessage,
+      }).catch((e) =>
+        console.error('⚠️ No se pudo registrar el evento en webhook_events:', e.message)
+      );
+
     if (!eventType || !data) {
+      await registrarEvento({ estado: 'invalido', motivo: 'sin event o data' });
       return res.status(400).json({ error: 'Evento Wompi inválido' });
     }
 
     // Solo procesar transaction.updated / transaction.approved / transaction.declined
     if (!['transaction.updated', 'transaction.approved', 'transaction.declined'].includes(eventType)) {
+      await registrarEvento({ estado: 'ignorado', motivo: 'tipo no relevante', tipo: eventType });
       return res.json({ success: true });
     }
 
@@ -821,6 +843,7 @@ exports.storeWebhook = async (req, res) => {
 
     if (!externalId) {
       console.warn('⚠️ Webhook store sin external_id');
+      await registrarEvento({ estado: 'ignorado', motivo: 'sin external_id' });
       return res.json({ success: true });
     }
 
@@ -851,6 +874,10 @@ exports.storeWebhook = async (req, res) => {
         // registro local: hay que pedirle a Wompi que reintente. Para el resto
         // (eventos ajenos, sondas) un 200 evita 24 h de reintentos inutiles.
         const esPedidoPropio = /^wompi_order_/.test(String(reference || ''));
+        await registrarEvento(
+          { estado: 'sin_transaccion', external_id: externalId, referencia: reference },
+          'Transacción de pedido no registrada'
+        );
         if (esPedidoPropio) {
           return res.status(500).json({ error: 'Transacción de pedido no registrada; reintentar' });
         }
@@ -863,6 +890,7 @@ exports.storeWebhook = async (req, res) => {
         // Idempotencia: se evalua DENTRO de la transaccion y con la fila bloqueada.
         if (tx.status === 'paid') {
           await client.query('COMMIT');
+          await registrarEvento({ estado: 'duplicado', external_id: externalId, motivo: 'ya estaba pagada' });
           return res.json({ success: true });
         }
 
@@ -942,9 +970,30 @@ exports.storeWebhook = async (req, res) => {
       }
     }
 
+    await registrarEvento({
+      estado: pedidoPagadoId ? 'pedido_pagado' : 'procesado',
+      pedido: pedidoPagadoId,
+      status_wompi: status,
+      external_id: externalId,
+    });
+
     return res.json({ success: true });
   } catch (error) {
     console.error('❌ ERROR EN /api/payments/store-webhook:', error);
+    // El registro va aquí y no por el helper: `eventType` y `externalId` viven
+    // dentro del try, así que en el catch no están en alcance.
+    const cuerpo = req.body || {};
+    const tipoError = typeof cuerpo.event === 'string'
+      ? cuerpo.event
+      : (cuerpo?.event?.type || cuerpo?.type || 'desconocido');
+    await recordWebhookEvent(pool, {
+      provider: 'wompi',
+      eventId: cuerpo?.data?.transaction?.id || cuerpo?.data?.id || null,
+      eventType: tipoError,
+      payload: cuerpo,
+      result: { estado: 'error' },
+      errorMessage: error.message,
+    }).catch((e) => console.error('⚠️ No se pudo registrar el evento fallido:', e.message));
     res.status(500).json({ error: 'Error al procesar webhook' });
   }
 };
