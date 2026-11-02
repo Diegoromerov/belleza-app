@@ -51,6 +51,10 @@ const MIGRACIONES = [
   // que introduce la 071 y que nunca se aplicaron. Sin ellas el panel de
   // productos responde 500 al crear o editar.
   '122_catalogo_costo_sku.sql',
+  // Checkout de la tienda: `createOrder` necesita app_platform_tenant_id() y las
+  // columnas tenant_id, ambas de la 071. Sin ellas todo pedido muere con 500 y
+  // el ciclo de pago de Wompi no puede empezar.
+  '123_checkout_tenant_wompi.sql',
 ];
 
 const path = require('path');
