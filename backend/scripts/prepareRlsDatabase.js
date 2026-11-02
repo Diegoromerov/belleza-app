@@ -42,6 +42,11 @@ const MIGRACIONES = [
   '118_drop_salon_miembros.sql',
   '119_force_rls_retention_policies.sql',
   '120_force_rls_all_tenant_tables.sql',
+  // GlowShop: crea las tablas de precios que la 071 nunca pudo crear (depende de
+  // scan_product_matches, inexistente) y siembra las listas base. Da el 200 a
+  // GET /api/products. Va al final a propósito: después de 120, para que el
+  // forzado de RLS de esa migración la cubra en el siguiente arranque.
+  '121_glowshop_precios_minimas.sql',
 ];
 
 const path = require('path');
