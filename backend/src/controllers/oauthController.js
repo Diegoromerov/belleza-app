@@ -128,3 +128,137 @@ exports.googleSignIn = async (req, res) => {
     });
   }
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Facebook
+// ─────────────────────────────────────────────────────────────────────────────
+const GRAPH_VERSION = process.env.FACEBOOK_GRAPH_VERSION || 'v21.0';
+
+/// POST /api/auth/facebook
+///
+/// Verifica el accessToken contra la Graph API y emite el JWT de GlowApp, con el
+/// mismo contrato de respuesta que /api/auth/google.
+///
+/// La verificación es en dos pasos a propósito:
+///   1. /debug_token con el app token: confirma que el token está vivo y que
+///      pertenece a NUESTRA app (app_id). Sin esto, un token de cualquier otra
+///      app de Facebook pasaría el /me y se emitiría un JWT por una cuenta ajena.
+///   2. /me con el token del usuario: identidad y email.
+///
+/// Si FACEBOOK_APP_ID/SECRET no están definidos responde 501 en vez de aceptar el
+/// token sin comprobarlo.
+exports.facebookSignIn = async (req, res) => {
+  try {
+    const { accessToken, role_intent } = req.body;
+    if (!accessToken) {
+      return res.status(400).json({ error: 'Falta el accessToken de Facebook' });
+    }
+
+    const appId = (process.env.FACEBOOK_APP_ID || '').trim();
+    const appSecret = (process.env.FACEBOOK_APP_SECRET || '').trim();
+    const mockAllowed = process.env.NODE_ENV === 'test' || process.env.ALLOW_MOCK_AUTH === 'true';
+
+    let fbUser;
+
+    if (mockAllowed && accessToken.startsWith('test_facebook_token_')) {
+      const sufijo = accessToken.replace('test_facebook_token_', '');
+      fbUser = {
+        id: `facebook_test_id_${sufijo}`,
+        name: `User Facebook ${sufijo}`,
+        email: `${sufijo}@facebook.com`,
+      };
+    } else {
+      if (!appId || !appSecret) {
+        return res.status(501).json({
+          error: 'Facebook no configurado',
+          details: 'Definir FACEBOOK_APP_ID y FACEBOOK_APP_SECRET en el servicio',
+        });
+      }
+
+      const debug = await axios.get(`https://graph.facebook.com/${GRAPH_VERSION}/debug_token`, {
+        params: { input_token: accessToken, access_token: `${appId}|${appSecret}` },
+        timeout: 10000,
+      });
+      const info = debug.data && debug.data.data;
+      if (!info || info.is_valid !== true) {
+        throw new Error('accessToken inválido o expirado');
+      }
+      if (String(info.app_id) !== appId) {
+        throw new Error(`El token pertenece a otra app de Facebook (${info.app_id})`);
+      }
+
+      const perfil = await axios.get(`https://graph.facebook.com/${GRAPH_VERSION}/me`, {
+        params: { fields: 'id,name,email,picture.type(large)', access_token: accessToken },
+        timeout: 10000,
+      });
+      fbUser = perfil.data;
+    }
+
+    if (!fbUser || !fbUser.id) {
+      throw new Error('Facebook no devolvió identidad');
+    }
+    if (!fbUser.email) {
+      return res.status(422).json({
+        error: 'Facebook no devolvió email',
+        details: 'La cuenta debe autorizar el permiso "email" al iniciar sesión',
+      });
+    }
+
+    const cleanEmail = String(fbUser.email).toLowerCase().trim();
+    const nombre = fbUser.name || 'Usuario Facebook';
+    const providerId = String(fbUser.id);
+
+    let userQuery = await pool.query('SELECT * FROM usuarios WHERE email = $1', [cleanEmail]);
+    let user;
+
+    if (userQuery.rows.length === 0) {
+      const validRoles = ['CLIENTE', 'PRESTADOR', 'SALON'];
+      const targetRole = role_intent && validRoles.includes(role_intent.toUpperCase())
+        ? role_intent.toUpperCase()
+        : null;
+      const onboardingCompleto = targetRole === 'CLIENTE';
+
+      const insertQuery = await pool.query(
+        `INSERT INTO usuarios (nombre, email, auth_provider, provider_id, rol, onboarding_completo)
+         VALUES ($1, $2, 'FACEBOOK', $3, $4, $5)
+         RETURNING id, nombre, email, rol, onboarding_completo`,
+        [nombre, cleanEmail, providerId, targetRole, onboardingCompleto]
+      );
+      user = insertQuery.rows[0];
+    } else {
+      user = userQuery.rows[0];
+      if (user.auth_provider !== 'FACEBOOK') {
+        await pool.query(
+          'UPDATE usuarios SET auth_provider = $1, provider_id = $2 WHERE id = $3',
+          ['FACEBOOK', providerId, user.id]
+        );
+        user.auth_provider = 'FACEBOOK';
+        user.provider_id = providerId;
+      }
+    }
+
+    const appToken = jwt.sign(
+      { id: user.id, email: user.email, role: toApiRole(user.rol), rol: user.rol },
+      getJwtSecret(),
+      { expiresIn: '24h' }
+    );
+
+    return res.status(200).json({
+      success: true,
+      token: appToken,
+      user: {
+        id: user.id.toString(),
+        full_name: user.nombre,
+        email: user.email,
+        role: toApiRole(user.rol),
+        onboarding_completo: user.onboarding_completo,
+      },
+    });
+  } catch (error) {
+    console.error('❌ ERROR FACEBOOK SIGN-IN:', error.message);
+    return res.status(401).json({
+      error: 'Autenticación de Facebook inválida o fallida',
+      details: error.message,
+    });
+  }
+};

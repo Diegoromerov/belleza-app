@@ -2,7 +2,7 @@ const { wrapRouterAsync } = require('../utils/expressAsync');
 const express = require('express');
 const router = express.Router();
 const { register, login, logout, forgotPassword, resetPassword, oauth, onboarding, acceptBiometricsConsent, saveFcmToken, getReferralInfo, deleteAccount, changePassword, selectRole, switchContext } = require('../controllers/authController');
-const { googleSignIn } = require('../controllers/oauthController');
+const { googleSignIn, facebookSignIn } = require('../controllers/oauthController');
 const { authMiddleware } = require('../middleware/auth');
 const { authLimiter, otpLimiter } = require('../middleware/rateLimiter');
 
@@ -13,6 +13,7 @@ router.post('/forgot-password', authLimiter, forgotPassword);
 router.post('/reset-password', authLimiter, resetPassword);
 router.post('/oauth', authLimiter, oauth);
 router.post('/google', authLimiter, googleSignIn);
+router.post('/facebook', authLimiter, facebookSignIn);
 router.post('/select-role', authMiddleware, selectRole);
 router.post('/context/switch', authMiddleware, switchContext);
 router.patch('/onboarding', authMiddleware, onboarding);
