@@ -308,7 +308,10 @@ router.post('/bookings/:id/complete', authMiddleware, async (req, res) => {
 
 // ─── CONFIRMAR OTP → DISPERSIÓN ──────────────────────────────────────────────
 
-router.post('/bookings/:id/confirm-otp', authMiddleware, async (req, res) => {
+// otpLimiter se importaba y nunca se usaba: el limite por codigo (3 intentos)
+// ya existe en la base, pero sin limite por IP cualquiera puede pedir codigos
+// nuevos en bucle y golpear la base.
+router.post('/bookings/:id/confirm-otp', authMiddleware, otpLimiter, async (req, res) => {
   const { id } = req.params;
   const { codigo } = req.body;
 
