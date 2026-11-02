@@ -32,6 +32,11 @@ const MIGRACIONES = [
   '107_rls_politicas_sin_contexto.sql',
   '012_business_engine.sql',
   '062_optimize_business_saas_postgres.sql',
+  // GlowShop: crean listas_precios / precios_producto / precios_historial.
+  // Faltaban aquí, así que `GET /api/products` consultaba una tabla inexistente
+  // y respondía 500 en producción.
+  '071_glowshop_niveles_a0.sql',
+  '072_catalogo_autorizado_y_historial_protegido.sql',
   '082_memberships.sql',
   '114_memberships_sub_rol.sql',
   '118_drop_salon_miembros.sql',
