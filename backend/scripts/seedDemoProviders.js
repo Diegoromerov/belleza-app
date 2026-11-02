@@ -27,9 +27,11 @@ const { Pool } = require('pg');
 const DOMINIO = '@glowapp.test';
 const PASSWORD_DEMO = 'DemoGlow2026!';
 
-// Centro real de la plataforma (platform_config.gps_centro_latitud/longitud).
-// El radio por defecto es 500 m, así que los desplazamientos son de metros.
-const CENTRO = { lat: 4.6735, lon: -74.1422 };
+// Centro por defecto. El real se lee de `platform_config` en cada corrida: si
+// se cambia el centro de la plataforma y el seed sigue con una coordenada fija,
+// los prestadores quedan fuera del radio y el catálogo vuelve a salir vacío sin
+// que nada falle.
+const CENTRO_POR_DEFECTO = { lat: 4.6735, lon: -74.1422 };
 
 // 0,001° de latitud ≈ 111 m.
 const DEMO = [
@@ -116,6 +118,17 @@ async function main() {
       console.log(`borrados=${borrados}`);
       return;
     }
+
+    // Centro real de la plataforma. Cae al valor por defecto si falta.
+    const cfg = await client.query(
+      "SELECT key, value FROM platform_config WHERE key IN ('gps_centro_latitud', 'gps_centro_longitud')"
+    );
+    const mapa = Object.fromEntries(cfg.rows.map((r) => [r.key, parseFloat(r.value)]));
+    const CENTRO = {
+      lat: Number.isFinite(mapa.gps_centro_latitud) ? mapa.gps_centro_latitud : CENTRO_POR_DEFECTO.lat,
+      lon: Number.isFinite(mapa.gps_centro_longitud) ? mapa.gps_centro_longitud : CENTRO_POR_DEFECTO.lon,
+    };
+    console.log(`centro=${CENTRO.lat},${CENTRO.lon}`);
 
     // El catálogo vive en el tenant de plataforma; si no hay, el más bajo.
     const t = await client.query(
