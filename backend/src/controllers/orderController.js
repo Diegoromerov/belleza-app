@@ -1,6 +1,7 @@
 const { pool } = require('../config/db');
 const { resolverPrecio } = require('../services/precioService');
 const { calcularEnvio } = require('../services/envioService');
+const { insertPendingTransaction } = require('../services/transactionStore');
 const wompiClient = require('../services/wompiClient');
 const { discriminarIva } = require('../utils/iva');
 
@@ -725,20 +726,17 @@ exports.payOrder = async (req, res) => {
     const wompiClient = require('../services/wompiClient');
     const wompiTx = await wompiClient.createTransaction(wompiTransactionData);
 
-    // Guardar transacción local
-    const transactionRes = await pool.query(
-      `INSERT INTO transactions
-         (booking_id, client_id, provider_id, amount, monto_total, comision_plataforma,
-          monto_neto_prestador, impuestos_retencion, status, payment_method, external_id,
-          pasarela_pago, referencia_pasarela, estado_pago, liberado_al_prestador)
-       VALUES (NULL, $1, NULL, $2, $2, 0, $2, 0, 'pending', $3, $4, 'wompi', $5, 'pending', false)
-       RETURNING *;`,
-      // external_id = id de la transaccion en WOMPI: storeWebhook busca por `data.id`
-      // (`orderController.js` storeWebhook: SELECT ... WHERE external_id = $1). Guardar
-      // aqui la referencia dejaba el pedido sin poder cerrarse NUNCA.
-      [userId, expectedAmount, method, wompiTx.id, externalId]
-    );
-    const transaction = transactionRes.rows[0];
+    // Guardar transacción local. `insertPendingTransaction` escribe tenant_id:
+    // `transactions` tiene RLS FORCE, así que una fila sin tenant queda invisible
+    // para cualquier rol que no sea superusuario.
+    const transaction = await insertPendingTransaction(pool, {
+      userId,
+      amount: expectedAmount,
+      method,
+      wompiId: wompiTx.id,
+      reference: externalId,
+      tenantId: order.tenant_id,
+    });
 
     // El webhook localiza el pedido con `metadata->>'wompi_external_id' = <data.id de Wompi>`,
     // asi que ahi va el id de la transaccion; la referencia se guarda aparte para trazabilidad.
