@@ -1839,6 +1839,11 @@ try {
 }
 
 
+// Middleware de error de Express. Debe ir DESPUÉS de todas las rutas (incluido
+// el catch-all 404 de /api/*) y ANTES de module.exports. Express lo identifica
+// por su aridad de 4 argumentos.
+app.use(require('./src/middleware/errorHandler'));
+
 // ==========================================
 // MANEJO GLOBAL DE ERRORES
 // ==========================================
