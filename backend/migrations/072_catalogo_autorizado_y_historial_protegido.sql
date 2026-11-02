@@ -53,15 +53,33 @@ BEGIN
 END $$;
 
 -- Crear claves foráneas con ON DELETE RESTRICT
-ALTER TABLE precios_historial
-  ADD CONSTRAINT fk_precios_historial_producto
-  FOREIGN KEY (producto_id) REFERENCES productos(id)
-  ON DELETE RESTRICT;
+-- Envuelto en DO: `ADD CONSTRAINT` no admite IF NOT EXISTS y sin esta guarda la
+-- migración fallaba al reejecutarse ("constraint already exists"), cosa que pasa
+-- en cada deploy porque prepareRlsDatabase aplica la lista completa.
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints
+    WHERE table_name = 'precios_historial'
+      AND constraint_name = 'fk_precios_historial_producto'
+  ) THEN
+    ALTER TABLE precios_historial
+      ADD CONSTRAINT fk_precios_historial_producto
+      FOREIGN KEY (producto_id) REFERENCES productos(id)
+      ON DELETE RESTRICT;
+  END IF;
 
-ALTER TABLE precios_historial
-  ADD CONSTRAINT fk_precios_historial_lista
-  FOREIGN KEY (lista_id) REFERENCES listas_precios(id)
-  ON DELETE RESTRICT;
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints
+    WHERE table_name = 'precios_historial'
+      AND constraint_name = 'fk_precios_historial_lista'
+  ) THEN
+    ALTER TABLE precios_historial
+      ADD CONSTRAINT fk_precios_historial_lista
+      FOREIGN KEY (lista_id) REFERENCES listas_precios(id)
+      ON DELETE RESTRICT;
+  END IF;
+END $$;
 
 
 -- 3. Autoverificación de la migración
