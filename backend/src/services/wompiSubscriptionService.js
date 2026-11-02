@@ -2,7 +2,23 @@
 const fetch = require('node-fetch');
 const crypto = require('crypto');
 
-const WOMPI_BASE_URL = process.env.WOMPI_BASE_URL || 'https://production.wompi.co/v1';
+const WOMPI_BASE_URL_SANDBOX = 'https://sandbox.wompi.co/v1';
+const WOMPI_BASE_URL_PRODUCTION = 'https://production.wompi.co/v1';
+
+/**
+ * Resuelve el host de Wompi en tiempo de llamada, no al importar.
+ *
+ * Antes el fallback era producción siempre: con llaves `pub_test_*` y sin la
+ * variable, las suscripciones SaaS pegaban a producción mientras la tienda
+ * (wompiClient, que decide por NODE_ENV) usaba sandbox. Misma regla que allí.
+ */
+function resolveWompiBaseUrl() {
+  const explicita = process.env.WOMPI_BASE_URL;
+  if (explicita) return explicita.replace(/\/$/, '');
+  return process.env.NODE_ENV === 'production'
+    ? WOMPI_BASE_URL_PRODUCTION
+    : WOMPI_BASE_URL_SANDBOX;
+}
 const WOMPI_PRIVATE_KEY = process.env.WOMPI_PRIVATE_KEY; // llave privada para firmar
 const WOMPI_PUBLIC_KEY = process.env.WOMPI_PUBLIC_KEY;
 const WOMPI_INTEGRITY_SECRET = process.env.WOMPI_INTEGRITY_SECRET; // para verificar webhooks
@@ -64,7 +80,7 @@ async function createSubscription({ customerId, planId, paymentMethodId, trialDa
     body.trial_days = trialDays;
   }
 
-  const response = await fetch(`${WOMPI_BASE_URL}/subscriptions`, {
+  const response = await fetch(`${resolveWompiBaseUrl()}/subscriptions`, {
     method: 'POST',
     headers: _authHeaders(),
     body: JSON.stringify(body)
@@ -111,7 +127,7 @@ async function changeSubscriptionPlan({ subscriptionId, newPlanId, prorate = tru
 async function getSubscription(subscriptionId) {
   if (!isConfigured()) return null;
 
-  const response = await fetch(`${WOMPI_BASE_URL}/subscriptions/${subscriptionId}`, {
+  const response = await fetch(`${resolveWompiBaseUrl()}/subscriptions/${subscriptionId}`, {
     headers: _authHeaders()
   });
 
@@ -131,14 +147,14 @@ async function cancelSubscription(subscriptionId, atPeriodEnd = true) {
     // Wompi: cancel_at_period_end no existe nativamente
     // Se marca en BD y job cancela al final del período
     // Aquí solo actualizamos metadata
-    await fetch(`${WOMPI_BASE_URL}/subscriptions/${subscriptionId}`, {
+    await fetch(`${resolveWompiBaseUrl()}/subscriptions/${subscriptionId}`, {
       method: 'PATCH',
       headers: _authHeaders(),
       body: JSON.stringify({ metadata: { cancel_at_period_end: 'true' } })
     });
     return { id: subscriptionId, status: 'ACTIVE', cancel_at_period_end: true };
   } else {
-    const response = await fetch(`${WOMPI_BASE_URL}/subscriptions/${subscriptionId}`, {
+    const response = await fetch(`${resolveWompiBaseUrl()}/subscriptions/${subscriptionId}`, {
       method: 'DELETE',
       headers: _authHeaders()
     });
@@ -198,7 +214,7 @@ async function createPaymentLink({ amountInCents, currency = 'COP', reference, c
     payment_method: { installments: 1 }
   };
 
-  const response = await fetch(`${WOMPI_BASE_URL}/payment_links`, {
+  const response = await fetch(`${resolveWompiBaseUrl()}/payment_links`, {
     method: 'POST',
     headers: _authHeaders(),
     body: JSON.stringify(body)
@@ -221,5 +237,6 @@ module.exports = {
   cancelSubscription,
   verifyWebhookSignature,
   parseWebhookEvent,
-  createPaymentLink
+  createPaymentLink,
+  resolveWompiBaseUrl
 };
