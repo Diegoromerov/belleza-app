@@ -19,6 +19,11 @@ if (!PASSWORD) {
 // Migrations are read from backend/migrations (copied into the image by Dockerfile).
 // The previous "embedded constants" approach silently corrupted some literals
 // (058 evaluated to NaN), so file-based loading is the only reliable option.
+// OJO: esta lista se aplica en cada arranque y el entrypoint ABORTA si alguna
+// falla (el contenedor queda en Crashed). Antes de agregar una migración hay que
+// comprobar que todas sus dependencias ya estén en la base: 071, por ejemplo,
+// hace ALTER TABLE sobre scan_product_matches (creada por 029) y tumba el
+// servicio si esa tabla no existe.
 const MIGRACIONES = [
   'init.sql',
   '054_create_core_tables.sql',
@@ -32,11 +37,6 @@ const MIGRACIONES = [
   '107_rls_politicas_sin_contexto.sql',
   '012_business_engine.sql',
   '062_optimize_business_saas_postgres.sql',
-  // GlowShop: crean listas_precios / precios_producto / precios_historial.
-  // Faltaban aquí, así que `GET /api/products` consultaba una tabla inexistente
-  // y respondía 500 en producción.
-  '071_glowshop_niveles_a0.sql',
-  '072_catalogo_autorizado_y_historial_protegido.sql',
   '082_memberships.sql',
   '114_memberships_sub_rol.sql',
   '118_drop_salon_miembros.sql',
