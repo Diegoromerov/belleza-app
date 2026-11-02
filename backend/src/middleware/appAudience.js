@@ -16,6 +16,32 @@
 
 const VALID_AUDIENCES = ['client', 'provider', 'salon', 'admin'];
 
+/**
+ * Callbacks máquina-a-máquina exentos de `X-App-Audience`.
+ *
+ * Wompi no envía esa cabecera: su POST llegaba con 400 y el handler nunca veía el
+ * evento, así que ningún pago se cerró nunca (webhook_events vacío). La
+ * autenticación de estas rutas es la firma del evento (checksum con
+ * WOMPI_EVENTS_SECRET), que cada handler verifica antes de tocar nada y falla
+ * cerrado con 401.
+ *
+ * Se comparan rutas EXACTAS (sin sufijo comodín): una subruta arbitraria bajo el
+ * mismo prefijo sigue exigiendo la cabecera.
+ */
+const MACHINE_CALLBACK_PATHS = new Set([
+  '/payments/store-webhook',
+  '/payments/wompi-webhook',
+]);
+
+function isMachineCallback(req) {
+  const original = (req && (req.originalUrl || req.url)) || '';
+  const sinQuery = original.split('?')[0];
+  // El middleware se monta en /api; se acepta también la ruta sin ese prefijo.
+  const relativa = sinQuery.replace(/^\/api(?=\/)/, '');
+  return MACHINE_CALLBACK_PATHS.has(sinQuery) || MACHINE_CALLBACK_PATHS.has(relativa);
+}
+
+
 function normalizeAudience(audience) {
   if (!audience) return null;
   const norm = String(audience).trim().toLowerCase();
@@ -40,6 +66,12 @@ function validateAppAudience(options = {}) {
   }
 
   return (req, res, next) => {
+    // 0. Callbacks máquina-a-máquina (pasarelas): su autenticación es la firma.
+    if (isMachineCallback(req)) {
+      req.appAudience = null;
+      return next();
+    }
+
     const rawAudience = req.header('X-App-Audience');
     const audience = normalizeAudience(rawAudience);
 
