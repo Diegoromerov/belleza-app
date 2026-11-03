@@ -1,13 +1,15 @@
 # Railway: dos proyectos independientes
 
-Este repositorio es la **matriz** (backend + migraciones). Lo despliega el proyecto
-Railway **`glowapp`**, y aquí se desarrolla todo.
+**Este repositorio es el archivo histórico.** Desde 2026-11-02 no construye ni
+despliega nada: el backend (con sus migraciones) se movió a
+`Diegoromerov/glowapp-firebase`, en `backend/`, y desde allí lo despliega el
+servicio `glowapp-api`. Aquí solo queda el código viejo para consulta.
 
 ## `glowapp` — el proyecto vivo
 
 | Servicio | Qué es | Se despliega desde |
 |---|---|---|
-| `glowapp-api` | Backend Node + migraciones | este repo, rama `main`, root `/backend` |
+| `glowapp-api` | Backend Node + migraciones | `glowapp-firebase`, rama `main`, root `/backend` |
 | `postgres-postgis-prod` | Base de datos de producción | imagen Docker |
 | `Redis` | Cola y caché | imagen Docker |
 
