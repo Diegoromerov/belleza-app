@@ -422,7 +422,7 @@ class AuthService {
     final response = await http.patch(
       Uri.parse('$baseUrl/api/salon/$salonId/profile'),
       headers: {
-        ..._jsonHeaders,
+        'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
       body: json.encode(changes),
@@ -443,7 +443,7 @@ class AuthService {
     final response = await http.get(
       Uri.parse('$baseUrl/api/salon/$salonId/profile'),
       headers: {
-        ..._jsonHeaders,
+        'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
     );
