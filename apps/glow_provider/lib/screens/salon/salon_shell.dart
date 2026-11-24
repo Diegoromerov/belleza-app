@@ -25,6 +25,7 @@ import 'package:glow_core/services/auth_service.dart';
 import 'package:glow_core/widgets/provider_services_screen.dart';
 import 'package:glow_core/widgets/locked_feature_card.dart';
 import 'caja_screen.dart';
+import 'salon_business_profile_screen.dart';
 
 class SalonShell extends StatefulWidget {
   /// Pestaña inicial (0 = Agenda). Útil para deep-links internos.
@@ -173,7 +174,7 @@ class _SalonShellState extends State<SalonShell> {
       case 3:
         return _cargarDatos ? const ProviderServicesScreen() : const _ServiciosPlaceholder();
       default:
-        return const _MasTab();
+        return _MasTab(salonId: _salonId, onOpenServices: () => setState(() => _index = 3));
     }
   }
 
@@ -486,7 +487,9 @@ class _ServiciosPlaceholder extends StatelessWidget {
 // ── Más ──────────────────────────────────────────────────────────────────────
 
 class _MasTab extends StatelessWidget {
-  const _MasTab();
+  final int? salonId;
+  final VoidCallback onOpenServices;
+  const _MasTab({required this.salonId, required this.onOpenServices});
 
   @override
   Widget build(BuildContext context) {
@@ -565,6 +568,7 @@ class _MasTab extends StatelessWidget {
         enlace('Uso del plan', '/saas/usage'),
         enlace('API keys', '/saas/api-keys'),
         enlace('Configuración', '/settings'),
+        Card(child: ListTile(title: const Text('Datos y horario del salón'), subtitle: const Text('Completa o corrige la información de tu sede'), trailing: const Icon(Icons.chevron_right), enabled: salonId != null, onTap: salonId == null ? null : () => Navigator.push(context, MaterialPageRoute(builder: (_) => SalonBusinessProfileScreen(salonId: salonId!, onOpenServices: () { Navigator.pop(context); onOpenServices(); }))))),
         enlace('Ayuda y soporte', '/support'),
         const SizedBox(height: Spacing.lg),
         Text(
