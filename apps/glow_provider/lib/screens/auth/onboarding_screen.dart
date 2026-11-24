@@ -39,6 +39,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final _salonAddressCtrl = TextEditingController();
   final _salonPhoneCtrl = TextEditingController();
   final _salonCityCtrl = TextEditingController();
+  static const Map<String, String> _salonWeekDays = {'lunes':'Lunes','martes':'Martes','miercoles':'Miércoles','jueves':'Jueves','viernes':'Viernes','sabado':'Sábado','domingo':'Domingo'};
+  final Map<String, Map<String, dynamic>> _salonBusinessHours = {for (final day in ['lunes','martes','miercoles','jueves','viernes','sabado','domingo']) day: {'open': false, 'start': '09:00', 'end': '18:00'}};
+  bool _salonBusinessHoursChanged = false;
+
 
   // Ubicación física y publicación del Salón
   final MapController _salonMapController = MapController();
@@ -241,6 +245,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       // /api/saas/* responde 401 "Contexto SaaS requerido".
       try {
         final profile = await SaasApiService.provisionTenant(plan: _selectedPlan.code);
+        if (_salonBusinessHoursChanged) {
+          try {
+            final salonResponse = await AuthService.getMySalon();
+            final salon = salonResponse?['salon'];
+            final salonId = salon is Map ? (salon['id'] as num?)?.toInt() : null;
+            if (salonId == null) throw StateError('No encontramos la sede para guardar su horario.');
+            final saved = await AuthService.updateSalonProfile(salonId: salonId, changes: {'horario_atencion': _salonBusinessHours});
+            if (saved?['success'] != true) throw StateError((saved?['error'] ?? 'No se pudo guardar el horario.').toString());
+          } catch (error) {
+            if (mounted) setState(() => _saasError = 'El salón quedó creado; el horario podrás completarlo después desde los datos del salón.');
+            if (kDebugMode) debugPrint('Onboarding: no se pudo guardar horario comercial: $error');
+          }
+        }
+
 
         // Paso 3: enviar invitaciones de equipo con el id real del tenant
         // (antes se pasaba el slug, que no identifica al tenant).
@@ -288,6 +306,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       });
     }
   }
+
+  Future<void> _selectSalonBusinessTime(String day, String field) async {
+    final parts = (_salonBusinessHours[day]![field] as String).split(':');
+    final selected = await showTimePicker(context: context, initialTime: TimeOfDay(hour: int.tryParse(parts.first) ?? 9, minute: int.tryParse(parts.last) ?? 0));
+    if (selected == null || !mounted) return;
+    setState(() { _salonBusinessHoursChanged = true; _salonBusinessHours[day]![field] = '${selected.hour.toString().padLeft(2, '0')}:${selected.minute.toString().padLeft(2, '0')}'; });
+  }
+  Widget _buildSalonBusinessHours() => Container(margin: const EdgeInsets.only(top: 14), padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFEFE8DE))), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+    const Text('Horario de apertura del salón', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1F1A15))), const SizedBox(height: 4),
+    const Text('Opcional. La disponibilidad de cada profesional se configura después en la agenda.', style: TextStyle(fontSize: 11, color: Color(0xFF8C7E74))), const SizedBox(height: 8),
+    ..._salonWeekDays.entries.map((entry) { final hours = _salonBusinessHours[entry.key]!; return Column(children: [
+      SwitchListTile.adaptive(contentPadding: EdgeInsets.zero, dense: true, title: Text(entry.value, style: const TextStyle(fontSize: 13)), value: hours['open'] == true, onChanged: (value) => setState(() { _salonBusinessHoursChanged = true; hours['open'] = value; })),
+      if (hours['open'] == true) Row(children: [Expanded(child: TextButton(onPressed: () => _selectSalonBusinessTime(entry.key, 'start'), child: Text('Abre ${hours['start']}'))), Expanded(child: TextButton(onPressed: () => _selectSalonBusinessTime(entry.key, 'end'), child: Text('Cierra ${hours['end']}')))]),
+    ]); }), const Text('Al terminar, podrás agregar los servicios iniciales desde la pestaña Servicios.', style: TextStyle(fontSize: 11, color: Color(0xFF8C7E74))),
+  ]));
 
   // ═══════════════════════════════════════════════════════════════
   // SAAS HELPER METHODS (class level)
@@ -797,6 +830,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
           ),
           const SizedBox(height: 18),
+          _buildSalonBusinessHours(),
+          const SizedBox(height: 14),
           CheckboxListTile(
             value: _habeasDataAccepted,
             onChanged: (val) => setState(() => _habeasDataAccepted = val ?? false),
